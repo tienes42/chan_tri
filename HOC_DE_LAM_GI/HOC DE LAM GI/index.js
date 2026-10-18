@@ -41,7 +41,7 @@ document.querySelectorAll('.hit[data-page]').forEach(b => {
 
 // Các nút thông tin & Popup
 document.getElementById('centerHit').addEventListener('click', () =>
-  showDialog('HỌC ĐỂ LÀM GÌ?', 'Khám phá kiến thức qua tình huống thực tế và mini game để vận dụng điều đã học vào giải quyết vấn đề.')
+  showDialog('Chân Tri', 'Nơi khám phá kiến thức qua tình huống thực tế và mini game để vận dụng điều đã học vào giải quyết vấn đề.')
 );
 
 document.getElementById('classButton').addEventListener('click', () =>
