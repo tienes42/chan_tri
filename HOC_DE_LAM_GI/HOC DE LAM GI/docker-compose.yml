@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: hoc-de-lam-gi-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hoc_de_lam_gi
+      POSTGRES_USER: hoc_user
+      POSTGRES_PASSWORD: change_me
+    ports:
+      - '5432:5432'
+    volumes:
+      - hoc_postgres_data:/var/lib/postgresql/data
+volumes:
+  hoc_postgres_data:

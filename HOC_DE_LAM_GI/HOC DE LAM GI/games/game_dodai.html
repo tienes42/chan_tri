@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Thợ mộc học việc - HỌC ĐỂ LÀM GÌ?</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0b1424;overflow:hidden;font-family:"Segoe UI",Arial,sans-serif;color:#fff;user-select:none;touch-action:none}
+#stage{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0;overflow:hidden;border-radius:14px}
+canvas{position:absolute;inset:0;width:960px;height:540px}
+.hud{position:absolute;display:flex;gap:8px;align-items:center}
+.pill{background:rgba(10,25,50,.72);border:2px solid rgba(255,255,255,.35);border-radius:16px;padding:6px 12px;font-weight:800;font-size:14px;backdrop-filter:blur(4px)}
+button{font:inherit;cursor:pointer;border:0;color:inherit}
+.btn{background:linear-gradient(#ffd166,#f4a300);color:#4a2c00;font-weight:900;border-radius:14px;padding:10px 18px;box-shadow:0 4px 0 #b06e00}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #b06e00}
+.btn.g{background:linear-gradient(#6ee7a0,#22b866);color:#053;box-shadow:0 4px 0 #14804a}
+.btn.s{padding:7px 12px;font-size:13px}.go{position:absolute;right:22px;bottom:22px;font-size:26px;padding:18px 34px;border-radius:20px;display:none;z-index:5}.go.ready{animation:pl .8s infinite}@keyframes pl{50%{transform:scale(1.08);box-shadow:0 4px 0 #14804a,0 0 26px #7dffa6}}
+.btn.sel{outline:3px solid #fff}
+#dlg{position:absolute;left:30px;right:30px;bottom:14px;background:rgba(8,20,42,.92);border:3px solid #ffd166;border-radius:18px;padding:16px 22px;min-height:96px;display:none;cursor:pointer}
+#nm{position:absolute;top:-17px;left:22px;background:#ffd166;color:#4a2c00;font-weight:900;padding:2px 16px;border-radius:12px}
+#tx{font-size:18px;line-height:1.5}
+#nx{position:absolute;right:16px;bottom:6px;font-size:12px;opacity:.7;animation:bl 1s infinite}
+@keyframes bl{50%{opacity:.1}}
+#pop{position:absolute;inset:0;background:rgba(5,12,28,.82);display:none;align-items:center;justify-content:center}
+#pop .card{background:#fff7e0;color:#3a2a10;border-radius:20px;padding:24px 30px;max-width:640px;border:5px solid #c98a2b;box-shadow:0 10px 40px #000a}
+#pop h2{color:#a8590a;margin-bottom:8px}#pop p{line-height:1.55;margin:6px 0}
+.tag{display:inline-block;background:#ffd166;border-radius:20px;padding:3px 12px;font-weight:800;font-size:13px;margin:3px 3px 0 0}
+</style>
+</head><body>
+<div id="stage"><canvas id="cv" width="960" height="540"></canvas>
+<div class="hud" style="left:14px;top:12px"><div class="pill" id="hAct"></div><div class="pill">⭐ <span id="hSc">0</span></div></div>
+<div class="hud" style="left:14px;top:58px"><button class="btn s" id="bExit">← Thoát</button><button class="btn s" id="bSnd">🔊</button></div><div class="hud" style="left:50%;top:12px;transform:translateX(-50%)"><div class="pill" id="meter"></div></div>
+<div class="hud" style="right:14px;top:12px"><button class="btn s" id="bNote">📓 Sổ tay</button></div><button class="btn g go" id="bGo">📏 GHI SỐ ĐO</button>
+<div id="dlg"><div id="nm"></div><div id="tx"></div><div id="nx">chạm để tiếp ▶</div></div>
+<div id="pop"></div></div>
+<script>
+/* GAME: ĐO ĐỘ DÀI (phần dùng chung lấy từ simulation.html) */
+const API=window.HOC_API_BASE||'http://127.0.0.1:8000/api',Q=new URLSearchParams(location.search),LESSON_ID=Q.get('lesson_id'),USER_ID=Number(localStorage.getItem('user_id'))||1;
+const $=i=>document.getElementById(i),fmt=(n,d=1)=>Number(n).toLocaleString('vi-VN',{maximumFractionDigits:d});
+
+const cv=$('cv'),c=cv.getContext('2d'),stage=$('stage');
+let story,st,score=0,sid=null,topic,P=[],T=0,dlgQ=[],dlgCB=null,typed=0,full='';
+const rr=(x,y,w,h,r)=>{c.beginPath();c.roundRect?c.roundRect(x,y,w,h,r):c.rect(x,y,w,h)};
+async function api(p,o){const r=await fetch(API+p,{headers:{'Content-Type':'application/json'},...o});if(!r.ok)throw 0;return r.json()}
+async function ev(a,d){if(!sid)return;try{await api(`/games/sessions/${sid}/events`,{method:'POST',body:JSON.stringify({action:a,event_data:JSON.stringify(d||{})})})}catch(e){}}
+/* ===== ÂM THANH: tạo bằng WebAudio, không cần file mp3. Chỉnh âm lượng ở các số v / MUSIC_VOL ===== */
+let AC,MG,lastAl=0,mute=localStorage.getItem('hdlg_mute')=='1';const MUSIC_VOL=.03;
+function ac(){if(!AC){AC=new(window.AudioContext||window.webkitAudioContext)();MG=AC.createGain();MG.gain.value=mute?0:1;MG.connect(AC.destination);ambient()}if(AC.state=='suspended')AC.resume();return AC}
+function tone(f,d=.15,t='sine',v=.07,at=0,fe=0){const a=ac(),o=a.createOscillator(),g=a.createGain(),s=a.currentTime+at;o.type=t;o.frequency.setValueAtTime(f,s);if(fe)o.frequency.exponentialRampToValueAtTime(fe,s+d);g.gain.setValueAtTime(v,s);g.gain.exponentialRampToValueAtTime(.001,s+d);o.connect(g);g.connect(MG);o.start(s);o.stop(s+d)}
+function noise(d=.3,f=1200,v=.1,ty='lowpass'){const a=ac(),n=a.sampleRate*d|0,b=a.createBuffer(1,n,a.sampleRate),x=b.getChannelData(0);for(let i=0;i<n;i++)x[i]=Math.random()*2-1;const s=a.createBufferSource(),fl=a.createBiquadFilter(),g=a.createGain(),t=a.currentTime;s.buffer=b;fl.type=ty;fl.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(fl);fl.connect(g);g.connect(MG);s.start(t)}
+function ambient(){const a=AC,n=a.sampleRate*3,b=a.createBuffer(1,n,a.sampleRate),x=b.getChannelData(0);let l=0;for(let i=0;i<n;i++){l=(l+.02*(Math.random()*2-1))/1.02;x[i]=l*3.5}
+ const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain(),o=a.createOscillator(),lg=a.createGain();s.buffer=b;s.loop=true;f.type='lowpass';f.frequency.value=600;g.gain.value=.55;o.frequency.value=.15;lg.gain.value=.3;o.connect(lg);lg.connect(g.gain);s.connect(f);f.connect(g);g.connect(MG);s.start();o.start();
+ const sc=[523,587,659,784,880,784,659,587];let k=0;setInterval(()=>{if(mute)return;k=Math.max(0,Math.min(7,k+(Math.random()<.5?-1:1)));if(Math.random()<.7)tone(sc[k],1.1,'sine',MUSIC_VOL);if(Math.random()<.25)tone(sc[k]/2,1.6,'triangle',MUSIC_VOL*.8)},650);
+ setInterval(()=>{if(!mute&&st&&st.a&&st.a.env=='sea'&&Math.random()<.5){tone(1500,.18,'sine',.03,0,1000);tone(1450,.22,'sine',.03,.22,900)}},6000)}
+const SND={pick:()=>tone(430,.08,'triangle',.06),thud:()=>{tone(130,.14,'sine',.12,0,55);noise(.12,500,.1)},splash:()=>noise(.35,1800,.12,'bandpass'),
+ talk:w=>tone(w=='tu'?140+Math.random()*30:w=='na'?330+Math.random()*50:240,.05,'triangle',.05),horn:()=>{tone(196,.8,'sawtooth',.07);tone(247,.8,'sawtooth',.05)},
+ sink:()=>{noise(1.3,450,.14);tone(320,1.2,'sine',.08,0,60);splash(0,0,0)},alarm:()=>tone(880,.12,'square',.035),fail:()=>tone(230,.45,'sawtooth',.06,0,110),
+ note:()=>{tone(880,.1,'sine',.06);tone(1175,.16,'sine',.06,.1)},win:()=>[523,659,784,1047].forEach((f,i)=>tone(f,i==3?.5:.16,'triangle',.08,i*.13))};
+addEventListener('pointerdown',()=>ac(),{once:true});addEventListener('keydown',()=>ac(),{once:true});
+function fit(){const s=Math.min(innerWidth/960,innerHeight/540);stage.style.transform=`translate(${(innerWidth-960*s)/2}px,${(innerHeight-540*s)/2}px) scale(${s})`;stage._s=s}
+addEventListener('resize',fit);fit();
+
+
+/* ---- hội thoại kiểu visual novel ---- */
+function say(lines,cb){dlgQ=lines.slice();dlgCB=cb;$('dlg').style.display='block';st.mode='talk';next()}
+function next(){if(typed<full.length){typed=full.length;return show()}const l=dlgQ.shift();if(!l){$('dlg').style.display='none';const f=dlgCB;dlgCB=null;f&&f();return}st.who=l[0];$('nm').textContent=WHO[l[0]];full=l[1];typed=0}
+const show=()=>$('tx').textContent=full.slice(0,Math.floor(typed));
+$('dlg').onclick=next;addEventListener('keydown',e=>{if(e.key==' '||e.key=='Enter')next()});
+
+
+function exitGame(){history.length>1?history.back():location.href='../index.html'}
+function askExit(){if(st.mode=='end')return exitGame();$('pop').style.display='flex';$('pop').innerHTML=`<div class="card"><h2>Thoát khỏi game?</h2><p>Tiến trình của chặng hiện tại sẽ không được lưu.</p><p style="margin-top:12px"><button class="btn g" onclick="$('pop').style.display='none'">▶ Chơi tiếp</button> <button class="btn" onclick="ev('exit',{act:st.i,score});exitGame()">Thoát</button></p></div>`}
+$('bExit').onclick=askExit;$('bSnd').textContent=mute?'🔇':'🔊';$('bSnd').onclick=()=>{mute=!mute;localStorage.setItem('hdlg_mute',mute?'1':'0');$('bSnd').textContent=mute?'🔇':'🔊';if(MG)MG.gain.value=mute?0:1;ac()};addEventListener('keydown',e=>{if(e.key=='Escape')askExit()});
+function finish(){st.mode='end';SND.win();const r=story.reveal;if(sid)api(`/games/sessions/${sid}/finish?score=${score}`,{method:'POST'}).catch(()=>{});
+ $('pop').style.display='flex';$('pop').innerHTML=`<div class="card"><h2>🏁 Hoàn thành! ${score}/${story.acts.length*100} điểm</h2><h2 style="margin-top:10px">🎓 HỌC ĐỂ LÀM GÌ?</h2><p>${r.text}</p><p><b>Công thức bạn vừa dùng:</b> ${r.formula}</p><p><b>Nghề dùng kiến thức này mỗi ngày:</b></p>${r.jobs.map(j=>`<span class="tag">${j}</span>`).join('')}<p style="margin-top:14px"><button class="btn" onclick="location.reload()">Chơi lại</button> <button class="btn g" onclick="history.length>1?history.back():location.href='../index.html'">Về bài học</button></p></div>`}
+
+
+/* ---- hạt: bọt nước, pháo giấy ---- */
+function splash(x,y,n,col='rgba(255,255,255,.85)',up=3){for(let i=0;i<n;i++)P.push({x,y,vx:(Math.random()-.5)*4,vy:-Math.random()*up-1,l:40+Math.random()*20,col,r:2+Math.random()*3})}
+function confetti(){for(let i=0;i<60;i++)P.push({x:480+(Math.random()-.5)*300,y:60,vx:(Math.random()-.5)*5,vy:Math.random()*2,l:120,col:`hsl(${Math.random()*360},90%,60%)`,r:4,g:.08})}
+
+/* ---- vẽ cảnh ---- */
+function person(x,y,o,talk,hot){c.save();c.translate(x,y+Math.sin(T*2+o.ph)*(hot?3:1.5));const s=o.s*(hot?1.06:1);c.scale(s,s);c.globalAlpha=hot||!st.who?1:.78;
+ c.fillStyle='#2f4a6b';c.fillRect(-13,-40,10,40);c.fillRect(3,-40,10,40);c.fillStyle=o.shirt;rr(-18,-94,36,58,9);c.fill();
+ c.fillStyle=o.skin;c.beginPath();c.arc(0,-110,18,0,7);c.fill();c.fillRect(-26,-88,8,26);c.fillRect(18,-88,8,26);
+ c.fillStyle='#2b1d10';c.beginPath();c.arc(-6,-112,2.4,0,7);c.arc(6,-112,2.4,0,7);c.fill();
+ c.strokeStyle='#7a3b2a';c.lineWidth=2;c.beginPath();talk?c.ellipse(0,-102,4,2+Math.abs(Math.sin(T*14))*3,0,0,7):(c.moveTo(-5,-102),c.quadraticCurveTo(0,-98,5,-102));c.stroke();
+ if(o.hat){c.fillStyle='#e8d28a';c.beginPath();c.moveTo(-36,-118);c.lineTo(36,-118);c.lineTo(0,-158);c.closePath();c.fill();c.strokeStyle='#b99a4a';c.stroke()}
+ else{c.fillStyle='#2b1d10';c.beginPath();c.arc(0,-116,19,Math.PI,0);c.fill();c.beginPath();c.arc(-22,-100,7,0,7);c.arc(22,-100,7,0,7);c.fill()}c.restore()}
+
+
+function ambient(){const sc=[392,440,523,587,659,587,523,440];let k=0;setInterval(()=>{if(mute)return;k=(k+1)%8;if(Math.random()<.7)tone(sc[k],.5,'triangle',MUSIC_VOL*1.2);if(k%4==0)tone(sc[k]/2,1.2,'sine',MUSIC_VOL)},480)}
+const TL=(k,n)=>({x:480-(n-1)*95-85+k*190,y:440});
+function newAct(i,re){const a=story.acts[i];st={i,a,mode:'talk',tries:st.i===i?st.tries:0,hints:st.i===i?st.hints:0,noted:0,ti:0,tools:[],ex:480,val:100,rd:0};
+ $('hAct').textContent=`Chặng ${i+1}/${story.acts.length} · ${a.name}`;$('hSc').textContent=score;$('meter').textContent=a.goal;
+ const go=()=>{st.mode='play';st.tools=(a.tools||[]).map((t,k)=>({...t,k,x:TL(k,a.tools.length).x,y:440}));a.type=='input'&&openInput()};re?go():say(a.intro,go)}
+function actWin(){SND.win();confetti();const a=st.a,g=Math.max(30,100-st.tries*15-st.hints*10);score+=g;$('hSc').textContent=score;ev('success',{act:st.i,tries:st.tries});say([...a.win,['me',`+${g} điểm`]],()=>st.i+1<story.acts.length?newAct(st.i+1):finish())}
+function oops(m){st.tries++;SND.fail();ev('wrong_answer',{act:st.i,tries:st.tries});$('dlg').style.display='none';say([[st.a.mentor,m]],()=>{st.mode='play';st.a.type=='input'&&openInput()})}
+function openInput(){const a=st.a;st.mode='input';$('pop').style.display='flex';$('pop').innerHTML=`<div class="card"><h2>${a.title}</h2><p>${a.prompt}</p>${a.fields.map((f,k)=>`<p>${f.label} <input id="f${k}" type="number" step="any" style="width:120px;font-size:18px;padding:4px"> ${f.unit}</p>`).join('')}<p id="fe" style="color:#a33;font-weight:700"></p><p><button class="btn" onclick="checkInput()">✔ Xác nhận</button> <button class="btn s" onclick="hintInput()">📓 Gợi ý</button></p></div>`}
+function hintInput(){if(!st.noted){st.noted=1;st.hints++}ev('hint',{act:st.i});SND.note();$('fe').innerHTML=st.a.note}
+function checkInput(){const bad=st.a.fields.filter((f,k)=>!(Math.abs(parseFloat($('f'+k).value)-f.ans)<=(f.tol||0)));$('pop').style.display='none';bad.length?oops(bad.map(f=>f.hint).join(' ')):actWin()}
+$('bNote').onclick=()=>{if(st.mode!='play')return;if(!st.noted){st.noted=1;const t=+localStorage.getItem('hdlg_hints')||0;if(t>0)localStorage.setItem('hdlg_hints',t-1);else st.hints++}ev('hint',{act:st.i});SND.note();$('pop').style.display='flex';$('pop').innerHTML=`<div class="card"><h2>📓 Sổ tay</h2>${st.a.note}<p style="margin-top:12px"><button class="btn" onclick="$('pop').style.display='none'">Đã hiểu</button></p></div>`};
+let drag=null;const pt=e=>{const r=stage.getBoundingClientRect();return{x:(e.clientX-r.left)/stage._s,y:(e.clientY-r.top)/stage._s}};
+function pickDown(m){for(const t of st.tools)if(m.x>t.x&&m.x<t.x+170&&m.y>t.y&&m.y<t.y+70){drag={t,dx:m.x-t.x,dy:m.y-t.y};SND.pick();return}}
+cv.onpointermove=e=>{if(drag){const m=pt(e);drag.t.x=m.x-drag.dx;drag.t.y=m.y-drag.dy}};
+cv.onpointerup=()=>{if(!drag)return;const t=drag.t;drag=null;if(Math.hypot(t.x+85-480,t.y+35-205)<150&&st.a.type=='pick'){const k=st.a.tasks[st.ti],r=st.a.judge(t,k,st.tools);ev('change_parameter',{tool:t.n,task:k.n,ok:!!r.ok});if(r.ok){st.ti++;SND.thud();st.ti>=st.a.tasks.length?actWin():say([[st.a.mentor,r.msg]],()=>st.mode='play')}else oops(r.msg)}else SND.pick()};
+cv.onpointerdown=e=>{if(st.mode=='play'&&st.a.type=='pick')pickDown(pt(e))};
+function pickDraw(){const a=st.a,k=a.tasks[Math.min(st.ti,a.tasks.length-1)];c.fillStyle='rgba(255,247,224,.96)';rr(330,96,300,214,18);c.fill();c.strokeStyle='#c98a2b';c.lineWidth=5;c.stroke();c.textAlign='center';c.fillStyle='#a8590a';c.font='bold 13px Arial';c.fillText(`NHIỆM VỤ ${Math.min(st.ti+1,a.tasks.length)}/${a.tasks.length}`,480,120);c.font='64px serif';c.fillStyle='#000';c.fillText(k.e,480,196);c.fillStyle='#3a2a10';c.font='bold 22px Arial';c.fillText(k.n,480,238);c.font='14px Arial';c.fillText(k.t,480,266);c.fillStyle='#8a6a3a';c.font='12px Arial';c.fillText('⬇ kéo dụng cụ phù hợp thả vào đây',480,296);
+ st.tools.forEach(t=>{if(!(drag&&drag.t==t)){const q=TL(t.k,st.tools.length);t.x+=(q.x-t.x)*.3;t.y+=(q.y-t.y)*.3}});[...st.tools].sort((x,y)=>(drag&&drag.t==x)-(drag&&drag.t==y)).forEach(t=>{c.fillStyle='#fff7e0';rr(t.x,t.y,170,70,14);c.fill();c.strokeStyle='#c98a2b';c.lineWidth=4;c.stroke();c.fillStyle='#3a2a10';c.font='bold 15px Arial';c.fillText(t.e+' '+t.n,t.x+85,t.y+30);c.font='11.5px Arial';c.fillStyle='#6a4a1a';c.fillText(t.s,t.x+85,t.y+52)})}
+function loop(t){T=t/1000;const a=st.a;$('bGo').style.display=(st.mode=='play'&&a.type=='read')?'block':'none';if(typed<full.length){const b4=Math.floor(typed);typed+=.9;if(Math.floor(typed)!=b4&&b4%2==0&&full[b4]!=' ')SND.talk(st.who);show()}draw();requestAnimationFrame(loop)}
+function peopleAndParticles(){if(st.mode=='talk')PEO.forEach(q=>person(q.x,470,q,st.who==q.id&&typed<full.length,st.who==q.id));P=P.filter(p=>p.l-->0);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=p.g||.15;c.fillStyle=p.col;c.beginPath();c.arc(p.x,p.y,p.r,0,7);c.fill()})}
+const start=async()=>{if(LESSON_ID){try{const g=await api(`/content/lessons/${LESSON_ID}/games`);if(g[0])sid=(await api('/games/sessions',{method:'POST',body:JSON.stringify({user_id:USER_ID,game_id:g[0].id})})).id}catch(e){}}st={i:-1,a:story.acts[0]};newAct(0);requestAnimationFrame(loop)};
+
+const WHO={ba:'Chú Ba · thợ mộc cả',mai:'Chị Mai · khách đặt hàng',me:'Bạn · thợ mộc học việc'};
+/* =========================================================
+   CỐT TRUYỆN + SỐ LIỆU (sửa tại đây). Đơn vị đo trong dữ liệu: mm.
+   tools: dụng cụ (g = GHĐ, d = ĐCNN) · tasks: vật cần đo (L = dài, p = độ chính xác cần)
+========================================================= */
+const STORY={reveal:{formula:'1 m = 100 cm = 1000 mm   |   GHĐ ≥ vật cần đo, ĐCNN ≤ độ chính xác cần',jobs:['Thợ mộc / thợ xây','Kỹ sư cơ khí','Thợ may / nhà thiết kế'],text:'Chọn đúng thước, đọc đúng vạch và đổi đúng đơn vị là kỹ năng sống còn của mọi nghề làm ra đồ vật: cắt sai vài milimét là cả tấm gỗ, tấm vải hay chi tiết máy thành phế phẩm.'},acts:[
+{name:'Chọn đúng thước',type:'pick',mentor:'ba',goal:'Kéo thước phù hợp vào vật cần đo',
+ tools:[{n:'Thước kẻ 30 cm',e:'📏',s:'GHĐ 30 cm · ĐCNN 1 mm',G:'30 cm',g:300,d:1},{n:'Thước cuộn 5 m',e:'📐',s:'GHĐ 5 m · ĐCNN 1 mm',G:'5 m',g:5000,d:1},{n:'Thước kẹp',e:'🔧',s:'GHĐ 15 cm · ĐCNN 0,1 mm',G:'15 cm',g:150,d:.1}],
+ tasks:[{e:'🪟',n:'Khung cửa sổ',t:'Dài khoảng 1,2 m · cần chính xác 1 mm',L:1200,p:1},{e:'🪵',n:'Độ dày tấm ván',t:'Dày khoảng 18 mm · cần chính xác 0,1 mm',L:18,p:.1},{e:'🪑',n:'Thanh gỗ làm chân ghế',t:'Dài khoảng 25 cm · cần chính xác 1 mm',L:250,p:1}],
+ judge:(t,k)=>t.g<k.L?{msg:`${t.n} chỉ đo tối đa ${t.G}, ngắn hơn vật cần đo. GHĐ của thước phải lớn hơn chiều dài vật.`}:t.d>k.p?{msg:`${t.n} có ĐCNN ${t.d} mm, thô quá để đo chính xác ${k.p} mm. Cần thước có ĐCNN nhỏ hơn.`}:{ok:1,msg:'Đúng thước rồi! Chọn đúng dụng cụ thì đo mới chuẩn.'},
+ note:'<p>Trước khi đo hãy xem <b>GHĐ</b> (giới hạn đo: số đo lớn nhất của thước) và <b>ĐCNN</b> (độ chia nhỏ nhất: khoảng cách giữa 2 vạch gần nhau).</p><p>Thước cần có <b>GHĐ ≥ chiều dài vật</b> và <b>ĐCNN ≤ độ chính xác cần</b>.</p>',
+ intro:[['me','Ngày đầu đi học nghề ở xưởng mộc của chú Ba. Chị Mai đặt làm cửa sổ và bộ bàn ghế.'],['ba','Nghề mộc đo sai một li là bỏ cả tấm gỗ! Trong xưởng có 3 loại thước, con phải biết chọn đúng cái.'],['ba','Nhìn GHĐ và ĐCNN ghi trên thước nha. Kéo thước thích hợp vào vật cần đo.']],win:[['ba','Khá lắm! Biết chọn dụng cụ là đã nửa tay thợ rồi.']]},
+{name:'Đọc cho đúng',type:'read',mentor:'ba',goal:'Đặt mắt vuông góc với vạch, rồi ghi số đo',rounds:[143,87],
+ note:'<p>Khi đọc số đo phải <b>đặt mắt nhìn vuông góc với cạnh thước</b> tại đầu vật. Nhìn xiên thì vạch bị lệch (sai số do nhìn lệch).</p><p>Kéo mắt (bấm giữ trên màn hình) sao cho tia nhìn thẳng đứng, rồi dùng nút +/− chọn số đo.</p>',
+ intro:[['mai','Chú Ba ơi, tấm ván này đo giúp em nhé, em cần đúng số để cưa.'],['ba','Đặt đầu ván sát vạch 0. Rồi chỉnh mắt: bấm giữ trên màn hình để dời mắt sao cho nhìn thẳng vuông góc xuống đầu ván. Đọc xong bấm Ghi số đo!']],win:[['mai','Chuẩn quá! Em tin tay nghề của chú cháu mình.']]},
+{name:'Đổi đơn vị rồi cưa',type:'input',mentor:'ba',goal:'Đổi ra mm để nhập vào máy cưa',title:'🪚 Máy cưa nhập bằng mm',prompt:'Bản vẽ: chân bàn <b>0,75 m</b>, mặt bàn <b>120 cm</b>, thanh giằng <b>35 cm</b>. Hãy đổi sang milimét:',
+ fields:[{label:'Chân bàn',unit:'mm',ans:750,hint:'Chân bàn 0,75 m = 750 mm (1 m = 1000 mm).'},{label:'Mặt bàn',unit:'mm',ans:1200,hint:'120 cm = 1200 mm (1 cm = 10 mm).'},{label:'Thanh giằng',unit:'mm',ans:350,hint:'35 cm = 350 mm.'}],
+ note:'1 m = 100 cm = 1000 mm · 1 cm = 10 mm. Muốn đổi cm sang mm thì nhân 10, đổi m sang mm thì nhân 1000.',
+ intro:[['ba','Giờ cưa thật. Máy cưa chỉ nhận số đo bằng mm, mà bản vẽ thì ghi lúc m lúc cm. Đổi sai là gỗ hỏng hết đó con.']],win:[['mai','Bàn lắp vừa khít, đẹp quá! Em đặt thêm 4 cái ghế nữa nha.']]}]};
+story=STORY;
+const PEO=[{x:110,ph:0,s:1,shirt:'#7a5a2a',skin:'#e0ac80',hat:1,id:'ba'},{x:180,ph:2,s:.85,shirt:'#e0679b',skin:'#e8b890',hat:0,id:'mai'}];
+const X0=120,SC=3.6,BTN=[{x:400,y:495,d:-1,t:'−'},{x:560,y:495,d:1,t:'+'}];
+const endx=()=>X0+st.a.rounds[st.rd]*SC;
+const appr=()=>{const e=endx();return(e+(e-st.ex)*45/175-X0)/SC};
+let down=false;
+cv.onpointerdown=e=>{const m=pt(e);if(st.mode!='play')return;if(st.a.type=='pick')return pickDown(m);BTN.forEach(b=>{if(Math.hypot(m.x-b.x,m.y-b.y)<38){st.val=Math.max(0,Math.min(200,st.val+b.d));SND.beep&&SND.beep()}});if(m.y<400){down=true;st.ex=Math.max(60,Math.min(900,m.x))}};
+const pm=cv.onpointermove;cv.onpointermove=e=>{pm(e);if(down&&st.a.type=='read')st.ex=Math.max(60,Math.min(900,pt(e).x))};
+const pu=cv.onpointerup;cv.onpointerup=e=>{down=false;pu(e)};
+$('bGo').onclick=()=>{if(st.mode!='play'||st.a.type!='read')return;const T0=st.a.rounds[st.rd],ok=Math.abs(st.ex-endx())<12,A=appr();ev('change_parameter',{val:st.val,eyeOk:ok});
+ if(ok&&Math.abs(st.val-T0)<=1){st.rd++;SND.thud();st.val=100;st.ex=480;st.rd>=st.a.rounds.length?actWin():say([[st.a.mentor,'Đúng số đo rồi! Thêm một tấm ván nữa nhé.']],()=>st.mode='play')}
+ else if(!ok&&Math.abs(st.val-A)<=1)oops(`Con nhìn xiên nên đọc ra ${fmt(A,0)} mm, trong khi đúng là ${T0} mm. Phải đặt mắt vuông góc với vạch chia nhé!`);
+ else oops(ok?'Mắt đặt đúng rồi nhưng số đọc chưa chuẩn. Nhìn vạch ở đúng đầu tấm ván nha.':'Mắt chưa vuông góc với đầu tấm ván! Bấm giữ trên màn hình để dời mắt cho tia nhìn thẳng đứng.')};
+function draw(){const a=st.a;c.clearRect(0,0,960,540);c.fillStyle='#b98a58';c.fillRect(0,0,960,540);c.fillStyle='rgba(60,35,10,.12)';for(let x=0;x<960;x+=60)c.fillRect(x,0,3,400);
+ c.fillStyle='#8fc7e8';rr(700,40,180,130,6);c.fill();c.strokeStyle='#5a3a16';c.lineWidth=8;c.stroke();c.fillStyle='#d9b88a';[60,120].forEach(y=>c.fillRect(30,y,200,10));c.fillStyle='#e8d0a0';[60,120].forEach(y=>{c.fillRect(40,y-14,150,14)});
+ c.fillStyle='#7a5a2a';c.fillRect(0,400,960,140);c.fillStyle='#9a7840';c.fillRect(0,400,960,10);
+ if(a.type=='pick')pickDraw();
+ else if(a.type=='read'){const e=endx(),y0=330;c.fillStyle='#e8c98c';c.fillRect(X0-8,250,e-X0+8,48);c.strokeStyle='#5a3a16';c.lineWidth=3;c.strokeRect(X0-8,250,e-X0+8,48);c.fillStyle='#f4f0e0';c.fillRect(X0-20,y0,780,40);c.strokeStyle='#222';c.lineWidth=1;c.fillStyle='#222';c.font='11px Arial';c.textAlign='center';for(let m=0;m<=200;m++){const x=X0+m*SC;c.beginPath();c.moveTo(x,y0);c.lineTo(x,y0+(m%10==0?22:m%5==0?15:9));c.stroke();if(m%10==0)c.fillText(m,x,y0+36)}
+  c.fillStyle='#333';c.font='bold 12px Arial';c.fillText('mm',X0+760,y0+36);
+  const ok=Math.abs(st.ex-e)<12;c.strokeStyle=ok?'#22b866':'#e33';c.lineWidth=3;c.setLineDash([8,6]);c.beginPath();c.moveTo(st.ex,128);c.lineTo(e,286);c.lineTo(e+(e-st.ex)*45/158,y0+2);c.stroke();c.setLineDash([]);c.font='42px serif';c.fillStyle='#000';c.fillText('👁️',st.ex,118);
+  c.fillStyle='#fff';c.font='bold 13px Arial';c.fillText(ok?'Nhìn vuông góc ✔':'Nhìn xiên ✖ (kéo mắt)',st.ex,60);c.fillStyle='rgba(10,25,50,.8)';rr(380,448,200,34,10);c.fill();c.fillStyle='#ffe27a';c.font='bold 22px Arial';c.fillText('Số đo: '+st.val+' mm',480,472);
+  BTN.forEach(b=>{c.fillStyle=b.d>0?'#22b866':'#e05a4a';c.beginPath();c.arc(b.x,b.y,32,0,7);c.fill();c.strokeStyle='#fff';c.lineWidth=4;c.stroke();c.fillStyle='#fff';c.font='bold 38px Arial';c.fillText(b.t,b.x,b.y+13)})}
+ else{c.fillStyle='#d9b88a';rr(250,300,460,40,6);c.fill();c.strokeStyle='#5a3a16';c.lineWidth=4;c.stroke();c.font='60px serif';c.fillStyle='#000';c.textAlign='center';c.fillText('🪚',480,270)}
+ peopleAndParticles()}
+start();
+</script></body></html>

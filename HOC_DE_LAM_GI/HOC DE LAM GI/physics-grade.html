@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vật lý lớp - HỌC ĐỂ LÀM GÌ</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="physics-grade.css">
+</head>
+
+<body>
+
+<div class="grade-background" aria-hidden="true">
+    <div class="bg-circle circle-1"></div>
+    <div class="bg-circle circle-2"></div>
+    <div class="bg-symbol symbol-1">F</div>
+    <div class="bg-symbol symbol-2">λ</div>
+    <div class="bg-symbol symbol-3">E</div>
+    <div class="bg-symbol symbol-4">v</div>
+    <div class="bg-symbol symbol-5">⚡</div>
+</div>
+
+<header class="grade-header">
+    <button class="back-button" id="backButton" type="button" aria-label="Quay lại">←</button>
+
+    <div class="brand">
+        <div class="brand-icon">⚡</div>
+        <div>
+            <h1>HỌC ĐỂ LÀM GÌ</h1>
+            <p>KHÁM PHÁ VẬT LÝ</p>
+        </div>
+    </div>
+
+    <div class="player">
+        <div class="player-avatar">👨‍🎓</div>
+        <div class="player-info">
+            <strong>Tên người chơi</strong>
+            <div class="xp-bar"><div class="xp-progress" id="xpProgress"></div></div>
+        </div>
+        <span class="level">Lv.1</span>
+    </div>
+</header>
+
+<main class="grade-main">
+
+    <section class="grade-hero">
+        <div class="hero-content">
+            <span class="hero-label">HÀNH TRÌNH KHÁM PHÁ</span>
+            <h2 id="gradeTitle">VẬT LÝ LỚP 10</h2>
+            <p id="gradeDescription">Khám phá các quy luật của chuyển động, lực, năng lượng và thế giới tự nhiên.</p>
+
+            <div class="progress-box">
+                <div class="progress-top">
+                    <span>Tiến trình học tập</span>
+                    <strong id="progressPercent">0%</strong>
+                </div>
+                <div class="large-progress">
+                    <div class="large-progress-fill" id="progressFill"></div>
+                </div>
+                <small id="progressText">0 / 0 bài học hoàn thành</small>
+            </div>
+        </div>
+
+        <div class="hero-illustration" aria-hidden="true">
+            <div class="orbit orbit-1"></div>
+            <div class="orbit orbit-2"></div>
+            <div class="math-orb">⚛</div>
+            <div class="floating-number number-1">F = ma</div>
+            <div class="floating-number number-2">v = s/t</div>
+            <div class="floating-number number-3">E = mc²</div>
+        </div>
+    </section>
+
+    <section class="stats" aria-label="Thống kê">
+        <div class="stat-card">
+            <div class="stat-icon">🧲</div>
+            <div><strong id="topicCount">0</strong><span>chủ đề</span></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📚</div>
+            <div><strong id="lessonCount">0</strong><span>bài học</span></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🎯</div>
+            <div><strong id="challengeCount">0</strong><span>thử thách</span></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">⭐</div>
+            <div><strong id="xpCount">0</strong><span>XP đã nhận</span></div>
+        </div>
+    </section>
+
+    <section class="topics-section">
+        <div class="section-heading">
+            <div>
+                <span>BƯỚC 02</span>
+                <h2>Khám phá chủ đề</h2>
+            </div>
+            <p>Chọn một chủ đề Vật lý để xem bài học và bắt đầu khám phá.</p>
+        </div>
+
+        <div class="topics-grid" id="topicsGrid">
+            <div style="grid-column:1/-1;text-align:center;padding:50px;color:#64748b">
+                Đang tải bài học...
+            </div>
+        </div>
+    </section>
+
+    <section class="real-life">
+        <div class="real-life-content">
+            <span class="real-label">VẬT LÝ TRONG ĐỜI SỐNG</span>
+            <h2>Học để hiểu thế giới thật.</h2>
+            <p>
+                Sau khi học kiến thức, bạn sẽ được đưa vào những tình huống thực tế
+                để vận dụng công thức, suy luận và giải quyết vấn đề.
+            </p>
+            <button class="challenge-button" id="challengeButton" type="button">
+                Thử thách thực tế <span>→</span>
+            </button>
+        </div>
+
+        <div class="real-life-visual">
+            <div class="scenario-card">
+                <div class="scenario-icon">🚗</div>
+                <strong>Ví dụ thực tế</strong>
+                <p>Một chiếc xe tăng tốc từ trạng thái đứng yên.</p>
+                <div class="scenario-equation">v = v₀ + at</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="bottom-actions">
+        <button class="bottom-action" id="calculatorButton" type="button">
+            <span>🧮</span>
+            <div>
+                <strong>Công cụ Vật lý</strong>
+                <small>Công thức & tính toán</small>
+            </div>
+            <b>→</b>
+        </button>
+
+        <button class="bottom-action" id="progressButton" type="button">
+            <span>📊</span>
+            <div>
+                <strong>Tiến trình</strong>
+                <small>Xem quá trình học tập</small>
+            </div>
+            <b>→</b>
+        </button>
+    </section>
+</main>
+
+<div class="popup-overlay" id="topicPopup" aria-hidden="true">
+    <div class="popup" role="dialog" aria-modal="true" aria-labelledby="popupTitle">
+        <button class="popup-close" id="popupClose" type="button" aria-label="Đóng">×</button>
+        <div class="popup-icon" id="popupIcon">⚡</div>
+        <div class="popup-label" id="popupLabel">VẬT LÝ</div>
+        <h2 id="popupTitle">Chủ đề</h2>
+        <p id="popupDescription">Mô tả chủ đề.</p>
+
+        <div class="popup-info">
+            <div>
+                <strong id="popupLessons">0</strong>
+                <span>bài học</span>
+            </div>
+            <div>
+                <strong id="popupXP">0</strong>
+                <span>XP</span>
+            </div>
+        </div>
+
+        <button class="popup-start" id="popupStart" type="button">
+            Bắt đầu học <span>→</span>
+        </button>
+    </div>
+</div>
+
+<script src="physics-grade.js"></script>
+</body>
+</html>

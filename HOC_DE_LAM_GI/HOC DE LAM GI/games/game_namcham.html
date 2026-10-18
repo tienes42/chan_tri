@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Nam châm và từ trường - HỌC ĐỂ LÀM GÌ?</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0b1424;overflow:hidden;font-family:"Segoe UI",Arial,sans-serif;color:#fff;user-select:none;touch-action:none}
+#stage{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0;overflow:hidden;border-radius:14px}
+canvas{position:absolute;inset:0;width:960px;height:540px}
+.hud{position:absolute;display:flex;gap:8px;align-items:center}
+.pill{background:rgba(10,25,50,.72);border:2px solid rgba(255,255,255,.35);border-radius:16px;padding:6px 12px;font-weight:800;font-size:14px;backdrop-filter:blur(4px)}
+button{font:inherit;cursor:pointer;border:0;color:inherit}
+.btn{background:linear-gradient(#ffd166,#f4a300);color:#4a2c00;font-weight:900;border-radius:14px;padding:10px 18px;box-shadow:0 4px 0 #b06e00}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #b06e00}
+.btn.g{background:linear-gradient(#6ee7a0,#22b866);color:#053;box-shadow:0 4px 0 #14804a}
+.btn.s{padding:7px 12px;font-size:13px}.go{position:absolute;right:22px;bottom:22px;font-size:26px;padding:18px 34px;border-radius:20px;display:none;z-index:5}.go.ready{animation:pl .8s infinite}@keyframes pl{50%{transform:scale(1.08);box-shadow:0 4px 0 #14804a,0 0 26px #7dffa6}}
+.btn.sel{outline:3px solid #fff}
+#dlg{position:absolute;left:30px;right:30px;bottom:14px;background:rgba(8,20,42,.92);border:3px solid #ffd166;border-radius:18px;padding:16px 22px;min-height:96px;display:none;cursor:pointer}
+#nm{position:absolute;top:-17px;left:22px;background:#ffd166;color:#4a2c00;font-weight:900;padding:2px 16px;border-radius:12px}
+#tx{font-size:18px;line-height:1.5}
+#nx{position:absolute;right:16px;bottom:6px;font-size:12px;opacity:.7;animation:bl 1s infinite}
+@keyframes bl{50%{opacity:.1}}
+#pop{position:absolute;inset:0;background:rgba(5,12,28,.82);display:none;align-items:center;justify-content:center}
+#pop .card{background:#fff7e0;color:#3a2a10;border-radius:20px;padding:24px 30px;max-width:640px;border:5px solid #c98a2b;box-shadow:0 10px 40px #000a}
+#pop h2{color:#a8590a;margin-bottom:8px}#pop p{line-height:1.55;margin:6px 0}
+.tag{display:inline-block;background:#ffd166;border-radius:20px;padding:3px 12px;font-weight:800;font-size:13px;margin:3px 3px 0 0}
+</style>
+</head><body>
+<div id="stage"><canvas id="cv" width="960" height="540"></canvas>
+<div class="hud" style="left:14px;top:12px"><div class="pill" id="hAct"></div><div class="pill">⭐ <span id="hSc">0</span></div></div>
+<div class="hud" style="left:14px;top:58px"><button class="btn s" id="bExit">← Thoát</button><button class="btn s" id="bSnd">🔊</button></div><div class="hud" style="left:50%;top:12px;transform:translateX(-50%)"><div class="pill" id="meter"></div></div>
+<div class="hud" style="right:14px;top:12px"><button class="btn s" id="bNote">📓 Sổ tay</button></div><button class="btn g go" id="bGo">✅ DUYỆT</button>
+<div id="dlg"><div id="nm"></div><div id="tx"></div><div id="nx">chạm để tiếp ▶</div></div>
+<div id="pop"></div></div>
+<script>
+/* GAME: NAM CHÂM VÀ TỪ TRƯỜNG (phần dùng chung lấy từ simulation.html) */
+const API=window.HOC_API_BASE||'http://127.0.0.1:8000/api',Q=new URLSearchParams(location.search),LESSON_ID=Q.get('lesson_id'),USER_ID=Number(localStorage.getItem('user_id'))||1;
+const $=i=>document.getElementById(i),fmt=(n,d=1)=>Number(n).toLocaleString('vi-VN',{maximumFractionDigits:d});
+
+const cv=$('cv'),c=cv.getContext('2d'),stage=$('stage');
+let story,st,score=0,sid=null,topic,P=[],T=0,dlgQ=[],dlgCB=null,typed=0,full='';
+const rr=(x,y,w,h,r)=>{c.beginPath();c.roundRect?c.roundRect(x,y,w,h,r):c.rect(x,y,w,h)};
+async function api(p,o){const r=await fetch(API+p,{headers:{'Content-Type':'application/json'},...o});if(!r.ok)throw 0;return r.json()}
+async function ev(a,d){if(!sid)return;try{await api(`/games/sessions/${sid}/events`,{method:'POST',body:JSON.stringify({action:a,event_data:JSON.stringify(d||{})})})}catch(e){}}
+/* ===== ÂM THANH: tạo bằng WebAudio, không cần file mp3. Chỉnh âm lượng ở các số v / MUSIC_VOL ===== */
+let AC,MG,lastAl=0,mute=localStorage.getItem('hdlg_mute')=='1';const MUSIC_VOL=.03;
+function ac(){if(!AC){AC=new(window.AudioContext||window.webkitAudioContext)();MG=AC.createGain();MG.gain.value=mute?0:1;MG.connect(AC.destination);ambient()}if(AC.state=='suspended')AC.resume();return AC}
+function tone(f,d=.15,t='sine',v=.07,at=0,fe=0){const a=ac(),o=a.createOscillator(),g=a.createGain(),s=a.currentTime+at;o.type=t;o.frequency.setValueAtTime(f,s);if(fe)o.frequency.exponentialRampToValueAtTime(fe,s+d);g.gain.setValueAtTime(v,s);g.gain.exponentialRampToValueAtTime(.001,s+d);o.connect(g);g.connect(MG);o.start(s);o.stop(s+d)}
+function noise(d=.3,f=1200,v=.1,ty='lowpass'){const a=ac(),n=a.sampleRate*d|0,b=a.createBuffer(1,n,a.sampleRate),x=b.getChannelData(0);for(let i=0;i<n;i++)x[i]=Math.random()*2-1;const s=a.createBufferSource(),fl=a.createBiquadFilter(),g=a.createGain(),t=a.currentTime;s.buffer=b;fl.type=ty;fl.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(fl);fl.connect(g);g.connect(MG);s.start(t)}
+function ambient(){const a=AC,n=a.sampleRate*3,b=a.createBuffer(1,n,a.sampleRate),x=b.getChannelData(0);let l=0;for(let i=0;i<n;i++){l=(l+.02*(Math.random()*2-1))/1.02;x[i]=l*3.5}
+ const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain(),o=a.createOscillator(),lg=a.createGain();s.buffer=b;s.loop=true;f.type='lowpass';f.frequency.value=600;g.gain.value=.55;o.frequency.value=.15;lg.gain.value=.3;o.connect(lg);lg.connect(g.gain);s.connect(f);f.connect(g);g.connect(MG);s.start();o.start();
+ const sc=[523,587,659,784,880,784,659,587];let k=0;setInterval(()=>{if(mute)return;k=Math.max(0,Math.min(7,k+(Math.random()<.5?-1:1)));if(Math.random()<.7)tone(sc[k],1.1,'sine',MUSIC_VOL);if(Math.random()<.25)tone(sc[k]/2,1.6,'triangle',MUSIC_VOL*.8)},650);
+ setInterval(()=>{if(!mute&&st&&st.a&&st.a.env=='sea'&&Math.random()<.5){tone(1500,.18,'sine',.03,0,1000);tone(1450,.22,'sine',.03,.22,900)}},6000)}
+const SND={pick:()=>tone(430,.08,'triangle',.06),thud:()=>{tone(130,.14,'sine',.12,0,55);noise(.12,500,.1)},splash:()=>noise(.35,1800,.12,'bandpass'),
+ talk:w=>tone((w=='tu'||w=='bay')?140+Math.random()*30:(w=='na'||w=='mi')?330+Math.random()*50:240,.05,'triangle',.05),horn:()=>{tone(196,.8,'sawtooth',.07);tone(247,.8,'sawtooth',.05)},
+ sink:()=>{noise(1.3,450,.14);tone(320,1.2,'sine',.08,0,60);splash(0,0,0)},alarm:()=>tone(880,.12,'square',.035),fail:()=>tone(230,.45,'sawtooth',.06,0,110),
+ note:()=>{tone(880,.1,'sine',.06);tone(1175,.16,'sine',.06,.1)},win:()=>[523,659,784,1047].forEach((f,i)=>tone(f,i==3?.5:.16,'triangle',.08,i*.13))};
+addEventListener('pointerdown',()=>ac(),{once:true});addEventListener('keydown',()=>ac(),{once:true});
+function fit(){const s=Math.min(innerWidth/960,innerHeight/540);stage.style.transform=`translate(${(innerWidth-960*s)/2}px,${(innerHeight-540*s)/2}px) scale(${s})`;stage._s=s}
+addEventListener('resize',fit);fit();
+
+
+/* ---- hội thoại kiểu visual novel ---- */
+function say(lines,cb){dlgQ=lines.slice();dlgCB=cb;$('dlg').style.display='block';st.mode='talk';next()}
+function next(){if(typed<full.length){typed=full.length;return show()}const l=dlgQ.shift();if(!l){$('dlg').style.display='none';const f=dlgCB;dlgCB=null;f&&f();return}st.who=l[0];$('nm').textContent=WHO[l[0]];full=l[1];typed=0}
+const show=()=>$('tx').textContent=full.slice(0,Math.floor(typed));
+$('dlg').onclick=next;addEventListener('keydown',e=>{if(e.key==' '||e.key=='Enter')next()});
+
+
+function exitGame(){history.length>1?history.back():location.href='../index.html'}
+function askExit(){if(st.mode=='end')return exitGame();$('pop').style.display='flex';$('pop').innerHTML=`<div class="card"><h2>Thoát khỏi game?</h2><p>Tiến trình của chặng hiện tại sẽ không được lưu.</p><p style="margin-top:12px"><button class="btn g" onclick="$('pop').style.display='none'">▶ Chơi tiếp</button> <button class="btn" onclick="ev('exit',{act:st.i,score});exitGame()">Thoát</button></p></div>`}
+$('bExit').onclick=askExit;$('bSnd').textContent=mute?'🔇':'🔊';$('bSnd').onclick=()=>{mute=!mute;localStorage.setItem('hdlg_mute',mute?'1':'0');$('bSnd').textContent=mute?'🔇':'🔊';if(MG)MG.gain.value=mute?0:1;ac()};addEventListener('keydown',e=>{if(e.key=='Escape')askExit()});
+function finish(){st.mode='end';SND.win();const r=story.reveal;if(sid)api(`/games/sessions/${sid}/finish?score=${score}`,{method:'POST'}).catch(()=>{});
+ $('pop').style.display='flex';$('pop').innerHTML=`<div class="card"><h2>🏁 Hoàn thành! ${score}/${story.acts.length*100} điểm</h2><h2 style="margin-top:10px">🎓 HỌC ĐỂ LÀM GÌ?</h2><p>${r.text}</p><p><b>Công thức bạn vừa dùng:</b> ${r.formula}</p><p><b>Nghề dùng kiến thức này mỗi ngày:</b></p>${r.jobs.map(j=>`<span class="tag">${j}</span>`).join('')}<p style="margin-top:14px"><button class="btn" onclick="location.reload()">Chơi lại</button> <button class="btn g" onclick="history.length>1?history.back():location.href='../index.html'">Về bài học</button></p></div>`}
+
+
+/* ---- hạt: bọt nước, pháo giấy ---- */
+function splash(x,y,n,col='rgba(255,255,255,.85)',up=3){for(let i=0;i<n;i++)P.push({x,y,vx:(Math.random()-.5)*4,vy:-Math.random()*up-1,l:40+Math.random()*20,col,r:2+Math.random()*3})}
+function confetti(){for(let i=0;i<60;i++)P.push({x:480+(Math.random()-.5)*300,y:60,vx:(Math.random()-.5)*5,vy:Math.random()*2,l:120,col:`hsl(${Math.random()*360},90%,60%)`,r:4,g:.08})}
+
+/* ---- vẽ cảnh ---- */
+function person(x,y,o,talk,hot){c.save();c.translate(x,y+Math.sin(T*2+o.ph)*(hot?3:1.5));const s=o.s*(hot?1.06:1);c.scale(s,s);c.globalAlpha=hot||!st.who?1:.78;
+ c.fillStyle='#2f4a6b';c.fillRect(-13,-40,10,40);c.fillRect(3,-40,10,40);c.fillStyle=o.shirt;rr(-18,-94,36,58,9);c.fill();
+ c.fillStyle=o.skin;c.beginPath();c.arc(0,-110,18,0,7);c.fill();c.fillRect(-26,-88,8,26);c.fillRect(18,-88,8,26);
+ c.fillStyle='#2b1d10';c.beginPath();c.arc(-6,-112,2.4,0,7);c.arc(6,-112,2.4,0,7);c.fill();
+ c.strokeStyle='#7a3b2a';c.lineWidth=2;c.beginPath();talk?c.ellipse(0,-102,4,2+Math.abs(Math.sin(T*14))*3,0,0,7):(c.moveTo(-5,-102),c.quadraticCurveTo(0,-98,5,-102));c.stroke();
+ if(o.hat){c.fillStyle='#e8d28a';c.beginPath();c.moveTo(-36,-118);c.lineTo(36,-118);c.lineTo(0,-158);c.closePath();c.fill();c.strokeStyle='#b99a4a';c.stroke()}
+ else{c.fillStyle='#2b1d10';c.beginPath();c.arc(0,-116,19,Math.PI,0);c.fill();c.beginPath();c.arc(-22,-100,7,0,7);c.arc(22,-100,7,0,7);c.fill()}c.restore()}
+
+function ambient(){const sc=[392,440,523,587,659,587,523,440];let k=0;setInterval(()=>{if(mute)return;k=(k+1)%8;if(Math.random()<.7)tone(sc[k],.5,'triangle',MUSIC_VOL*1.2);if(k%4==0)tone(sc[k]/2,1.2,'sine',MUSIC_VOL)},480)}
+const TL=(k,n)=>({x:480-(n-1)*95-85+k*190,y:440});
+function newAct(i,re){const a=story.acts[i];st={i,a,mode:'talk',tries:st.i===i?st.tries:0,hints:st.i===i?st.hints:0,noted:0,ti:0,mir:null,obj:null,tools:[],ex:480,val:100,rd:0};
+ $('hAct').textContent=`Chặng ${i+1}/${story.acts.length} · ${a.name}`;$('hSc').textContent=score;$('meter').textContent=a.goal;
+ const go=()=>{st.mode='play';st.tools=(a.tools||[]).map((t,k)=>({...t,k,x:TL(k,a.tools.length).x,y:440}));a.type=='input'&&openInput()};re?go():say(a.intro,go)}
+function actWin(){SND.win();confetti();const a=st.a,g=Math.max(30,100-st.tries*15-st.hints*10);score+=g;$('hSc').textContent=score;ev('success',{act:st.i,tries:st.tries});say([...a.win,['me',`+${g} điểm`]],()=>st.i+1<story.acts.length?newAct(st.i+1):finish())}
+function oops(m){st.tries++;SND.fail();ev('wrong_answer',{act:st.i,tries:st.tries});$('dlg').style.display='none';say([[st.a.mentor,m]],()=>{st.mode='play';st.a.type=='input'&&openInput()})}
+function openInput(){const a=st.a;st.mode='input';$('pop').style.display='flex';$('pop').innerHTML=`<div class="card"><h2>${a.title}</h2><p>${a.prompt}</p>${a.fields.map((f,k)=>`<p>${f.label} <input id="f${k}" type="number" step="any" style="width:120px;font-size:18px;padding:4px"> ${f.unit}</p>`).join('')}<p id="fe" style="color:#a33;font-weight:700"></p><p><button class="btn" onclick="checkInput()">✔ Xác nhận</button> <button class="btn s" onclick="hintInput()">📓 Gợi ý</button></p></div>`}
+function hintInput(){if(!st.noted){st.noted=1;st.hints++}ev('hint',{act:st.i});SND.note();$('fe').innerHTML=st.a.note}
+function checkInput(){const bad=st.a.fields.filter((f,k)=>!(Math.abs(parseFloat($('f'+k).value)-f.ans)<=(f.tol||0)));$('pop').style.display='none';bad.length?oops(bad.map(f=>f.hint).join(' ')):actWin()}
+$('bNote').onclick=()=>{if(st.mode!='play')return;if(!st.noted){st.noted=1;const t=+localStorage.getItem('hdlg_hints')||0;if(t>0)localStorage.setItem('hdlg_hints',t-1);else st.hints++}ev('hint',{act:st.i});SND.note();$('pop').style.display='flex';$('pop').innerHTML=`<div class="card"><h2>📓 Sổ tay</h2>${st.a.note}<p style="margin-top:12px"><button class="btn" onclick="$('pop').style.display='none'">Đã hiểu</button></p></div>`};
+let drag=null;const pt=e=>{const r=stage.getBoundingClientRect();return{x:(e.clientX-r.left)/stage._s,y:(e.clientY-r.top)/stage._s}};
+function pickDown(m){for(const t of st.tools)if(m.x>t.x&&m.x<t.x+170&&m.y>t.y&&m.y<t.y+70){drag={t,dx:m.x-t.x,dy:m.y-t.y};SND.pick();return}}
+cv.onpointermove=e=>{if(drag){const m=pt(e);drag.t.x=m.x-drag.dx;drag.t.y=m.y-drag.dy}};
+cv.onpointerup=()=>{if(!drag)return;const t=drag.t;drag=null;if(Math.hypot(t.x+85-480,t.y+35-205)<150&&st.a.type=='pick'){const k=st.a.tasks[st.ti],r=st.a.judge(t,k,st.tools);ev('change_parameter',{tool:t.n,task:k.n,ok:!!r.ok});if(r.ok){st.ti++;SND.thud();st.ti>=st.a.tasks.length?actWin():say([[st.a.mentor,r.msg]],()=>st.mode='play')}else oops(r.msg)}else SND.pick()};
+cv.onpointerdown=e=>{if(st.mode=='play'&&st.a.type=='pick')pickDown(pt(e))};
+function pickDraw(){const a=st.a,k=a.tasks[Math.min(st.ti,a.tasks.length-1)];c.fillStyle='rgba(255,247,224,.96)';rr(330,96,300,214,18);c.fill();c.strokeStyle='#c98a2b';c.lineWidth=5;c.stroke();c.textAlign='center';c.fillStyle='#a8590a';c.font='bold 13px Arial';c.fillText(`NHIỆM VỤ ${Math.min(st.ti+1,a.tasks.length)}/${a.tasks.length}`,480,120);c.font='64px serif';c.fillStyle='#000';c.fillText(k.e,480,196);c.fillStyle='#3a2a10';c.font='bold 22px Arial';c.fillText(k.n,480,238);c.font='14px Arial';c.fillText(k.t,480,266);c.fillStyle='#8a6a3a';c.font='12px Arial';c.fillText('⬇ kéo dụng cụ phù hợp thả vào đây',480,296);
+ st.tools.forEach(t=>{if(!(drag&&drag.t==t)){const q=TL(t.k,st.tools.length);t.x+=(q.x-t.x)*.3;t.y+=(q.y-t.y)*.3}});[...st.tools].sort((x,y)=>(drag&&drag.t==x)-(drag&&drag.t==y)).forEach(t=>{c.fillStyle='#fff7e0';rr(t.x,t.y,170,70,14);c.fill();c.strokeStyle='#c98a2b';c.lineWidth=4;c.stroke();c.fillStyle='#3a2a10';c.font='bold 15px Arial';c.fillText(t.e+' '+t.n,t.x+85,t.y+30);c.font='11.5px Arial';c.fillStyle='#6a4a1a';c.fillText(t.s,t.x+85,t.y+52)})}
+function loop(t){T=t/1000;const a=st.a;$('bGo').style.display=(st.mode=='play')?'block':'none';if(typed<full.length){const b4=Math.floor(typed);typed+=.9;if(Math.floor(typed)!=b4&&b4%2==0&&full[b4]!=' ')SND.talk(st.who);show()}draw();requestAnimationFrame(loop)}
+function peopleAndParticles(){if(st.mode=='talk')PEO.forEach(q=>person(q.x,470,q,st.who==q.id&&typed<full.length,st.who==q.id));P=P.filter(p=>p.l-->0);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=p.g||.15;c.fillStyle=p.col;c.beginPath();c.arc(p.x,p.y,p.r,0,7);c.fill()})}
+const start=async()=>{if(LESSON_ID){try{const g=await api(`/content/lessons/${LESSON_ID}/games`);if(g[0])sid=(await api('/games/sessions',{method:'POST',body:JSON.stringify({user_id:USER_ID,game_id:g[0].id})})).id}catch(e){}}st={i:-1,a:story.acts[0]};newAct(0);requestAnimationFrame(loop)};
+
+const WHO={bay:'Chú Bảy · chủ xưởng cơ khí',mi:'Bé Mi · con gái chú Bảy',me:'Bạn · thợ lắp đặt tập sự'};
+const DEG=Math.PI/180,NC='#e0403a',SC='#2f6fdc';
+const E=.12,MM=8,FK=.4,FS=.6,CD=2.2,VMAX=2.3,VK=.5,VMAXD=1.15;
+const STORY={
+ reveal:{formula:'Cực cùng tên đẩy nhau · Cực khác tên hút nhau · Từ trường biểu diễn bằng đường sức từ (đi ra từ cực Bắc, đi vào cực Nam)',
+  jobs:['Kỹ sư cơ điện: thiết kế cơ cấu cửa, khóa từ','Thợ lắp đặt thiết bị an ninh: cảm biến cửa từ','Kỹ sư chế tạo động cơ, loa, thiết bị điện'],
+  text:'Khóa từ cửa tủ, cảm biến báo mở cửa, loa, động cơ điện hay tàu đệm từ đều chạy nhờ lực hút và đẩy giữa các cực nam châm. Nắm vững quy luật cực cùng tên đẩy, khác tên hút, bạn chọn đúng cực và độ mạnh nam châm cho cơ cấu chạy ổn ngay từ lần đầu.'},
+ acts:[
+ {name:'Lật cực cho ba cánh cửa',type:'pol',mentor:'bay',goal:'Chạm vào cánh cửa để lật nam châm, sao cho từng chỗ HÚT hoặc ĐẨY đúng yêu cầu',
+  intro:[['me','Ngày đầu đi làm ở xưởng của chú Bảy. Xưởng chuyên làm tủ và cửa tự đóng bằng nam châm, không cần chốt khóa hay tay nắm.'],
+   ['bay','Chào nhóc! Mỗi cánh cửa có một nam châm gắn ở khung và một nam châm gắn ở cánh. Mỗi chỗ có yêu cầu riêng: có chỗ phải HÚT cho đóng chặt, có chỗ phải ĐẨY cho cánh tự hé ra.'],
+   ['mi','Chạm vào cánh cửa để lật nam châm của cánh đó. Nhớ nha: cực cùng tên đẩy nhau, cực khác tên hút nhau!'],
+   ['bay','Lật xong cả ba chỗ thì bấm Duyệt.']],
+  note:'<p>Mỗi nam châm có hai cực: <b style="color:#e0403a">Bắc (N)</b> và <b style="color:#2f6fdc">Nam (S)</b>.</p><p><b>Cực cùng tên đẩy nhau, cực khác tên hút nhau.</b> Hai đầu đang quay vào nhau mà khác tên (N và S) thì cánh cửa bị hút lại. Cùng tên (N và N, hoặc S và S) thì cánh cửa bị đẩy ra.</p>',
+  win:[['bay','Ba cánh cửa chạy êm ru. Cực khác tên hút, cùng tên đẩy. Nhớ hai câu này là làm được nghề rồi đó.']]},
+ {name:'Tìm cực bị mất nhãn',type:'compass',mentor:'bay',goal:'Kéo la bàn lại gần thanh nam châm, tìm đầu là cực Bắc rồi xác nhận',
+  intro:[['bay','Lô nam châm thanh mới về mà thợ cũ quên sơn nhãn cực. Lắp ngược cực là cửa không đóng được.'],
+   ['mi','Dùng la bàn đi chú! Kim la bàn cũng là một nam châm nhỏ, nó xoay theo từ trường. Kéo la bàn lại gần xem kim chỉ về đâu.'],
+   ['bay','Đầu kim màu đỏ là cực Bắc của kim. Tìm ra cực Bắc của thanh nam châm thì chạm vào đầu đó, rồi bấm xác nhận.']],
+  note:'<p>Kim la bàn là một nam châm nhỏ. Đầu kim màu đỏ là cực Bắc của kim, nên nó bị <b>hút về cực Nam</b> của nam châm cần tìm (cực khác tên hút nhau).</p><p>Đặt la bàn sát một đầu thanh nam châm: nếu đầu kim đỏ chỉ <b>vào</b> đầu đó thì đó là cực Nam. Nếu đầu kim đỏ quay <b>ra xa</b> thì đó là cực Bắc.</p>',
+  win:[['mi','Kim đỏ luôn chỉ về cực Nam của thanh nam châm, nên đầu còn lại là cực Bắc!'],['bay','Đúng rồi. Nhìn nè, các đường sức từ đi ra từ cực Bắc rồi cong vào cực Nam.']]},
+ {name:'Cửa kho trượt tự động',type:'door',mentor:'bay',goal:'Lật cực và chỉnh lực hai nam châm khung để cửa tự đóng êm và giữ chắc khi mở',
+  intro:[['bay','Khách đặt một cửa kho trượt. Buông nhẹ là cửa phải tự đóng sát, kéo ra thì phải nằm yên ở vị trí mở. Cửa nặng nên không cần gắn tay nắm.'],
+   ['bay','Cánh cửa có nam châm với đầu trái là cực Bắc (N), đầu phải là cực Nam (S). Chạm vào nam châm khung để lật cực, bấm dấu cộng trừ để chỉnh lực rồi bấm Thử cửa.'],
+   ['mi','Yếu quá thì không kéo nổi cửa. Mạnh quá thì cửa đập vào khung bể luôn đó. Tốc độ va chạm tối đa cho phép là 1,15 m/s.']],
+  note:'<p>Đầu trái của cánh cửa là <b style="color:#e0403a">N</b>, đầu phải là <b style="color:#2f6fdc">S</b>. Muốn nam châm khung <b>hút</b> đầu nào của cánh thì phải quay về cánh <b>cực khác tên</b> với đầu đó.</p><p>Lực hút mạnh dần khi hai nam châm lại gần nhau. Nam châm bên phải mạnh quá sẽ kéo giữ cửa lại, không cho đóng. Nam châm bên trái mạnh quá thì cửa đập vào khung.</p>',
+  win:[['bay','Êm ru! Đóng gọn, mở thì giữ chắc. Đó chính là cơ cấu cửa tự động bằng nam châm.'],['mi','Chú Bảy ơi, cho tụi con lắp luôn cái tủ nhà mình nha!']]}
+ ]};
+story=STORY;
+const PEO=[{x:110,ph:0,s:1,shirt:'#d9822b',skin:'#d9a06f',hat:0,id:'bay'},{x:190,ph:2,s:.8,shirt:'#e0679b',skin:'#e8b890',hat:0,id:'mi'}];
+
+/* ---- chặng 1: lật cực ---- */
+const ROWS=[
+ {e:'🧰',n:'Tủ thuốc',goal:'HÚT',att:1,f:'N',d0:'N'},
+ {e:'🪟',n:'Cửa thông gió',goal:'ĐẨY',att:0,f:'S',d0:'N'},
+ {e:'🗄️',n:'Ngăn kéo dụng cụ',goal:'HÚT',att:1,f:'S',d0:'S'}];
+const ROWY=[190,300,410];
+function bar(x,y,w,h,leftPole,hot){const hw=w/2;
+ c.fillStyle=leftPole=='N'?NC:SC;c.fillRect(x,y,hw,h);c.fillStyle=leftPole=='N'?SC:NC;c.fillRect(x+hw,y,hw,h);
+ c.strokeStyle=hot?'#fff':'#1b1b1b';c.lineWidth=hot?4:2;c.strokeRect(x,y,w,h);
+ c.fillStyle='#fff';c.font='bold '+Math.min(22,h*.5)+'px Arial';c.textAlign='center';
+ c.fillText(leftPole,x+hw/2,y+h/2+7);c.fillText(leftPole=='N'?'S':'N',x+hw+hw/2,y+h/2+7)}
+function rrect(x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function drawPol(){const x=st.x||(st.x={pol:ROWS.map(r=>r.d0),dx:ROWS.map(()=>472)});
+ ROWS.forEach((r,i)=>{const y=ROWY[i],att=r.f!=x.pol[i],tg=att?402:472;x.dx[i]+=(tg-x.dx[i])*.2;const dx=x.dx[i];
+  c.fillStyle='rgba(255,255,255,.06)';rrect(30,y-48,900,96,12);c.fill();
+  c.textAlign='left';c.fillStyle='#fff';c.font='34px Arial';c.fillText(r.e,50,y+12);
+  c.font='bold 17px Arial';c.fillText(r.n,100,y-6);c.fillStyle='#ffd166';c.font='15px Arial';c.fillText('Yêu cầu: phải '+r.goal,100,y+18);
+  c.fillStyle='#8a6a42';c.fillRect(300,y-40,30,80);
+  bar(330,y-22,70,44,r.f=='N'?'S':'N');
+  c.fillStyle='#b98a52';c.fillRect(dx,y-30,200,60);c.strokeStyle='#5d4122';c.lineWidth=3;c.strokeRect(dx,y-30,200,60);
+  bar(dx,y-22,70,44,x.pol[i]);
+  c.fillStyle='#fff';c.globalAlpha=.8;c.font='12px Arial';c.textAlign='center';c.fillText('chạm để lật',dx+135,y+4);c.globalAlpha=1;
+  c.font='bold 18px Arial';c.fillStyle=att?'#58d68d':'#ff6b6b';c.fillText(att?'▶ ◀':'◀ ▶',401,y-36);
+  c.textAlign='left';c.font='bold 26px Arial';c.fillStyle=att?'#58d68d':'#ff6b6b';c.fillText(att?'HÚT':'ĐẨY',745,y+2);
+  const ok=att==!!r.att;c.font='bold 22px Arial';c.fillStyle=ok?'#58d68d':'#ff6b6b';c.fillText(ok?'✔':'✖',850,y+4);
+  c.textAlign='left';c.fillStyle='#ccd';c.font='12px Arial';c.fillText(x.pol[i]+' đối '+r.f,745,y+22)});
+ setMeter(st.a.goal)}
+function polDown(p){const x=st.x;ROWS.forEach((r,i)=>{const y=ROWY[i];if(p.x>=x.dx[i]&&p.x<=x.dx[i]+200&&Math.abs(p.y-y)<32){x.pol[i]=x.pol[i]=='N'?'S':'N';SND.pick()}})}
+function polGo(){const x=st.x,bad=ROWS.filter((r,i)=>(r.f!=x.pol[i])!=!!r.att);
+ if(!bad.length)return actWin();
+ oops('Chưa đúng ở: '+bad.map(r=>r.n+' (cần '+r.goal+')').join(', ')+'. Muốn HÚT thì hai đầu quay vào nhau phải khác tên (N với S). Muốn ĐẨY thì phải cùng tên (N với N, hoặc S với S).')}
+
+/* ---- chặng 2: la bàn ---- */
+const MAG={x:480,y:290,L:130};
+const MROUNDS=[0,150*DEG,-55*DEG];
+function endsOf(phi){const dx=Math.cos(phi),dy=Math.sin(phi);return{N:{x:MAG.x+dx*MAG.L,y:MAG.y+dy*MAG.L},S:{x:MAG.x-dx*MAG.L,y:MAG.y-dy*MAG.L}}}
+function fieldAt(P,e){let bx=0,by=0;[[e.N,1],[e.S,-1]].forEach(([q,s])=>{const dx=P.x-q.x,dy=P.y-q.y,r=Math.hypot(dx,dy)+8,k=s/(r*r*r);bx+=dx*k;by+=dy*k});return{x:bx,y:by}}
+const angd=(a,b)=>{let d=b-a;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;return d};
+function fieldLine(e,a0){let p={x:e.N.x+16*Math.cos(a0),y:e.N.y+16*Math.sin(a0)};const pts=[p];
+ for(let i=0;i<320;i++){const b=fieldAt(p,e),m=Math.hypot(b.x,b.y)||1;p={x:p.x+b.x/m*7,y:p.y+b.y/m*7};pts.push(p);
+  if(Math.hypot(p.x-e.S.x,p.y-e.S.y)<14||p.x<20||p.x>940||p.y<95||p.y>520)break}return pts}
+function drawCompass(){const x=st.x||(st.x={phi:MROUNDS[st.rd],cp:{x:230,y:170},na:0,sel:-1,sol:false});
+ const e=endsOf(x.phi);
+ if(x.sol){c.lineWidth=2;for(let k=0;k<10;k++){const pts=fieldLine(e,k/10*2*Math.PI+.3);c.strokeStyle='rgba(255,209,102,.7)';c.beginPath();pts.forEach((q,i)=>i?c.lineTo(q.x,q.y):c.moveTo(q.x,q.y));c.stroke();
+  const m=pts[Math.min(14,pts.length-2)],n=pts[Math.min(15,pts.length-1)],an=Math.atan2(n.y-m.y,n.x-m.x);c.fillStyle='#ffd166';c.save();c.translate(m.x,m.y);c.rotate(an);c.beginPath();c.moveTo(7,0);c.lineTo(-5,-5);c.lineTo(-5,5);c.fill();c.restore()}}
+ c.save();c.translate(MAG.x,MAG.y);c.rotate(x.phi);
+ c.fillStyle=x.sol?NC:'#8b949e';c.fillRect(0,-24,MAG.L,48);c.fillStyle=x.sol?SC:'#8b949e';c.fillRect(-MAG.L,-24,MAG.L,48);
+ c.strokeStyle='#111';c.lineWidth=3;c.strokeRect(-MAG.L,-24,MAG.L*2,48);c.restore();
+ [[e.N,'N',0],[e.S,'S',1]].forEach(([p,l,k])=>{c.fillStyle='#fff';c.font='bold 26px Arial';c.textAlign='center';c.fillText(x.sol?l:'?',p.x-(p.x-MAG.x)*.5,p.y-(p.y-MAG.y)*.5+9);
+  if(x.sel==k){c.strokeStyle='#ffd166';c.lineWidth=4;c.setLineDash([8,6]);c.beginPath();c.arc(p.x-(p.x-MAG.x)*.2,p.y-(p.y-MAG.y)*.2,40,0,7);c.stroke();c.setLineDash([])}});
+ const b=fieldAt(x.cp,e),ta=Math.atan2(b.y,b.x);x.na+=angd(x.na,ta)*.22;
+ c.save();c.translate(x.cp.x,x.cp.y);c.fillStyle='#f3efe2';c.beginPath();c.arc(0,0,38,0,7);c.fill();c.strokeStyle='#555';c.lineWidth=4;c.stroke();
+ c.rotate(x.na);c.fillStyle='#e0403a';c.beginPath();c.moveTo(32,0);c.lineTo(-3,-7);c.lineTo(-3,7);c.fill();c.fillStyle='#2f6fdc';c.beginPath();c.moveTo(-32,0);c.lineTo(3,-7);c.lineTo(3,7);c.fill();c.restore();
+ c.fillStyle='#fff';c.font='bold 15px Arial';c.textAlign='center';c.fillText('la bàn (kéo tôi)',x.cp.x,x.cp.y+60);
+ c.font='bold 18px Arial';c.fillStyle='#ffd166';c.fillText('Lượt '+(st.rd+1)+'/'+MROUNDS.length,480,140);
+ c.font='14px Arial';c.fillStyle='#ccd';c.fillText(x.sel<0?'Chạm vào một đầu thanh nam châm để chọn cực Bắc':'Đã chọn một đầu. Bấm xác nhận nếu chắc chắn.',480,478);
+ setMeter(st.a.goal)}
+function compDown(p){const x=st.x,e=endsOf(x.phi);
+ if(Math.hypot(p.x-x.cp.x,p.y-x.cp.y)<48){dg={k:'cp',dx:p.x-x.cp.x,dy:p.y-x.cp.y};SND.pick();return true}
+ const dn=Math.hypot(p.x-e.N.x,p.y-e.N.y),ds=Math.hypot(p.x-e.S.x,p.y-e.S.y);
+ if(Math.min(dn,ds)<80){x.sel=dn<ds?0:1;SND.pick()}return false}
+function compGo(){const x=st.x;
+ if(x.sel<0){$('dlg').style.display='none';return say([['bay','Chạm vào một đầu thanh nam châm để chọn cực Bắc trước đã nhóc.']],()=>st.mode='play')}
+ if(x.sel==0){x.sol=true;SND.thud();
+  if(st.rd<MROUNDS.length-1){st.mode='talk';say([['mi','Chuẩn rồi! Thanh tiếp theo nằm nghiêng hơn, làm lại xem sao.']],()=>{st.rd++;st.x=null;st.mode='play'})}
+  else actWin();return}
+ oops('Chưa đúng. Đặt la bàn sát một đầu thanh nam châm: đầu kim ĐỎ chỉ vào đầu nào thì đầu ấy là cực NAM (cực khác tên hút nhau). Cực Bắc là đầu còn lại.')}
+
+/* ---- chặng 3: cửa trượt ---- */
+const D0=215,D1=635,DW=130,RY=270;
+function simDoor(sL,aL,sR,aR,u0){let u=u0,v=0,imp=0;const tr=[u],dt=1/120;
+ for(let i=0;i<1500;i++){
+  const fr=sR*aR/((1-u+E)**2)-sL*aL/((u+E)**2);
+  if(v==0&&Math.abs(fr)<=FS)break;
+  const a=(fr-CD*v-(v!=0?Math.sign(v)*FK:Math.sign(fr)*FK))/MM;
+  v+=a*dt;if(Math.abs(v)<.004&&Math.abs(fr)<=FK)v=0;
+  u+=v*dt;
+  if(u<=0){imp=Math.max(imp,Math.abs(v));u=0;v=0;if(aL>0){tr.push(u);break}}
+  if(u>=1){imp=Math.max(imp,Math.abs(v));u=1;v=0;if(aR>0){tr.push(u);break}}
+  tr.push(u)}
+ return{u,imp,tr}}
+function a3init(){return st.x||(st.x={fl:'N',fr:'S',sL:2,sR:2,u:.5,anim:null,lab:''})}
+function a3run(ph){const x=st.x,aL=x.fl=='S'?1:-1,aR=x.fr=='N'?1:-1;x.aL=aL;x.aR=aR;
+ const sim=simDoor(x.sL,aL,x.sR,aR,ph==1?.5:.95);x.u=ph==1?.5:.95;x.anim={ph,sim,t0:null};st.mode='anim';
+ x.lab=ph==1?'Thử 1: buông cửa ở giữa ray, cửa phải tự đóng êm':'Thử 2: kéo cửa ra mở, cửa phải nằm yên ở vị trí mở'}
+function a3end(){const x=st.x,an=x.anim,s=an.sim;x.anim=null;const v=s.imp*VK;let m=null;
+ if(an.ph==1){
+  if(x.aL<0)m='Nam châm bên trái đang ĐẨY cánh cửa ra. Đầu trái của cánh là cực Bắc (N), nên mặt nam châm khung quay về cánh phải là cực Nam (S) thì mới hút.';
+  else if(s.u>=.03)m='Cửa không tự đóng được. Nó bị lực bên phải kéo giữ lại hoặc bên trái quá yếu. Thử tăng lực nam châm trái hoặc giảm lực nam châm phải.';
+  else if(v>VMAXD)m='Cửa đập vào khung với tốc độ khoảng '+fmt(v,2)+' m/s, vượt giới hạn '+fmt(VMAXD,2)+' m/s nên dễ bể. Giảm lực nam châm bên trái.';
+  if(m){x.u=.5;x.lab='';return oops(m)}
+  SND.thud();splash(D0,RY,10,'rgba(255,255,255,.7)',2);a3run(2);return}
+ if(s.u<=.97)m=x.aR<0?'Nam châm bên phải đang ĐẨY cánh cửa. Đầu phải của cánh là cực Nam (S), nên mặt nam châm khung quay về cánh phải là cực Bắc (N) thì mới hút giữ cửa khi mở.':'Cửa bị kéo ngược về bên trái. Giảm lực nam châm trái hoặc tăng lực nam châm phải.';
+ if(m){x.u=.5;x.lab='';return oops(m)}
+ x.lab='';actWin()}
+const A3CTL={L:{m:[150,410],p:[270,410],c:210},R:{m:[700,410],p:[820,410],c:760}};
+function drawDoor(){const x=a3init(),T0=T;
+ if(x.anim){const an=x.anim;if(an.t0==null)an.t0=T0;const k=Math.floor((T0-an.t0)*120);x.u=an.sim.tr[Math.min(k,an.sim.tr.length-1)];if(k>=an.sim.tr.length+50)a3end()}
+ c.fillStyle='#7a5a36';c.fillRect(120,170,25,200);c.fillRect(835,170,25,200);c.fillStyle='#4b3a22';c.fillRect(120,345,740,15);
+ const u=x.u,dx=D0+u*(D1-D0);
+ c.setLineDash([6,6]);c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=2;c.strokeRect(D0,195,DW,150);c.strokeRect(D1,195,DW,150);c.setLineDash([]);
+ c.fillStyle='#ccd';c.font='13px Arial';c.textAlign='center';c.fillText('vị trí ĐÓNG',D0+DW/2,372);c.fillText('vị trí MỞ',D1+DW/2,372);
+ c.fillStyle='#b98a52';c.fillRect(dx,195,DW,150);c.strokeStyle='#5d4122';c.lineWidth=3;c.strokeRect(dx,195,DW,150);
+ bar(dx,RY-22,DW,44,'N');
+ bar(145,RY-22,70,44,x.fl=='N'?'S':'N',!x.anim);bar(765,RY-22,70,44,x.fr,!x.anim);
+ c.fillStyle='#fff';c.font='12px Arial';c.textAlign='center';if(!x.anim){c.fillText('chạm để lật cực',180,RY-34);c.fillText('chạm để lật cực',800,RY-34)}
+ const aL=x.fl=='S'?1:-1,aR=x.fr=='N'?1:-1;
+ if(!x.anim){const FL=x.sL/((u+E)**2),FR=x.sR/((1-u+E)**2);
+  [[dx,aL,FL,-1],[dx+DW,aR,FR,1]].forEach(([ax,a,F,side])=>{const len=Math.min(90,F*12),dir=(a>0?side:-side),col=a>0?'#58d68d':'#ff6b6b';
+   c.strokeStyle=col;c.fillStyle=col;c.lineWidth=6;c.beginPath();c.moveTo(ax,180);c.lineTo(ax+dir*len,180);c.stroke();c.beginPath();c.moveTo(ax+dir*(len+12),180);c.lineTo(ax+dir*len,172);c.lineTo(ax+dir*len,188);c.fill();
+   c.font='bold 13px Arial';c.textAlign='center';c.fillText(a>0?'hút':'đẩy',ax+dir*len/2,166)})}
+ [['L',x.sL],['R',x.sR]].forEach(([k,s])=>{const q=A3CTL[k];[['m','−'],['p','+']].forEach(([w,t])=>{c.fillStyle='#2f3a52';c.beginPath();c.arc(q[w][0],q[w][1],18,0,7);c.fill();c.strokeStyle='#fff';c.lineWidth=2;c.stroke();c.fillStyle='#fff';c.font='bold 24px Arial';c.textAlign='center';c.fillText(t,q[w][0],q[w][1]+8)});
+  c.fillStyle='#fff';c.font='bold 16px Arial';c.textAlign='center';c.fillText('Lực '+s,q.c,q.m[1]-2);for(let i=0;i<5;i++){c.fillStyle=i<s?'#ffd166':'rgba(255,255,255,.2)';c.fillRect(q.c-45+i*19,q.m[1]+6,15,8)}});
+ if(x.lab){c.fillStyle='rgba(0,0,0,.55)';rrect(230,118,500,34,10);c.fill();c.fillStyle='#ffd166';c.font='bold 15px Arial';c.textAlign='center';c.fillText(x.lab,480,141)}
+ setMeter(st.mode=='play'?'Lực trái '+x.sL+' · Lực phải '+x.sR+' · Va chạm tối đa '+fmt(VMAXD,2)+' m/s':st.a.goal)}
+function doorDown(p){const x=st.x;
+ if(p.x>=145&&p.x<=215&&Math.abs(p.y-RY)<30){x.fl=x.fl=='N'?'S':'N';SND.pick();return}
+ if(p.x>=765&&p.x<=835&&Math.abs(p.y-RY)<30){x.fr=x.fr=='N'?'S':'N';SND.pick();return}
+ for(const k of['L','R']){const q=A3CTL[k],key=k=='L'?'sL':'sR';
+  if(Math.hypot(p.x-q.m[0],p.y-q.m[1])<24){x[key]=Math.max(1,x[key]-1);SND.pick()}
+  if(Math.hypot(p.x-q.p[0],p.y-q.p[1])<24){x[key]=Math.min(5,x[key]+1);SND.pick()}}}
+
+/* ---- điều khiển chung ---- */
+function setMeter(t){if(st.mm!==t){st.mm=t;$('meter').textContent=t}}
+let dg=null;
+cv.onpointerdown=e=>{if(st.mode!='play')return;const p=pt(e),t=st.a.type;
+ if(t=='pol')polDown(p);else if(t=='compass'){if(compDown(p))cv.setPointerCapture(e.pointerId)}else doorDown(p)};
+cv.onpointermove=e=>{if(!dg||st.a.type!='compass'||!st.x)return;const p=pt(e);st.x.cp.x=Math.max(40,Math.min(920,p.x-dg.dx));st.x.cp.y=Math.max(110,Math.min(500,p.y-dg.dy))};
+cv.onpointerup=cv.onpointercancel=()=>{dg=null};
+$('bGo').onclick=()=>{if(st.mode!='play')return;const t=st.a.type;if(t=='pol')polGo();else if(t=='compass')compGo();else a3run(1)};
+
+/* ---- vẽ ---- */
+function draw(){const a=st.a;c.clearRect(0,0,960,540);
+ const g=c.createLinearGradient(0,0,0,540);g.addColorStop(0,'#2a3140');g.addColorStop(1,'#1c2230');c.fillStyle=g;c.fillRect(0,0,960,540);
+ c.fillStyle='rgba(255,255,255,.05)';for(let i=0;i<24;i++)for(let j=0;j<12;j++){c.beginPath();c.arc(20+i*40,100+j*38,2,0,7);c.fill()}
+ c.fillStyle='#4a3a28';c.fillRect(0,505,960,35);
+ const t=a.type;
+ const bt=t=='pol'?'✅ DUYỆT 3 CÁNH CỬA':t=='compass'?'✅ ĐÂY LÀ CỰC BẮC':'▶ THỬ CỬA';if($('bGo').textContent!==bt)$('bGo').textContent=bt;
+ if(t=='pol')drawPol();else if(t=='compass')drawCompass();else drawDoor();
+ peopleAndParticles()}
+start();
+</script></body></html>

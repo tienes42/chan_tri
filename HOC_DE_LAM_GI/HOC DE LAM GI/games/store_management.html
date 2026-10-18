@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Ông Chủ Tập Sự - HỌC ĐỂ LÀM GÌ</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", Arial, sans-serif;
+            background:
+                radial-gradient(circle at top, #fff7df 0%, #f7e8c5 45%, #ead3a5 100%);
+            color: #2d2418;
+            min-height: 100vh;
+        }
+
+        button,
+        input {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        /* =========================
+           HEADER
+        ========================= */
+
+        .game-header {
+            min-height: 82px;
+            background: #4b2e1f;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 28px;
+            box-shadow: 0 5px 15px rgba(0,0,0,.2);
+            gap: 20px;
+        }
+
+        .brand h1 {
+            font-size: 25px;
+        }
+
+        .brand p {
+            font-size: 13px;
+            opacity: .75;
+            margin-top: 3px;
+        }
+
+        .hud {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .hud-box {
+            background: rgba(255,255,255,.12);
+            border: 1px solid rgba(255,255,255,.15);
+            border-radius: 12px;
+            padding: 8px 14px;
+            min-width: 100px;
+        }
+
+        .hud-label {
+            display: block;
+            font-size: 11px;
+            opacity: .7;
+        }
+
+        .hud-value {
+            font-weight: 800;
+            font-size: 17px;
+        }
+
+        /* =========================
+           MAIN
+        ========================= */
+
+        .game-wrapper {
+            max-width: 1450px;
+            margin: auto;
+            padding: 22px;
+        }
+
+        .event-card {
+            background: #fff;
+            border: 2px solid #e8c777;
+            border-radius: 18px;
+            padding: 15px 20px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 6px 15px rgba(79,53,20,.08);
+        }
+
+        .event-icon {
+            width: 55px;
+            height: 55px;
+            border-radius: 15px;
+            background: #fff1bf;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 31px;
+            flex-shrink: 0;
+        }
+
+        .event-title {
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        .event-description {
+            font-size: 14px;
+            margin-top: 4px;
+            color: #675644;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 18px;
+        }
+
+        /* =========================
+           SHOP
+        ========================= */
+
+        .shop {
+            position: relative;
+            min-height: 610px;
+            border-radius: 24px;
+            overflow: hidden;
+            background:
+                linear-gradient(
+                    to bottom,
+                    #bfe4f4 0,
+                    #d9f0f7 46%,
+                    #d99b61 46%,
+                    #c7834b 100%
+                );
+            border: 4px solid #5a3725;
+            box-shadow: 0 12px 25px rgba(59,39,20,.2);
+        }
+
+        .shop-sign {
+            position: absolute;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #fff2b8;
+            color: #4b2e1f;
+            border: 4px solid #5a3725;
+            border-radius: 15px;
+            padding: 10px 35px;
+            font-size: 23px;
+            font-weight: 900;
+            z-index: 4;
+            box-shadow: 0 5px 0 #5a3725;
+        }
+
+        .sun {
+            position: absolute;
+            right: 35px;
+            top: 25px;
+            font-size: 48px;
+        }
+
+        .shelf {
+            position: absolute;
+            width: 210px;
+            height: 145px;
+            background: #704329;
+            border: 7px solid #4a2a1a;
+            border-radius: 10px;
+            top: 170px;
+        }
+
+        .shelf.left {
+            left: 35px;
+        }
+
+        .shelf.right {
+            right: 35px;
+        }
+
+        .shelf-top {
+            position: absolute;
+            top: 32px;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: #4a2a1a;
+        }
+
+        .shelf-bottom {
+            position: absolute;
+            top: 83px;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background: #4a2a1a;
+        }
+
+        .products {
+            position: absolute;
+            inset: 0;
+            font-size: 28px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .counter {
+            position: absolute;
+            bottom: 65px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 370px;
+            height: 105px;
+            background: #7b492c;
+            border: 8px solid #4b2b1b;
+            border-radius: 15px 15px 8px 8px;
+            z-index: 3;
+        }
+
+        .counter-top {
+            position: absolute;
+            top: -17px;
+            left: -10px;
+            width: calc(100% + 20px);
+            height: 25px;
+            background: #9c6039;
+            border: 6px solid #4b2b1b;
+            border-radius: 10px;
+        }
+
+        .cashier {
+            position: absolute;
+            bottom: 95px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 72px;
+            z-index: 5;
+        }
+
+        .door {
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+            width: 105px;
+            height: 155px;
+            background: #5a3827;
+            border: 8px solid #3c2418;
+            border-bottom: none;
+            border-radius: 10px 10px 0 0;
+            z-index: 1;
+        }
+
+        .door-handle {
+            position: absolute;
+            right: 13px;
+            top: 75px;
+            width: 10px;
+            height: 10px;
+            background: #e5c45e;
+            border-radius: 50%;
+        }
+
+        /* =========================
+           CUSTOMERS
+        ========================= */
+
+        .customers-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 6;
+        }
+
+        .customer {
+            position: absolute;
+            bottom: 25px;
+            left: -80px;
+            font-size: 45px;
+            transition: left 1.3s ease;
+        }
+
+        .customer.enter {
+            left: calc(50% - 180px);
+        }
+
+        .customer.buy {
+            animation: customerBuy .7s ease-in-out;
+        }
+
+        .customer.leave {
+            left: calc(100% + 80px);
+        }
+
+        @keyframes customerBuy {
+            0% { transform: translateY(0); }
+            40% { transform: translateY(-18px) scale(1.1); }
+            100% { transform: translateY(0); }
+        }
+
+        /* =========================
+           SIDE PANEL
+        ========================= */
+
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 18px;
+            padding: 18px;
+            border: 2px solid #ead7ae;
+            box-shadow: 0 6px 16px rgba(79,53,20,.08);
+        }
+
+        .panel h2 {
+            font-size: 17px;
+            margin-bottom: 14px;
+        }
+
+        .mission {
+            background: #fff8db;
+            border-color: #e6c965;
+        }
+
+        .mission-title {
+            font-weight: 800;
+        }
+
+        .mission-progress {
+            height: 9px;
+            background: #eadfca;
+            border-radius: 20px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .mission-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: #53a96b;
+            transition: width .4s;
+        }
+
+        .control {
+            margin-top: 15px;
+        }
+
+        .control-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 7px;
+        }
+
+        .control-value {
+            font-size: 20px;
+            font-weight: 900;
+            color: #b45725;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: #b45725;
+        }
+
+        .stepper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stepper button {
+            width: 38px;
+            height: 38px;
+            border: none;
+            border-radius: 10px;
+            background: #ead5b0;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .stepper button:hover {
+            background: #d9bd8c;
+        }
+
+        .stepper-value {
+            flex: 1;
+            text-align: center;
+            font-weight: 900;
+            font-size: 21px;
+        }
+
+        .open-button {
+            width: 100%;
+            border: none;
+            border-radius: 14px;
+            padding: 16px;
+            background: #3e8751;
+            color: white;
+            font-weight: 900;
+            font-size: 17px;
+            box-shadow: 0 5px 0 #286337;
+            margin-top: 17px;
+        }
+
+        .open-button:hover {
+            transform: translateY(-1px);
+        }
+
+        .open-button:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #286337;
+        }
+
+        .open-button:disabled {
+            background: #999;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        /* =========================
+           FEED
+        ========================= */
+
+        .feed {
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .feed-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee5d7;
+            font-size: 13px;
+        }
+
+        .feed-item:last-child {
+            border-bottom: none;
+        }
+
+        .feed-time {
+            color: #9a8268;
+            font-size: 11px;
+            margin-right: 5px;
+        }
+
+        /* =========================
+           RESULT MODAL
+        ========================= */
+
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(34,23,15,.72);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 100;
+        }
+
+        .overlay.show {
+            display: flex;
+        }
+
+        .result-card {
+            width: min(560px, 100%);
+            background: white;
+            border-radius: 24px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0,0,0,.3);
+            animation: popup .3s ease;
+        }
+
+        @keyframes popup {
+            from {
+                transform: scale(.85);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .result-icon {
+            font-size: 60px;
+        }
+
+        .result-card h2 {
+            margin: 8px 0;
+            font-size: 28px;
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .result-stat {
+            background: #faf4e7;
+            border-radius: 12px;
+            padding: 12px;
+        }
+
+        .result-stat span {
+            display: block;
+            color: #806d57;
+            font-size: 12px;
+        }
+
+        .result-stat strong {
+            font-size: 20px;
+        }
+
+        .next-button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: #4b2e1f;
+            color: white;
+            font-weight: 800;
+        }
+
+        /* =========================
+           FINAL
+        ========================= */
+
+        .final-card {
+            max-width: 680px;
+        }
+
+        .final-score {
+            font-size: 50px;
+            font-weight: 900;
+            color: #b45725;
+        }
+
+        .achievement-list {
+            text-align: left;
+            margin: 15px 0;
+        }
+
+        .achievement {
+            padding: 9px 12px;
+            margin: 7px 0;
+            border-radius: 10px;
+            background: #f6f0e5;
+        }
+
+        .achievement.unlocked {
+            background: #e5f4e8;
+        }
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
+        @media (max-width: 950px) {
+            .game-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .side-panel {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .panel:last-child {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 650px) {
+            .game-header {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .hud {
+                justify-content: flex-start;
+            }
+
+            .game-wrapper {
+                padding: 12px;
+            }
+
+            .shop {
+                min-height: 520px;
+            }
+
+            .shelf {
+                width: 140px;
+                height: 115px;
+                top: 145px;
+            }
+
+            .shelf.left {
+                left: 15px;
+            }
+
+            .shelf.right {
+                right: 15px;
+            }
+
+            .counter {
+                width: 280px;
+            }
+
+            .side-panel {
+                display: flex;
+            }
+
+            .shop-sign {
+                font-size: 17px;
+                padding: 8px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="game-header">
+
+    <div class="brand">
+        <h1>🏪 ÔNG CHỦ TẬP SỰ</h1>
+        <p>HỌC ĐỂ LÀM GÌ • Toán học trong đời sống</p>
+    </div>
+
+    <div class="hud">
+
+        <div class="hud-box">
+            <span class="hud-label">NGÀY</span>
+            <span class="hud-value" id="dayDisplay">1 / 5</span>
+        </div>
+
+        <div class="hud-box">
+            <span class="hud-label">TIỀN</span>
+            <span class="hud-value" id="moneyDisplay">2.000.000đ</span>
+        </div>
+
+        <div class="hud-box">
+            <span class="hud-label">HÀNG</span>
+            <span class="hud-value" id="stockDisplay">40</span>
+        </div>
+
+        <div class="hud-box">
+            <span class="hud-label">LỢI NHUẬN</span>
+            <span class="hud-value" id="profitDisplay">0đ</span>
+        </div>
+
+    </div>
+
+</header>
+
+
+<main class="game-wrapper">
+
+    <section class="event-card">
+
+        <div class="event-icon" id="eventIcon">☀️</div>
+
+        <div>
+            <div class="event-title" id="eventTitle">
+                Một ngày mới bắt đầu!
+            </div>
+
+            <div class="event-description" id="eventDescription">
+                Hãy quyết định giá bán và lượng hàng nhập trước khi mở cửa.
+            </div>
+        </div>
+
+    </section>
+
+
+    <div class="game-grid">
+
+        <!-- SHOP -->
+
+        <section class="shop">
+
+            <div class="shop-sign">
+                🥤 TIỆM NHỎ CỦA TÔI
+            </div>
+
+            <div class="sun">☀️</div>
+
+            <div class="shelf left">
+                <div class="shelf-top"></div>
+                <div class="shelf-bottom"></div>
+
+                <div class="products">
+                    🥤 🍪 🧃
+                </div>
+            </div>
+
+            <div class="shelf right">
+                <div class="shelf-top"></div>
+                <div class="shelf-bottom"></div>
+
+                <div class="products">
+                    🍫 🥤 🍪
+                </div>
+            </div>
+
+            <div class="door">
+                <div class="door-handle"></div>
+            </div>
+
+            <div class="counter">
+                <div class="counter-top"></div>
+            </div>
+
+            <div class="cashier">
+                🧑‍💼
+            </div>
+
+            <div class="customers-layer" id="customersLayer"></div>
+
+        </section>
+
+
+        <!-- CONTROL -->
+
+        <aside class="side-panel">
+
+            <section class="panel mission">
+
+                <h2>🎯 NHIỆM VỤ</h2>
+
+                <div class="mission-title">
+                    Kiếm 500.000đ trong 5 ngày
+                </div>
+
+                <div class="mission-progress">
+                    <div
+                        class="mission-progress-fill"
+                        id="missionProgress">
+                    </div>
+                </div>
+
+                <p style="margin-top:8px;font-size:13px;">
+                    <span id="missionText">0 / 500.000đ</span>
+                </p>
+
+            </section>
+
+
+            <section class="panel">
+
+                <h2>⚙️ QUYẾT ĐỊNH HÔM NAY</h2>
+
+                <div class="control">
+
+                    <div class="control-header">
+                        <span>Giá bán</span>
+                        <span
+                            class="control-value"
+                            id="priceValue">
+                            20.000đ
+                        </span>
+                    </div>
+
+                    <input
+                        type="range"
+                        id="priceSlider"
+                        min="10"
+                        max="30"
+                        value="20"
+                        step="1"
+                    >
+
+                    <div
+                        style="
+                            display:flex;
+                            justify-content:space-between;
+                            font-size:11px;
+                            color:#8d7b65;
+                        "
+                    >
+                        <span>10.000đ</span>
+                        <span>30.000đ</span>
+                    </div>
+
+                </div>
+
+
+                <div class="control">
+
+                    <div class="control-header">
+                        <span>Nhập thêm hàng</span>
+                        <span class="control-value" id="restockValue">
+                            0
+                        </span>
+                    </div>
+
+                    <div class="stepper">
+
+                        <button id="restockMinus">
+                            −
+                        </button>
+
+                        <div
+                            class="stepper-value"
+                            id="restockDisplay">
+                            0 sản phẩm
+                        </div>
+
+                        <button id="restockPlus">
+                            +
+                        </button>
+
+                    </div>
+
+                    <div
+                        style="
+                            font-size:11px;
+                            color:#8d7b65;
+                            margin-top:5px;
+                        "
+                    >
+                        8.000đ / sản phẩm
+                    </div>
+
+                </div>
+
+
+                <button
+                    class="open-button"
+                    id="openShopButton"
+                >
+                    🚪 MỞ CỬA BÁN HÀNG
+                </button>
+
+            </section>
+
+
+            <section class="panel">
+
+                <h2>📋 DIỄN BIẾN</h2>
+
+                <div
+                    class="feed"
+                    id="activityFeed"
+                ></div>
+
+            </section>
+
+        </aside>
+
+    </div>
+
+</main>
+
+
+<!-- RESULT -->
+
+<div
+    class="overlay"
+    id="resultOverlay"
+>
+
+    <div class="result-card">
+
+        <div class="result-icon" id="resultIcon">
+            🎉
+        </div>
+
+        <h2 id="resultTitle">
+            Kết quả ngày 1
+        </h2>
+
+        <p id="resultMessage">
+            Một ngày kinh doanh đã kết thúc.
+        </p>
+
+        <div class="result-grid">
+
+            <div class="result-stat">
+                <span>Nhu cầu</span>
+                <strong id="resultDemand">0</strong>
+            </div>
+
+            <div class="result-stat">
+                <span>Đã bán</span>
+                <strong id="resultSold">0</strong>
+            </div>
+
+            <div class="result-stat">
+                <span>Doanh thu</span>
+                <strong id="resultRevenue">0đ</strong>
+            </div>
+
+            <div class="result-stat">
+                <span>Lãi ngày</span>
+                <strong id="resultDailyProfit">0đ</strong>
+            </div>
+
+        </div>
+
+        <button
+            class="next-button"
+            id="nextDayButton"
+        >
+            Sang ngày tiếp theo →
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- FINAL -->
+
+<div
+    class="overlay"
+    id="finalOverlay"
+>
+
+    <div class="result-card final-card">
+
+        <div class="result-icon">
+            🏆
+        </div>
+
+        <h2>
+            HÀNH TRÌNH KINH DOANH KẾT THÚC
+        </h2>
+
+        <div class="final-score" id="finalProfit">
+            0đ
+        </div>
+
+        <p>
+            Tổng lợi nhuận sau 5 ngày
+        </p>
+
+        <div class="result-grid">
+
+            <div class="result-stat">
+                <span>Tổng khách</span>
+                <strong id="finalCustomers">0</strong>
+            </div>
+
+            <div class="result-stat">
+                <span>Tổng sản phẩm bán</span>
+                <strong id="finalSold">0</strong>
+            </div>
+
+            <div class="result-stat">
+                <span>Điểm</span>
+                <strong id="finalScore">0</strong>
+            </div>
+
+            <div class="result-stat">
+                <span>Số dư</span>
+                <strong id="finalMoney">0đ</strong>
+            </div>
+
+        </div>
+
+        <div class="achievement-list">
+
+            <div
+                class="achievement"
+                id="achievementProfit"
+            >
+                🔒 Đạt mục tiêu 500.000đ
+            </div>
+
+            <div
+                class="achievement"
+                id="achievementStock"
+            >
+                🔒 Không để cửa hàng hết hàng
+            </div>
+
+            <div
+                class="achievement"
+                id="achievementStrategy"
+            >
+                🔒 Nhà kinh doanh biết thích nghi
+            </div>
+
+        </div>
+
+        <button
+            class="next-button"
+            onclick="location.reload()"
+        >
+            🔄 Chơi lại
+        </button>
+
+    </div>
+
+</div>
+
+
+<script src="store_management.js"></script>
+
+</body>
+</html>

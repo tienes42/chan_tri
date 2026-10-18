@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Toán học - HỌC ĐỂ LÀM GÌ</title>
+
+    <link rel="stylesheet" href="math-grade.css">
+</head>
+
+<body>
+
+    <!-- =========================
+         BACKGROUND
+    ========================== -->
+
+    <div class="grade-background">
+
+        <div class="bg-circle circle-1"></div>
+        <div class="bg-circle circle-2"></div>
+
+        <div class="bg-symbol symbol-1">+</div>
+        <div class="bg-symbol symbol-2">×</div>
+        <div class="bg-symbol symbol-3">π</div>
+        <div class="bg-symbol symbol-4">√</div>
+        <div class="bg-symbol symbol-5">∑</div>
+
+    </div>
+
+
+    <!-- =========================
+         HEADER
+    ========================== -->
+
+    <header class="grade-header">
+
+        <button class="back-button" id="backButton">
+            ←
+        </button>
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                📐
+            </div>
+
+            <div>
+                <h1>TOÁN HỌC</h1>
+                <p>HỌC ĐỂ LÀM GÌ</p>
+            </div>
+
+        </div>
+
+        <div class="player">
+
+            <div class="player-avatar">
+                👨‍🎓
+            </div>
+
+            <div class="player-info">
+
+                <strong>Tên người chơi</strong>
+
+                <div class="xp-bar">
+                    <div class="xp-progress"></div>
+                </div>
+
+            </div>
+
+            <span class="level">
+                Lv.1
+            </span>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================
+         MAIN
+    ========================== -->
+
+    <main class="grade-main">
+
+
+        <!-- =========================
+             HERO
+        ========================== -->
+
+        <section class="grade-hero">
+
+            <div class="hero-content">
+
+                <span class="hero-label">
+                    HÀNH TRÌNH TRI THỨC
+                </span>
+
+                <h2 id="gradeTitle">
+                    TOÁN LỚP 10
+                </h2>
+
+                <p id="gradeDescription">
+                    Khám phá những kiến thức toán học
+                    và biến chúng thành công cụ giải quyết
+                    vấn đề trong cuộc sống.
+                </p>
+
+                <div class="progress-box">
+
+                    <div class="progress-top">
+
+                        <span>
+                            Tiến độ học tập
+                        </span>
+
+                        <strong id="progressPercent">
+                            0%
+                        </strong>
+
+                    </div>
+
+                    <div class="large-progress">
+
+                        <div
+                            class="large-progress-fill"
+                            id="progressFill">
+                        </div>
+
+                    </div>
+
+                    <small id="progressText">
+                        0 / 0 bài học hoàn thành
+                    </small>
+
+                </div>
+
+            </div>
+
+
+            <div class="hero-illustration">
+
+                <div class="orbit orbit-1"></div>
+                <div class="orbit orbit-2"></div>
+
+                <div class="math-orb">
+                    ∑
+                </div>
+
+                <span class="floating-number number-1">
+                    2x + 3
+                </span>
+
+                <span class="floating-number number-2">
+                    πr²
+                </span>
+
+                <span class="floating-number number-3">
+                    √x
+                </span>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             QUICK STATS
+        ========================== -->
+
+        <section class="stats">
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    📚
+                </div>
+
+                <div>
+                    <strong id="topicCount">
+                        0
+                    </strong>
+
+                    <span>
+                        Chủ đề
+                    </span>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    📝
+                </div>
+
+                <div>
+                    <strong id="lessonCount">
+                        0
+                    </strong>
+
+                    <span>
+                        Bài học
+                    </span>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    ⭐
+                </div>
+
+                <div>
+                    <strong id="xpCount">
+                        0
+                    </strong>
+
+                    <span>
+                        XP đạt được
+                    </span>
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+                    🎯
+                </div>
+
+                <div>
+                    <strong id="challengeCount">
+                        0
+                    </strong>
+
+                    <span>
+                        Thử thách
+                    </span>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             TOPICS
+        ========================== -->
+
+        <section class="topics-section">
+
+            <div class="section-heading">
+
+                <div>
+
+                    <span>
+                        BƯỚC 02
+                    </span>
+
+                    <h2>
+                        Chọn chủ đề
+                    </h2>
+
+                </div>
+
+                <p>
+                    Học theo từng chủ đề để xây dựng
+                    nền tảng vững chắc.
+                </p>
+
+            </div>
+
+
+            <div
+                class="topics-grid"
+                id="topicsGrid">
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             REAL LIFE
+        ========================== -->
+
+        <section class="real-life">
+
+            <div class="real-life-content">
+
+                <span class="real-label">
+                    HỌC ĐỂ LÀM GÌ?
+                </span>
+
+                <h2>
+                    Toán học không chỉ<br>
+                    nằm trên giấy.
+                </h2>
+
+                <p>
+                    Hãy sử dụng những kiến thức bạn vừa học
+                    để giải quyết các tình huống thực tế.
+                </p>
+
+                <button
+                    class="challenge-button"
+                    id="challengeButton">
+
+                    🎯
+                    Thử thách thực tế
+
+                    <span>→</span>
+
+                </button>
+
+            </div>
+
+
+            <div class="real-life-visual">
+
+                <div class="scenario-card">
+
+                    <div class="scenario-icon">
+                        🏪
+                    </div>
+
+                    <strong>
+                        Quản lý cửa hàng
+                    </strong>
+
+                    <p>
+                        Tính doanh thu,
+                        lợi nhuận và chi phí.
+                    </p>
+
+                    <div class="scenario-equation">
+                        Doanh thu − Chi phí = ?
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             BOTTOM NAV
+        ========================== -->
+
+        <section class="bottom-actions">
+
+            <button
+                class="bottom-action"
+                id="calculatorButton">
+
+                <span>🧮</span>
+
+                <div>
+                    <strong>Máy tính</strong>
+                    <small>Công cụ toán học</small>
+                </div>
+
+                <b>→</b>
+
+            </button>
+
+
+            <button
+                class="bottom-action"
+                id="progressButton">
+
+                <span>📊</span>
+
+                <div>
+                    <strong>Tiến trình</strong>
+                    <small>Xem năng lực của bạn</small>
+                </div>
+
+                <b>→</b>
+
+            </button>
+
+        </section>
+
+    </main>
+
+
+    <!-- =========================
+         TOPIC POPUP
+    ========================== -->
+
+    <div
+        class="popup-overlay"
+        id="topicPopup">
+
+        <div class="popup">
+
+            <button
+                class="popup-close"
+                id="popupClose">
+                ×
+            </button>
+
+            <div
+                class="popup-icon"
+                id="popupIcon">
+                📚
+            </div>
+
+            <span
+                class="popup-label"
+                id="popupLabel">
+                CHỦ ĐỀ
+            </span>
+
+            <h2 id="popupTitle">
+                Hàm số
+            </h2>
+
+            <p id="popupDescription">
+                Khám phá kiến thức và luyện tập
+                thông qua các bài học.
+            </p>
+
+            <div class="popup-info">
+
+                <div>
+                    <strong id="popupLessons">
+                        10
+                    </strong>
+
+                    <span>
+                        bài học
+                    </span>
+                </div>
+
+                <div>
+                    <strong id="popupXP">
+                        100
+                    </strong>
+
+                    <span>
+                        XP
+                    </span>
+                </div>
+
+            </div>
+
+            <button
+                class="popup-start"
+                id="popupStart">
+
+                Bắt đầu học
+                <span>→</span>
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         JS
+    ========================== -->
+
+    <script src="math-grade.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Bài học - HỌC ĐỂ LÀM GÌ</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f5f7fb;
+            color: #1f2937;
+            line-height: 1.7;
+        }
+
+        header {
+            background: #ffffff;
+            border-bottom: 1px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-inner {
+            max-width: 1100px;
+            margin: auto;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .brand {
+            font-size: 20px;
+            font-weight: 800;
+            color: #111827;
+        }
+
+        #backButton {
+            border: none;
+            background: #eef2ff;
+            color: #3730a3;
+            padding: 10px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        #backButton:hover {
+            background: #e0e7ff;
+        }
+
+        main {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px 60px;
+        }
+
+        #loading {
+            text-align: center;
+            padding: 80px 20px;
+            color: #6b7280;
+        }
+
+        #error {
+            display: none;
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .lesson-header {
+            background: #ffffff;
+            border-radius: 20px;
+            padding: 35px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        .lesson-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .lesson-grade {
+            display: inline-block;
+            background: #eef2ff;
+            color: #4338ca;
+            padding: 5px 12px;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        #lessonTitle {
+            font-size: 38px;
+            line-height: 1.2;
+            margin-bottom: 15px;
+            color: #111827;
+        }
+
+        #lessonDescription {
+            color: #6b7280;
+            font-size: 17px;
+            max-width: 800px;
+        }
+
+        .lesson-section {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 30px;
+            margin-bottom: 22px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-title {
+            font-size: 24px;
+            margin-bottom: 18px;
+            color: #111827;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-content {
+            color: #374151;
+            font-size: 16px;
+        }
+
+        .definition-box {
+            background: #f8fafc;
+            border-left: 5px solid #6366f1;
+            padding: 20px;
+            border-radius: 10px;
+            white-space: pre-line;
+        }
+
+        .concept-box {
+            white-space: pre-line;
+        }
+
+        /* =========================
+           CONTEXT
+        ========================= */
+
+        .context-box {
+            background: #f0fdf4;
+            border-left: 5px solid #22c55e;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .context-title {
+            font-size: 19px;
+            font-weight: 800;
+            color: #166534;
+            margin-bottom: 10px;
+        }
+
+        /* =========================
+           THEORY
+        ========================= */
+
+        .theory-box {
+            background: #eff6ff;
+            border-left: 5px solid #3b82f6;
+            padding: 20px;
+            border-radius: 10px;
+            white-space: pre-line;
+        }
+
+        /* =========================
+           FORMULAS
+        ========================= */
+
+        .formula-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .formula-category {
+            margin-bottom: 28px;
+        }
+
+        .formula-category-title {
+            margin: 0 0 14px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .formula-category-items {
+            display: grid;
+            gap: 14px;
+        }
+
+        .formula-item {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 18px;
+        }
+
+        .formula-name {
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 8px;
+        }
+
+        .formula-expression {
+            font-family: "Cambria Math", "Times New Roman", serif;
+            font-size: 19px;
+            background: #ffffff;
+            padding: 14px;
+            border-radius: 8px;
+            overflow-x: auto;
+            color: #111827;
+            white-space: pre-line;
+        }
+
+        .formula-note {
+            margin-top: 8px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        /* =========================
+           EXAMPLE
+        ========================= */
+
+        .example-box {
+            background: #fffbeb;
+            border-left: 5px solid #f59e0b;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .example-title {
+            font-weight: 800;
+            color: #92400e;
+            margin-bottom: 8px;
+        }
+
+        .answer-box {
+            background: #f0fdf4;
+            border-left: 5px solid #22c55e;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .answer-title {
+            font-weight: 800;
+            color: #166534;
+            margin-bottom: 8px;
+        }
+
+        /* =========================
+           QUESTION
+        ========================= */
+
+        .question-box {
+            background: #f5f3ff;
+            border-left: 5px solid #8b5cf6;
+            padding: 22px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .question-text {
+            font-weight: 700;
+            font-size: 17px;
+            white-space: pre-line;
+        }
+
+        .answers-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 18px;
+        }
+
+        .answer-option {
+            padding: 13px 16px;
+            background: #ffffff;
+            border: 1px solid #ddd6fe;
+            border-radius: 10px;
+        }
+
+        .answer-option.correct {
+            border-color: #22c55e;
+            background: #f0fdf4;
+            font-weight: 700;
+        }
+
+        /* =========================
+           APPLICATION
+        ========================= */
+
+        .application-box {
+            background: #ecfeff;
+            border-left: 5px solid #06b6d4;
+            padding: 20px;
+            border-radius: 10px;
+            white-space: pre-line;
+        }
+
+        /* =========================
+           CHALLENGE
+        ========================= */
+
+        .challenge-box {
+            background: #fff7ed;
+            border-left: 5px solid #f97316;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .challenge-title {
+            font-weight: 800;
+            color: #9a3412;
+            margin-bottom: 8px;
+        }
+
+        .challenge-answer-box {
+            background: #f0fdf4;
+            border-left: 5px solid #16a34a;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        /* =========================
+           GAME
+        ========================= */
+
+        .game-section {
+            background: #111827;
+            color: #ffffff;
+            border-radius: 20px;
+            padding: 35px;
+            margin-top: 30px;
+        }
+
+        .game-section .section-title {
+            color: #ffffff;
+        }
+
+        #gameDescription {
+            color: #d1d5db;
+            margin-bottom: 25px;
+            white-space: pre-line;
+        }
+
+        #gameButton {
+            border: none;
+            background: #ffffff;
+            color: #111827;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        #gameButton:hover {
+            transform: translateY(-2px);
+        }
+
+        #noGame {
+            color: #9ca3af;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 700px) {
+
+            .header-inner {
+                padding: 14px 16px;
+            }
+
+            main {
+                margin-top: 25px;
+                padding: 0 14px 40px;
+            }
+
+            .lesson-header {
+                padding: 25px;
+            }
+
+            .lesson-section {
+                padding: 22px;
+            }
+
+            #lessonTitle {
+                font-size: 30px;
+            }
+
+            .section-title {
+                font-size: 21px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+
+    <div class="header-inner">
+
+        <div class="brand">
+            HỌC ĐỂ LÀM GÌ
+        </div>
+
+        <button id="backButton">
+            ← Quay lại
+        </button>
+
+    </div>
+
+</header>
+
+
+<main>
+
+    <!-- LOADING -->
+
+    <div id="loading">
+        Đang tải bài học...
+    </div>
+
+
+    <!-- ERROR -->
+
+    <div id="error"></div>
+
+
+    <!-- CONTENT -->
+
+    <div id="lessonContent" class="hidden">
+
+        <!-- =========================
+             HEADER
+        ========================== -->
+
+        <section class="lesson-header">
+
+            <div id="lessonIcon" class="lesson-icon">
+                📚
+            </div>
+
+            <div id="lessonGrade" class="lesson-grade">
+                Lớp
+            </div>
+
+            <h1 id="lessonTitle">
+                Tên bài học
+            </h1>
+
+            <p id="lessonDescription">
+                Mô tả bài học
+            </p>
+
+        </section>
+
+
+        <!-- =========================
+             1. ĐỊNH NGHĨA
+        ========================== -->
+
+        <section class="lesson-section" id="definitionSection">
+
+            <h2 class="section-title">
+                📖 Định nghĩa / Khái niệm
+            </h2>
+
+            <div
+                id="definition"
+                class="section-content definition-box">
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             2. BỐI CẢNH
+        ========================== -->
+
+        <section class="lesson-section" id="contextSection">
+
+            <h2 class="section-title">
+                🌍 Kiến thức trong đời sống
+            </h2>
+
+            <div class="context-box">
+
+                <div
+                    id="contextTitle"
+                    class="context-title">
+                </div>
+
+                <div
+                    id="context"
+                    class="section-content">
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             3. KIẾN THỨC CỐT LÕI
+        ========================== -->
+
+        <section class="lesson-section" id="theorySection">
+
+            <h2 class="section-title">
+                🧠 Kiến thức cốt lõi
+            </h2>
+
+            <div
+                id="theory"
+                class="section-content theory-box">
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             4. CONCEPT CŨ
+        ========================== -->
+
+        <section class="lesson-section" id="conceptSection">
+
+            <h2 class="section-title">
+                💭 Khái niệm
+            </h2>
+
+            <div
+                id="concept"
+                class="section-content concept-box">
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             5. CÔNG THỨC
+        ========================== -->
+
+        <section class="lesson-section" id="formulaSection">
+
+            <h2 class="section-title">
+                📐 Công thức
+            </h2>
+
+            <div
+                id="formulas"
+                class="formula-list">
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             6. VÍ DỤ
+        ========================== -->
+
+        <section class="lesson-section" id="exampleSection">
+
+            <h2 class="section-title">
+                📝 Ví dụ
+            </h2>
+
+            <div class="example-box">
+
+                <div class="example-title">
+                    Bài toán / tình huống
+                </div>
+
+                <div
+                    id="example"
+                    class="section-content">
+                </div>
+
+            </div>
+
+            <div class="answer-box">
+
+                <div class="answer-title">
+                    💡 Lời giải
+                </div>
+
+                <div
+                    id="exampleAnswer"
+                    class="section-content">
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             7. CÂU HỎI
+        ========================== -->
+
+        <section class="lesson-section" id="questionSection">
+
+            <h2 class="section-title">
+                ❓ Kiểm tra nhanh
+            </h2>
+
+            <div class="question-box">
+
+                <div
+                    id="question"
+                    class="question-text">
+                </div>
+
+                <div
+                    id="answers"
+                    class="answers-list">
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             8. Ý NGHĨA
+        ========================== -->
+
+        <section class="lesson-section" id="meaningSection">
+
+            <h2 class="section-title">
+                💡 Ý nghĩa
+            </h2>
+
+            <div
+                id="meaning"
+                class="section-content">
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             9. ỨNG DỤNG
+        ========================== -->
+
+        <section class="lesson-section" id="applicationSection">
+
+            <h2 class="section-title">
+                🔧 Ứng dụng thực tế
+            </h2>
+
+            <div
+                id="application"
+                class="section-content application-box">
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             10. ĐỜI SỐNG CŨ
+        ========================== -->
+
+        <section class="lesson-section" id="realLifeSection">
+
+            <h2 class="section-title">
+                🏠 Kiến thức này giúp gì trong đời sống?
+            </h2>
+
+            <div
+                id="realLife"
+                class="section-content definition-box">
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             11. THỬ THÁCH
+        ========================== -->
+
+        <section class="lesson-section" id="challengeSection">
+
+            <h2 class="section-title">
+                🎯 Thử thách thực tế
+            </h2>
+
+            <div class="challenge-box">
+
+                <div class="challenge-title">
+                    Thử thách
+                </div>
+
+                <div
+                    id="challenge"
+                    class="section-content">
+                </div>
+
+            </div>
+
+            <div class="challenge-answer-box">
+
+                <div class="challenge-title">
+                    💡 Gợi ý / Đáp án
+                </div>
+
+                <div
+                    id="challengeAnswer"
+                    class="section-content">
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             12. GAME
+        ========================== -->
+
+        <section class="game-section">
+
+            <h2 class="section-title">
+                🎮 Trải nghiệm thực tế
+            </h2>
+
+            <p id="gameDescription"></p>
+
+            <button id="gameButton">
+                🚀 Bắt đầu trải nghiệm
+            </button>
+
+            <p id="noGame" class="hidden">
+                Bài học này chưa có trải nghiệm thực tế.
+            </p>
+
+        </section>
+
+    </div>
+
+</main>
+
+
+<script src="lesson.js"></script>
+
+</body>
+</html>

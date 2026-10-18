@@ -1,0 +1,1036 @@
+/* =========================================================
+   HỌC ĐỂ LÀM GÌ — PHYSICS GRADE
+   Giao diện Vật lý lớp 6 → 12
+========================================================= */
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --physics-900: #082f49;
+    --physics-800: #0c4a6e;
+    --physics-700: #0369a1;
+    --physics-600: #0284c7;
+    --physics-500: #0ea5e9;
+    --physics-400: #38bdf8;
+    --physics-100: #e0f2fe;
+    --physics-50: #f0f9ff;
+
+    --text: #0f172a;
+    --muted: #64748b;
+    --white: #ffffff;
+    --border: #dbeafe;
+
+    --shadow-sm: 0 8px 24px rgba(8, 47, 73, .07);
+    --shadow-md: 0 18px 45px rgba(8, 47, 73, .11);
+    --shadow-lg: 0 28px 70px rgba(8, 47, 73, .16);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    min-height: 100vh;
+    overflow-x: hidden;
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: var(--text);
+    background:
+        radial-gradient(circle at 10% 5%, rgba(56, 189, 248, .20), transparent 28%),
+        radial-gradient(circle at 90% 15%, rgba(14, 165, 233, .14), transparent 25%),
+        linear-gradient(180deg, #f7fcff 0%, #eef8ff 48%, #f8fbff 100%);
+}
+
+/* =========================================================
+   BACKGROUND
+========================================================= */
+
+.grade-background {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.bg-circle {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(3px);
+}
+
+.circle-1 {
+    width: 520px;
+    height: 520px;
+    top: -280px;
+    right: -170px;
+    background: rgba(56, 189, 248, .18);
+}
+
+.circle-2 {
+    width: 430px;
+    height: 430px;
+    bottom: -230px;
+    left: -180px;
+    background: rgba(14, 165, 233, .12);
+}
+
+.bg-symbol {
+    position: absolute;
+    color: rgba(2, 132, 199, .055);
+    font-weight: 800;
+    user-select: none;
+}
+
+.symbol-1 { top: 18%; left: 4%; font-size: 85px; }
+.symbol-2 { top: 42%; right: 4%; font-size: 100px; }
+.symbol-3 { bottom: 18%; left: 12%; font-size: 70px; }
+.symbol-4 { top: 68%; right: 18%; font-size: 80px; }
+.symbol-5 { top: 8%; left: 47%; font-size: 65px; }
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.grade-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    min-height: 78px;
+    padding: 12px max(24px, 5vw);
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: rgba(255,255,255,.88);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(14,165,233,.13);
+    box-shadow: 0 5px 25px rgba(8,47,73,.05);
+}
+
+.back-button {
+    flex: 0 0 46px;
+    width: 46px;
+    height: 46px;
+    border: 1px solid #bae6fd;
+    border-radius: 14px;
+    background: #e0f2fe;
+    color: var(--physics-700);
+    font-size: 23px;
+    cursor: pointer;
+    transition: .22s ease;
+}
+
+.back-button:hover {
+    transform: translateX(-3px);
+    background: #bae6fd;
+    box-shadow: var(--shadow-sm);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.brand-icon {
+    width: 45px;
+    height: 45px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    color: white;
+    font-size: 23px;
+    background: linear-gradient(135deg, var(--physics-700), var(--physics-400));
+    box-shadow: 0 10px 24px rgba(14,165,233,.22);
+}
+
+.brand h1 {
+    font-size: 17px;
+    letter-spacing: .8px;
+    color: var(--physics-900);
+}
+
+.brand p {
+    margin-top: 1px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.player {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.player-avatar {
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #e0f2fe;
+}
+
+.player-info {
+    min-width: 130px;
+}
+
+.player-info strong {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 12px;
+}
+
+.xp-bar {
+    width: 130px;
+    height: 6px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e2e8f0;
+}
+
+.xp-progress {
+    width: 25%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--physics-600), var(--physics-400));
+}
+
+.level {
+    color: var(--physics-700);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+.grade-main {
+    width: min(1240px, calc(100% - 48px));
+    margin: 0 auto;
+    padding: 34px 0 70px;
+}
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.grade-hero {
+    position: relative;
+    min-height: 330px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 35px;
+    overflow: hidden;
+    padding: 48px 55px;
+    border: 1px solid rgba(14,165,233,.18);
+    border-radius: 30px;
+    background:
+        linear-gradient(135deg, rgba(255,255,255,.98), rgba(240,249,255,.96));
+    box-shadow: var(--shadow-lg);
+}
+
+.grade-hero::before {
+    content: "";
+    position: absolute;
+    width: 430px;
+    height: 430px;
+    right: -180px;
+    top: -210px;
+    border-radius: 50%;
+    background: rgba(56,189,248,.13);
+}
+
+.grade-hero::after {
+    content: "";
+    position: absolute;
+    width: 260px;
+    height: 260px;
+    left: -150px;
+    bottom: -180px;
+    border-radius: 50%;
+    background: rgba(14,165,233,.08);
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 680px;
+}
+
+.hero-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-bottom: 13px;
+    color: var(--physics-700);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+
+.hero-label::before {
+    content: "⚡";
+    font-size: 15px;
+}
+
+.hero-content h2 {
+    margin-bottom: 15px;
+    color: var(--physics-900);
+    font-size: clamp(38px, 5vw, 60px);
+    line-height: .98;
+    letter-spacing: -1.8px;
+}
+
+.hero-content p {
+    max-width: 620px;
+    color: #52677a;
+    font-size: 16px;
+    line-height: 1.75;
+}
+
+.progress-box {
+    max-width: 520px;
+    margin-top: 27px;
+}
+
+.progress-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 9px;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.progress-top strong {
+    color: var(--physics-700);
+    font-size: 14px;
+}
+
+.large-progress {
+    height: 11px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #dff3ff;
+}
+
+.large-progress-fill {
+    width: 0%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--physics-700), var(--physics-400));
+    transition: width .6s ease;
+}
+
+.progress-box small {
+    display: block;
+    margin-top: 8px;
+    color: var(--muted);
+}
+
+/* =========================================================
+   PHYSICS HERO VISUAL
+========================================================= */
+
+.hero-illustration {
+    position: relative;
+    z-index: 2;
+    flex: 0 0 315px;
+    width: 315px;
+    height: 265px;
+    display: grid;
+    place-items: center;
+}
+
+.math-orb {
+    position: relative;
+    z-index: 3;
+    width: 138px;
+    height: 138px;
+    display: grid;
+    place-items: center;
+    border: 7px solid rgba(255,255,255,.7);
+    border-radius: 50%;
+    color: white;
+    font-size: 57px;
+    font-weight: 900;
+    background: linear-gradient(145deg, var(--physics-800), var(--physics-400));
+    box-shadow:
+        0 20px 50px rgba(2,132,199,.28),
+        inset 0 0 30px rgba(255,255,255,.15);
+}
+
+.orbit {
+    position: absolute;
+    border: 1px dashed rgba(2,132,199,.30);
+    border-radius: 50%;
+}
+
+.orbit-1 {
+    width: 190px;
+    height: 190px;
+    animation: spin 18s linear infinite;
+}
+
+.orbit-2 {
+    width: 260px;
+    height: 260px;
+    animation: spin-reverse 25s linear infinite;
+}
+
+.floating-number {
+    position: absolute;
+    z-index: 4;
+    padding: 8px 12px;
+    border: 1px solid rgba(14,165,233,.15);
+    border-radius: 11px;
+    color: var(--physics-700);
+    font-size: 12px;
+    font-weight: 800;
+    background: rgba(255,255,255,.94);
+    box-shadow: var(--shadow-sm);
+}
+
+.number-1 { top: 8px; right: 4px; }
+.number-2 { bottom: 10px; left: 10px; }
+.number-3 { top: 100px; left: -5px; }
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes spin-reverse {
+    to { transform: rotate(-360deg); }
+}
+
+/* =========================================================
+   STATS
+========================================================= */
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 17px;
+    margin: 24px 0 54px;
+}
+
+.stat-card {
+    min-height: 92px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px;
+    border: 1px solid rgba(14,165,233,.12);
+    border-radius: 18px;
+    background: rgba(255,255,255,.92);
+    box-shadow: var(--shadow-sm);
+    transition: .22s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+    border-color: #bae6fd;
+}
+
+.stat-icon {
+    flex: 0 0 46px;
+    width: 46px;
+    height: 46px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: var(--physics-50);
+    font-size: 21px;
+}
+
+.stat-card strong {
+    display: block;
+    color: var(--physics-900);
+    font-size: 23px;
+    line-height: 1.1;
+}
+
+.stat-card span {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+/* =========================================================
+   TOPICS
+========================================================= */
+
+.topics-section {
+    margin-bottom: 45px;
+}
+
+.section-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 25px;
+    margin-bottom: 22px;
+}
+
+.section-heading span {
+    color: var(--physics-600);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+
+.section-heading h2 {
+    margin-top: 4px;
+    color: var(--physics-900);
+    font-size: 31px;
+    letter-spacing: -.7px;
+}
+
+.section-heading p {
+    max-width: 360px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+    text-align: right;
+}
+
+/* KEY FIX: cards are proper responsive cards, not squeezed into one row */
+.topics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.topic-card {
+    position: relative;
+    min-height: 205px;
+    width: 100%;
+    padding: 22px;
+    overflow: hidden;
+    text-align: left;
+    border: 1px solid #d8edf8;
+    border-radius: 21px;
+    color: var(--text);
+    background: rgba(255,255,255,.96);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+
+.topic-card::after {
+    content: "";
+    position: absolute;
+    width: 110px;
+    height: 110px;
+    right: -48px;
+    bottom: -50px;
+    border-radius: 50%;
+    background: rgba(56,189,248,.09);
+}
+
+.topic-card:hover {
+    transform: translateY(-6px);
+    border-color: #7dd3fc;
+    box-shadow: var(--shadow-md);
+}
+
+.topic-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 17px;
+}
+
+.topic-icon {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 15px;
+    color: white;
+    font-size: 22px;
+    background: linear-gradient(145deg, var(--physics-700), var(--physics-400));
+    box-shadow: 0 10px 22px rgba(14,165,233,.22);
+}
+
+.topic-number {
+    color: #94a3b8 !important;
+    font-size: 10px !important;
+    letter-spacing: 1.2px !important;
+}
+
+.topic-card h3 {
+    position: relative;
+    z-index: 2;
+    margin-bottom: 8px;
+    color: var(--physics-900);
+    font-size: 19px;
+    line-height: 1.25;
+}
+
+.topic-card > p {
+    position: relative;
+    z-index: 2;
+    min-height: 43px;
+    margin-bottom: 17px;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.topic-progress {
+    position: relative;
+    z-index: 2;
+}
+
+.topic-progress-top {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    color: #64748b;
+    font-size: 11px;
+}
+
+.topic-progress-bar {
+    height: 7px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e0f2fe;
+}
+
+.topic-progress-fill {
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--physics-700), var(--physics-400));
+}
+
+.topic-arrow {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    color: var(--physics-600);
+    font-size: 22px;
+    font-weight: 700;
+}
+
+/* =========================================================
+   REAL LIFE
+========================================================= */
+
+.real-life {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.15fr .85fr;
+    gap: 35px;
+    overflow: hidden;
+    margin-top: 15px;
+    padding: 42px;
+    border-radius: 28px;
+    color: white;
+    background:
+        radial-gradient(circle at 80% 20%, rgba(56,189,248,.30), transparent 30%),
+        linear-gradient(135deg, #082f49, #075985);
+    box-shadow: var(--shadow-lg);
+}
+
+.real-life-content {
+    position: relative;
+    z-index: 2;
+}
+
+.real-label {
+    display: inline-block;
+    margin-bottom: 11px;
+    color: #7dd3fc;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+
+.real-life h2 {
+    margin-bottom: 13px;
+    font-size: 36px;
+    line-height: 1.08;
+}
+
+.real-life p {
+    max-width: 540px;
+    color: #d7effd;
+    line-height: 1.7;
+}
+
+.challenge-button {
+    margin-top: 23px;
+    padding: 13px 18px;
+    border: 1px solid rgba(255,255,255,.16);
+    border-radius: 13px;
+    color: white;
+    font-weight: 800;
+    background: rgba(255,255,255,.12);
+    cursor: pointer;
+    transition: .22s ease;
+}
+
+.challenge-button:hover {
+    transform: translateY(-2px);
+    background: rgba(255,255,255,.20);
+}
+
+.challenge-button span {
+    margin-left: 12px;
+}
+
+.real-life-visual {
+    display: grid;
+    place-items: center;
+}
+
+.scenario-card {
+    width: min(100%, 330px);
+    padding: 22px;
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 20px;
+    background: rgba(255,255,255,.10);
+    backdrop-filter: blur(12px);
+}
+
+.scenario-icon {
+    margin-bottom: 12px;
+    font-size: 35px;
+}
+
+.scenario-card strong {
+    display: block;
+    margin-bottom: 7px;
+    font-size: 18px;
+}
+
+.scenario-card p {
+    color: #d7effd;
+    font-size: 13px;
+}
+
+.scenario-equation {
+    margin-top: 16px;
+    padding: 11px;
+    border-radius: 10px;
+    color: #e0f2fe;
+    font-weight: 800;
+    background: rgba(0,0,0,.13);
+}
+
+/* =========================================================
+   BOTTOM ACTIONS
+========================================================= */
+
+.bottom-actions {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+    margin-top: 24px;
+}
+
+.bottom-action {
+    min-height: 82px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 18px 21px;
+    border: 1px solid #d8edf8;
+    border-radius: 18px;
+    color: var(--text);
+    background: rgba(255,255,255,.94);
+    box-shadow: var(--shadow-sm);
+    cursor: pointer;
+    text-align: left;
+    transition: .22s ease;
+}
+
+.bottom-action:hover {
+    transform: translateY(-3px);
+    border-color: #7dd3fc;
+    box-shadow: var(--shadow-md);
+}
+
+.bottom-action > span {
+    font-size: 25px;
+}
+
+.bottom-action div {
+    flex: 1;
+}
+
+.bottom-action strong {
+    display: block;
+    color: var(--physics-900);
+}
+
+.bottom-action small {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+}
+
+.bottom-action b {
+    color: var(--physics-600);
+    font-size: 20px;
+}
+
+/* =========================================================
+   POPUP
+========================================================= */
+
+.popup-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(2, 24, 39, .58);
+    backdrop-filter: blur(7px);
+}
+
+.popup-overlay.show {
+    display: flex;
+}
+
+.popup {
+    position: relative;
+    width: min(510px, 100%);
+    padding: 32px;
+    border: 1px solid rgba(125,211,252,.35);
+    border-radius: 25px;
+    background: white;
+    box-shadow: 0 30px 90px rgba(0,0,0,.24);
+    animation: popup-in .22s ease;
+}
+
+@keyframes popup-in {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.popup-close {
+    position: absolute;
+    top: 15px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 10px;
+    color: #64748b;
+    font-size: 24px;
+    background: #f1f5f9;
+    cursor: pointer;
+}
+
+.popup-close:hover {
+    color: var(--physics-700);
+    background: #e0f2fe;
+}
+
+.popup-icon {
+    width: 64px;
+    height: 64px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 15px;
+    border-radius: 18px;
+    color: white;
+    font-size: 29px;
+    background: linear-gradient(145deg, var(--physics-700), var(--physics-400));
+}
+
+.popup-label {
+    color: var(--physics-600);
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: 1.5px;
+}
+
+.popup h2 {
+    margin: 5px 0 10px;
+    color: var(--physics-900);
+    font-size: 30px;
+}
+
+.popup > p {
+    color: var(--muted);
+    line-height: 1.7;
+}
+
+.popup-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 22px 0;
+}
+
+.popup-info > div {
+    padding: 14px;
+    border-radius: 14px;
+    background: var(--physics-50);
+}
+
+.popup-info strong {
+    display: block;
+    color: var(--physics-800);
+    font-size: 21px;
+}
+
+.popup-info span {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.popup-start {
+    width: 100%;
+    padding: 14px 18px;
+    border: none;
+    border-radius: 13px;
+    color: white;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--physics-700), var(--physics-500));
+    box-shadow: 0 12px 25px rgba(14,165,233,.22);
+    cursor: pointer;
+}
+
+.popup-start:hover {
+    filter: brightness(1.05);
+}
+
+.popup-start span {
+    margin-left: 8px;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1000px) {
+    .grade-hero {
+        padding: 38px;
+    }
+
+    .hero-illustration {
+        flex-basis: 260px;
+        width: 260px;
+        transform: scale(.9);
+    }
+
+    .topics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 720px) {
+    .grade-header {
+        padding: 10px 16px;
+    }
+
+    .player-info,
+    .level {
+        display: none;
+    }
+
+    .grade-main {
+        width: min(100% - 28px, 620px);
+        padding-top: 20px;
+    }
+
+    .grade-hero {
+        min-height: auto;
+        padding: 30px 24px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .hero-content h2 {
+        font-size: 42px;
+    }
+
+    .hero-illustration {
+        align-self: center;
+        transform: scale(.82);
+        margin: -15px 0 -25px;
+    }
+
+    .section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .section-heading p {
+        max-width: none;
+        text-align: left;
+    }
+
+    .topics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .stat-card {
+        padding: 14px;
+    }
+
+    .real-life {
+        grid-template-columns: 1fr;
+        padding: 28px 23px;
+    }
+
+    .real-life h2 {
+        font-size: 30px;
+    }
+
+    .bottom-actions {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 440px) {
+    .stats {
+        grid-template-columns: 1fr;
+    }
+
+    .grade-hero {
+        border-radius: 22px;
+    }
+
+    .topic-card {
+        min-height: 190px;
+    }
+
+    .hero-illustration {
+        transform: scale(.70);
+        margin-left: -35px;
+    }
+}

@@ -1,0 +1,2583 @@
+/* =========================
+   RESET
+========================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+
+    min-height: 100vh;
+
+   
+
+    color: white;
+
+    background:
+        radial-gradient(
+            circle at 50% 30%,
+            #8fd8ff 0%,
+            #5597dc 35%,
+            #294f91 70%,
+            #172c59 100%
+        );
+}
+
+
+/* =========================
+   BACKGROUND
+========================= */
+
+.background {
+    position: fixed;
+
+    inset: 0;
+
+    overflow: hidden;
+
+    z-index: -10;
+}
+
+
+.background::before {
+    content: "";
+
+    position: absolute;
+
+    width: 700px;
+    height: 700px;
+
+    top: -300px;
+    left: 20%;
+
+    background: rgba(255, 255, 255, 0.18);
+
+    border-radius: 50%;
+
+    filter: blur(80px);
+}
+
+
+.background::after {
+    content: "";
+
+    position: absolute;
+
+    width: 600px;
+    height: 600px;
+
+    right: -200px;
+    bottom: -200px;
+
+    background: rgba(255, 255, 255, 0.15);
+
+    border-radius: 50%;
+
+    filter: blur(90px);
+}
+
+
+/* =========================
+   CLOUDS
+========================= */
+
+.cloud {
+    position: absolute;
+
+    width: 220px;
+    height: 60px;
+
+    background: rgba(255,255,255,0.30);
+
+    border-radius: 100px;
+
+    filter: blur(5px);
+
+    animation: cloudMove 25s linear infinite;
+}
+
+
+.cloud::before,
+.cloud::after {
+    content: "";
+
+    position: absolute;
+
+    background: inherit;
+
+    border-radius: 50%;
+}
+
+
+.cloud::before {
+    width: 90px;
+    height: 90px;
+
+    left: 30px;
+    bottom: 20px;
+}
+
+
+.cloud::after {
+    width: 110px;
+    height: 110px;
+
+    right: 30px;
+    bottom: 10px;
+}
+
+
+.cloud-1 {
+    top: 20%;
+    left: -200px;
+}
+
+
+.cloud-2 {
+    top: 55%;
+    left: 40%;
+
+    transform: scale(0.7);
+
+    animation-delay: -8s;
+}
+
+
+.cloud-3 {
+    top: 75%;
+    left: 70%;
+
+    transform: scale(0.5);
+
+    animation-delay: -15s;
+}
+
+
+@keyframes cloudMove {
+
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(120vw);
+    }
+
+}
+
+
+/* =========================
+   STARS
+========================= */
+
+.stars span {
+    position: absolute;
+
+    font-size: 20px;
+
+    opacity: 0.7;
+
+    animation: twinkle 2s infinite alternate;
+}
+
+
+.stars span:nth-child(1) {
+    top: 15%;
+    left: 40%;
+}
+
+.stars span:nth-child(2) {
+    top: 35%;
+    left: 55%;
+}
+
+.stars span:nth-child(3) {
+    top: 25%;
+    left: 75%;
+}
+
+.stars span:nth-child(4) {
+    top: 65%;
+    left: 25%;
+}
+
+.stars span:nth-child(5) {
+    top: 75%;
+    left: 55%;
+}
+
+.stars span:nth-child(6) {
+    top: 45%;
+    left: 85%;
+}
+
+
+@keyframes twinkle {
+
+    from {
+        opacity: 0.25;
+        transform: scale(0.7);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+
+}
+
+
+/* =========================
+   PLAYER CARD
+========================= */
+
+.player-card {
+    position: fixed;
+
+    top: 20px;
+    left: 25px;
+
+    width: 290px;
+
+    display: flex;
+    align-items: center;
+
+    padding: 10px 18px 10px 10px;
+
+    background: rgba(14, 35, 72, 0.85);
+
+    border: 2px solid rgba(137, 201, 255, 0.6);
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 10px 30px rgba(0,0,0,0.25);
+
+    backdrop-filter: blur(8px);
+
+    z-index: 20;
+}
+
+
+.avatar {
+    width: 58px;
+    height: 58px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 34px;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            145deg,
+            #dff5ff,
+            #719ed8
+        );
+
+    border: 3px solid white;
+}
+
+
+.player-info {
+    margin-left: 12px;
+
+    flex: 1;
+}
+
+
+.player-name {
+    font-weight: bold;
+
+    font-size: 15px;
+
+    margin-bottom: 8px;
+}
+
+
+.level-row {
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+}
+
+
+.level {
+    font-size: 12px;
+
+    font-weight: bold;
+
+    color: #ffd86b;
+}
+
+
+.xp-bar {
+    flex: 1;
+
+    height: 8px;
+
+    background: #152b50;
+
+    border-radius: 10px;
+
+    overflow: hidden;
+}
+
+
+.xp-progress {
+    width: 0%;
+
+    height: 100%;
+
+    background: linear-gradient(
+        90deg,
+        #55eaff,
+        #7c9cff
+    );
+
+    border-radius: 10px;
+}
+
+
+.xp-text {
+    font-size: 10px;
+
+    opacity: 0.8;
+}
+
+
+/* =========================
+   TOP BUTTONS
+========================= */
+
+.top-button {
+    position: fixed;
+
+    top: 15px;
+
+    height: 60px;
+
+    border: 2px solid rgba(255,255,255,0.4);
+
+    border-radius: 18px;
+
+    color: white;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 8px 15px;
+
+    cursor: pointer;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    z-index: 20;
+
+    box-shadow:
+        0 8px 25px rgba(0,0,0,0.2);
+
+    transition: 0.25s;
+}
+
+
+.class-button {
+    right: 210px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #36b56d,
+            #087c58
+        );
+}
+
+
+.ranking-button {
+    right: 20px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #3188dd,
+            #2259ad
+        );
+}
+
+
+.top-button:hover {
+    transform: translateY(-3px) scale(1.03);
+
+    filter: brightness(1.1);
+}
+
+
+.button-icon {
+    font-size: 24px;
+}
+
+
+.arrow {
+    font-size: 28px;
+
+    margin-left: 5px;
+}
+
+
+/* =========================
+   WORLD
+========================= */
+
+.world {
+    position: relative;
+
+    width: 100vw;
+    height: 100vh;
+}
+
+
+/* =========================
+   ISLAND
+========================= */
+
+.island {
+    position: absolute;
+
+    width: 145px;
+    height: 115px;
+
+    border: none;
+
+    cursor: pointer;
+
+    color: white;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: flex-end;
+
+    align-items: center;
+
+    padding-bottom: 12px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #5c9d67,
+            #27614c
+        );
+
+    clip-path: polygon(
+        10% 35%,
+        25% 15%,
+        50% 20%,
+        75% 10%,
+        93% 35%,
+        83% 65%,
+        65% 78%,
+        45% 100%,
+        25% 78%,
+        5% 65%
+    );
+
+    filter:
+        drop-shadow(
+            0 18px 12px
+            rgba(0,0,0,0.35)
+        );
+
+    transition:
+        transform 0.3s,
+        filter 0.3s;
+
+    z-index: 5;
+}
+
+
+.island::before {
+    content: "";
+
+    position: absolute;
+
+    width: 55px;
+    height: 45px;
+
+    top: 5px;
+
+    background: #75bb79;
+
+    border-radius: 50%;
+
+    opacity: 0.9;
+}
+
+
+.island:hover {
+    transform:
+        translateY(-12px)
+        scale(1.08);
+
+    filter:
+        drop-shadow(
+            0 25px 20px
+            rgba(0,0,0,0.4)
+        )
+        brightness(1.15);
+
+    z-index: 10;
+}
+
+
+.island-icon {
+    position: absolute;
+
+    top: 5px;
+
+    font-size: 40px;
+
+    z-index: 2;
+
+    filter:
+        drop-shadow(
+            0 3px 4px
+            rgba(0,0,0,0.35)
+        );
+}
+
+
+.island-title {
+    position: relative;
+
+    z-index: 3;
+
+    padding: 6px 12px;
+
+    background:
+        rgba(14, 39, 69, 0.88);
+
+    border-radius: 8px;
+
+    font-size: 15px;
+
+    font-weight: bold;
+
+    white-space: nowrap;
+}
+
+
+.island-description {
+    position: absolute;
+
+    bottom: -23px;
+
+    opacity: 0;
+
+    font-size: 11px;
+
+    white-space: nowrap;
+
+    transition: 0.25s;
+
+    color: #e9f7ff;
+}
+
+
+.island:hover .island-description {
+    opacity: 1;
+}
+
+
+/* =========================
+   ISLAND POSITIONS
+========================= */
+
+.island-math {
+    top: 20%;
+
+    left: 14%;
+}
+
+
+.island-physics {
+    top: 10%;
+
+    left: 38%;
+}
+
+
+.island-chemistry {
+    top: 15%;
+
+    left: 57%;
+}
+
+
+.island-literature {
+    top: 23%;
+
+    right: 12%;
+}
+
+
+.island-sport {
+    top: 40%;
+
+    left: 3%;
+}
+
+
+.island-art {
+    top: 50%;
+
+    left: 17%;
+}
+
+
+.island-biology {
+    top: 43%;
+
+    right: 3%;
+}
+
+
+.island-geography {
+    top: 59%;
+
+    right: 19%;
+}
+
+
+.island-computer {
+    bottom: 12%;
+
+    left: 6%;
+}
+
+
+.island-english {
+    bottom: 8%;
+
+    left: 27%;
+}
+
+
+.island-history {
+    bottom: 5%;
+
+    left: 52%;
+}
+
+
+/* =========================
+   CENTRAL WORLD
+========================= */
+
+.central-world {
+    position: absolute;
+
+    top: 35%;
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+
+    width: 290px;
+    height: 245px;
+
+    border: none;
+
+    cursor: pointer;
+
+    border-radius: 50%;
+
+    color: white;
+
+    background:
+        radial-gradient(
+            circle at 50% 30%,
+            #78bf77,
+            #337a5c 60%,
+            #1e4e4b
+        );
+
+    box-shadow:
+        0 30px 40px rgba(0,0,0,0.35),
+        inset 0 15px 25px rgba(255,255,255,0.18);
+
+    transition: 0.35s;
+
+    z-index: 7;
+}
+
+
+.central-world:hover {
+    transform:
+        translate(-50%, -50%)
+        scale(1.06);
+
+    box-shadow:
+        0 40px 50px rgba(0,0,0,0.4),
+        0 0 45px rgba(255,255,255,0.35),
+        inset 0 15px 25px rgba(255,255,255,0.2);
+}
+
+
+.central-world::before {
+    content: "";
+
+    position: absolute;
+
+    inset: 20px;
+
+    border: 2px solid rgba(255,255,255,0.25);
+
+    border-radius: 50%;
+}
+
+
+.central-book {
+    font-size: 52px;
+
+    margin-top: 5px;
+
+    filter:
+        drop-shadow(
+            0 5px 5px
+            rgba(0,0,0,0.4)
+        );
+}
+
+
+.central-world h1 {
+    font-size: 31px;
+
+    line-height: 0.95;
+
+    margin-top: -5px;
+
+    text-shadow:
+        0 4px 5px
+        rgba(0,0,0,0.4);
+}
+
+
+.central-world h1 span {
+    color: #ffd85c;
+}
+
+
+.central-world p {
+    margin-top: 10px;
+
+    font-size: 12px;
+
+    opacity: 0.9;
+}
+
+
+/* =========================
+   RANKING PANEL
+========================= */
+
+.ranking-panel {
+    position: fixed;
+
+    right: 18px;
+
+    bottom: 105px;
+
+    width: 210px;
+
+    padding: 10px;
+
+    border-radius: 18px;
+
+    background:
+        rgba(13, 38, 73, 0.88);
+
+    border: 2px solid rgba(145,210,255,0.4);
+
+    backdrop-filter: blur(10px);
+
+    box-shadow:
+        0 15px 30px
+        rgba(0,0,0,0.3);
+
+    z-index: 15;
+}
+
+
+.ranking-header {
+    font-size: 14px;
+
+    font-weight: bold;
+
+    padding-bottom: 10px;
+
+    border-bottom: 1px solid
+        rgba(255,255,255,0.2);
+
+    text-align: center;
+}
+
+
+.ranking-item {
+    display: grid;
+
+    grid-template-columns:
+        25px 1fr 45px;
+
+    align-items: center;
+
+    gap: 4px;
+
+    padding: 7px 2px;
+
+    font-size: 11px;
+
+    border-bottom: 1px solid
+        rgba(255,255,255,0.08);
+}
+
+
+.ranking-item strong {
+    text-align: right;
+
+    color: #ffd866;
+}
+
+
+.ranking-item.first {
+    background:
+        rgba(255,216,102,0.1);
+
+    border-radius: 8px;
+}
+
+
+/* =========================
+   BOTTOM MENU
+========================= */
+
+.bottom-menu {
+    position: fixed;
+
+    bottom: 18px;
+
+    left: 25px;
+
+    display: flex;
+
+    gap: 12px;
+
+    z-index: 30;
+}
+
+
+.menu-button {
+    width: 65px;
+
+    border: none;
+
+    background: transparent;
+
+    color: white;
+
+    cursor: pointer;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    gap: 3px;
+
+    transition: 0.25s;
+}
+
+
+.menu-button span {
+    width: 43px;
+    height: 43px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        rgba(15,38,72,0.9);
+
+    border:
+        1px solid
+        rgba(255,255,255,0.3);
+
+    font-size: 20px;
+}
+
+
+.menu-button small {
+    font-size: 10px;
+}
+
+
+.menu-button:hover {
+    transform: translateY(-5px);
+}
+
+
+/* =========================
+   AI MESSAGE
+========================= */
+
+.ai-message {
+    position: fixed;
+
+    right: 20px;
+
+    bottom: 20px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    z-index: 20;
+}
+
+
+.ai-message p {
+    text-align: right;
+
+    font-size: 12px;
+
+    line-height: 1.3;
+
+    font-style: italic;
+
+    color: #e9f8ff;
+
+    text-shadow:
+        0 2px 4px rgba(0,0,0,0.4);
+}
+
+
+.ai-message strong {
+    color: #fff;
+}
+
+
+.ai-icon {
+    font-size: 35px;
+
+    filter:
+        drop-shadow(
+            0 3px 5px
+            rgba(0,0,0,0.3)
+        );
+}
+
+
+.ai-spark {
+    font-size: 18px;
+
+    animation:
+        twinkle 1.5s infinite alternate;
+}
+
+
+/* =========================
+   POPUP
+========================= */
+
+.popup-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    background:
+        rgba(4,15,35,0.65);
+
+    backdrop-filter: blur(7px);
+
+    z-index: 100;
+}
+
+
+.popup-overlay.show {
+    display: flex;
+}
+
+
+.popup {
+    position: relative;
+
+    width: min(420px, 90%);
+
+    padding: 35px;
+
+    text-align: center;
+
+    border-radius: 25px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #1c477d,
+            #102a55
+        );
+
+    border: 2px solid
+        rgba(156,219,255,0.5);
+
+    box-shadow:
+        0 30px 60px
+        rgba(0,0,0,0.5);
+
+    animation:
+        popupIn 0.25s ease;
+}
+
+
+@keyframes popupIn {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(30px)
+            scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+
+}
+
+
+.close-popup {
+    position: absolute;
+
+    top: 10px;
+    right: 15px;
+
+    border: none;
+
+    background: transparent;
+
+    color: white;
+
+    font-size: 30px;
+
+    cursor: pointer;
+}
+
+
+.popup-icon {
+    font-size: 55px;
+
+    margin-bottom: 10px;
+}
+
+
+.popup h2 {
+    font-size: 25px;
+
+    margin-bottom: 10px;
+}
+
+
+.popup p {
+    color: #cce8ff;
+
+    line-height: 1.5;
+
+    margin-bottom: 25px;
+}
+
+
+.popup-action {
+    border: none;
+
+    padding: 12px 28px;
+
+    border-radius: 12px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #36b8ff,
+            #496eff
+        );
+
+    color: white;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+
+.popup-action:hover {
+    transform: scale(1.05);
+
+    filter: brightness(1.1);
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1000px) {
+
+    .island {
+        transform: scale(0.8);
+    }
+
+    .island:hover {
+        transform:
+            translateY(-10px)
+            scale(0.88);
+    }
+
+    .central-world {
+        transform:
+            translate(-50%, -50%)
+            scale(0.8);
+    }
+
+    .central-world:hover {
+        transform:
+            translate(-50%, -50%)
+            scale(0.85);
+    }
+
+    .ranking-panel {
+        display: none;
+    }
+
+}
+
+
+@media (max-width: 700px) {
+
+    body {
+        overflow: auto;
+    }
+
+    .world {
+        height: 1100px;
+    }
+
+    .player-card {
+        width: 220px;
+        transform: scale(0.8);
+        transform-origin: top left;
+    }
+
+    .top-button {
+        transform: scale(0.75);
+        transform-origin: top right;
+    }
+
+    .class-button {
+        right: 120px;
+    }
+
+    .island {
+        position: absolute;
+
+        transform: scale(0.7);
+    }
+
+    .central-world {
+        top: 48%;
+    }
+
+    .ai-message {
+        display: none;
+    }
+
+}
+
+/* =========================================================
+   MATH PAGE
+========================================================= */
+
+
+/* =========================
+   BACKGROUND
+========================= */
+
+.math-background {
+    position: fixed;
+    inset: 0;
+
+    overflow: hidden;
+
+    z-index: -10;
+
+    background:
+        radial-gradient(
+            circle at 50% 20%,
+            #91ddff 0%,
+            #579bdd 35%,
+            #2d5798 70%,
+            #172c59 100%
+        );
+}
+
+
+.math-background::before {
+    content: "";
+
+    position: absolute;
+
+    width: 700px;
+    height: 700px;
+
+    top: -350px;
+    left: 20%;
+
+    background:
+        rgba(255,255,255,0.16);
+
+    border-radius: 50%;
+
+    filter: blur(80px);
+}
+
+
+.math-background::after {
+    content: "";
+
+    position: absolute;
+
+    width: 600px;
+    height: 600px;
+
+    right: -250px;
+    bottom: -250px;
+
+    background:
+        rgba(255,255,255,0.12);
+
+    border-radius: 50%;
+
+    filter: blur(90px);
+}
+
+
+/* =========================
+   CLOUD
+========================= */
+
+.math-cloud {
+    position: absolute;
+
+    width: 220px;
+    height: 55px;
+
+    background:
+        rgba(255,255,255,0.22);
+
+    border-radius: 100px;
+
+    filter: blur(5px);
+
+    animation:
+        mathCloudMove 30s linear infinite;
+}
+
+
+.math-cloud::before,
+.math-cloud::after {
+    content: "";
+
+    position: absolute;
+
+    background: inherit;
+
+    border-radius: 50%;
+}
+
+
+.math-cloud::before {
+    width: 90px;
+    height: 90px;
+
+    left: 25px;
+    bottom: 15px;
+}
+
+
+.math-cloud::after {
+    width: 100px;
+    height: 100px;
+
+    right: 25px;
+    bottom: 8px;
+}
+
+
+.math-cloud-1 {
+    top: 18%;
+    left: -250px;
+}
+
+
+.math-cloud-2 {
+    top: 65%;
+    left: 60%;
+
+    transform: scale(0.7);
+
+    animation-delay: -12s;
+}
+
+
+@keyframes mathCloudMove {
+
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(130vw);
+    }
+
+}
+
+
+/* =========================
+   STARS
+========================= */
+
+.math-stars span {
+    position: absolute;
+
+    font-size: 18px;
+
+    opacity: 0.65;
+
+    animation:
+        mathTwinkle 2s infinite alternate;
+}
+
+
+.math-stars span:nth-child(1) {
+    top: 12%;
+    left: 18%;
+}
+
+
+.math-stars span:nth-child(2) {
+    top: 18%;
+    left: 75%;
+}
+
+
+.math-stars span:nth-child(3) {
+    top: 35%;
+    left: 90%;
+}
+
+
+.math-stars span:nth-child(4) {
+    top: 55%;
+    left: 8%;
+}
+
+
+.math-stars span:nth-child(5) {
+    top: 75%;
+    left: 25%;
+}
+
+
+.math-stars span:nth-child(6) {
+    top: 80%;
+    left: 80%;
+}
+
+
+.math-stars span:nth-child(7) {
+    top: 42%;
+    left: 45%;
+}
+
+
+.math-stars span:nth-child(8) {
+    top: 65%;
+    left: 55%;
+}
+
+
+@keyframes mathTwinkle {
+
+    from {
+        opacity: 0.2;
+        transform: scale(0.7);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+
+}
+
+
+/* =========================
+   HEADER
+========================= */
+
+.math-header {
+    position: fixed;
+
+    top: 0;
+    left: 0;
+    right: 0;
+
+    height: 82px;
+
+    padding:
+        12px 25px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    background:
+        rgba(12,35,70,0.78);
+
+    border-bottom:
+        1px solid
+        rgba(160,220,255,0.25);
+
+    backdrop-filter: blur(12px);
+
+    z-index: 50;
+}
+
+
+/* =========================
+   BACK BUTTON
+========================= */
+
+.back-button {
+    width: 52px;
+    height: 52px;
+
+    border: 1px solid
+        rgba(255,255,255,0.3);
+
+    border-radius: 15px;
+
+    background:
+        rgba(255,255,255,0.1);
+
+    color: white;
+
+    font-size: 28px;
+
+    cursor: pointer;
+
+    transition: 0.25s;
+}
+
+
+.back-button:hover {
+    transform: translateX(-4px);
+
+    background:
+        rgba(255,255,255,0.18);
+}
+
+
+/* =========================
+   MATH TITLE
+========================= */
+
+.math-title {
+    display: flex;
+
+    align-items: center;
+
+    gap: 13px;
+
+    margin-right: auto;
+
+    margin-left: 18px;
+}
+
+
+.math-title-icon {
+    width: 52px;
+    height: 52px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-size: 30px;
+
+    border-radius: 15px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #6dcf91,
+            #277354
+        );
+
+    box-shadow:
+        0 8px 18px
+        rgba(0,0,0,0.25);
+}
+
+
+.math-title h1 {
+    font-size: 20px;
+
+    letter-spacing: 1px;
+}
+
+
+.math-title p {
+    margin-top: 2px;
+
+    font-size: 11px;
+
+    color: #ccecff;
+}
+
+
+/* =========================
+   PLAYER
+========================= */
+
+.math-player {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    padding:
+        8px 14px;
+
+    border-radius: 15px;
+
+    background:
+        rgba(255,255,255,0.08);
+
+    border:
+        1px solid
+        rgba(255,255,255,0.2);
+}
+
+
+.math-player-icon {
+    font-size: 25px;
+}
+
+
+.math-player strong {
+    display: block;
+
+    font-size: 12px;
+}
+
+
+.math-xp {
+    width: 110px;
+
+    height: 6px;
+
+    margin-top: 5px;
+
+    overflow: hidden;
+
+    border-radius: 10px;
+
+    background:
+        rgba(0,0,0,0.3);
+}
+
+
+.math-xp-progress {
+    width: 0%;
+
+    height: 100%;
+
+    background:
+        linear-gradient(
+            90deg,
+            #55eaff,
+            #7c9cff
+        );
+}
+
+
+.math-level {
+    font-size: 11px;
+
+    font-weight: bold;
+
+    color: #ffd85c;
+}
+
+
+/* =========================
+   MAIN
+========================= */
+
+.math-main {
+    width: min(1200px, 94%);
+
+    margin:
+        0 auto;
+
+    padding:
+        115px 0 70px;
+
+    min-height: 100vh;
+
+    overflow-y: auto;
+}
+
+
+/* =========================
+   HERO
+========================= */
+
+.math-hero {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 25px;
+
+    margin-bottom: 35px;
+
+    text-align: left;
+}
+
+
+.hero-book {
+    width: 105px;
+    height: 105px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    font-size: 58px;
+
+    border-radius: 50%;
+
+    background:
+        radial-gradient(
+            circle at 35% 30%,
+            #8bd38a,
+            #327b5c
+        );
+
+    box-shadow:
+        0 20px 30px
+        rgba(0,0,0,0.3),
+
+        inset
+        0 8px 15px
+        rgba(255,255,255,0.2);
+}
+
+
+.hero-label {
+    font-size: 10px;
+
+    letter-spacing: 3px;
+
+    color: #bcecff;
+}
+
+
+.math-hero h2 {
+    margin-top: 5px;
+
+    font-size: 31px;
+
+    line-height: 1.1;
+
+    text-shadow:
+        0 3px 5px
+        rgba(0,0,0,0.25);
+}
+
+
+.math-hero h2 span {
+    color: #ffd85c;
+}
+
+
+.math-hero p {
+    margin-top: 8px;
+
+    font-size: 13px;
+
+    color: #e0f3ff;
+}
+
+
+/* =========================
+   SECTION HEADING
+========================= */
+
+.section-heading {
+    display: flex;
+
+    align-items: end;
+
+    justify-content: space-between;
+
+    margin-bottom: 18px;
+}
+
+
+.section-heading span {
+    font-size: 10px;
+
+    letter-spacing: 2px;
+
+    color: #9fe6ff;
+}
+
+
+.section-heading h2 {
+    margin-top: 3px;
+
+    font-size: 22px;
+}
+
+
+.section-heading p {
+    font-size: 11px;
+
+    color: #c6e5ff;
+}
+
+
+/* =========================
+   CLASS GRID
+========================= */
+
+.class-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(4, 1fr);
+
+    gap: 15px;
+}
+
+
+/* =========================
+   CLASS CARD
+========================= */
+
+.class-card {
+    position: relative;
+
+    min-height: 155px;
+
+    padding: 20px;
+
+    overflow: hidden;
+
+    text-align: left;
+
+    color: white;
+
+    border:
+        1px solid
+        rgba(165,220,255,0.35);
+
+    border-radius: 20px;
+
+    cursor: pointer;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(42,103,158,0.9),
+            rgba(22,55,105,0.92)
+        );
+
+    box-shadow:
+        0 12px 25px
+        rgba(0,0,0,0.22);
+
+    transition:
+        transform 0.25s,
+        box-shadow 0.25s,
+        border 0.25s;
+}
+
+
+.class-card::before {
+    content: "";
+
+    position: absolute;
+
+    width: 90px;
+    height: 90px;
+
+    right: -35px;
+    top: -35px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(255,255,255,0.08);
+}
+
+
+.class-card:hover {
+    transform:
+        translateY(-8px)
+        scale(1.02);
+
+    border-color:
+        rgba(255,255,255,0.65);
+
+    box-shadow:
+        0 20px 35px
+        rgba(0,0,0,0.35),
+
+        0 0 25px
+        rgba(120,210,255,0.15);
+}
+
+
+.class-number {
+    position: absolute;
+
+    top: 12px;
+    right: 15px;
+
+    font-size: 11px;
+
+    opacity: 0.5;
+
+    font-weight: bold;
+}
+
+
+.class-icon {
+    font-size: 32px;
+
+    margin-bottom: 7px;
+
+    filter:
+        drop-shadow(
+            0 3px 3px
+            rgba(0,0,0,0.3)
+        );
+}
+
+
+.class-card h3 {
+    font-size: 17px;
+}
+
+
+.class-card p {
+    margin-top: 4px;
+
+    max-width: 150px;
+
+    font-size: 10px;
+
+    line-height: 1.4;
+
+    color: #cce9ff;
+}
+
+
+.class-arrow {
+    position: absolute;
+
+    right: 15px;
+    bottom: 14px;
+
+    font-size: 20px;
+
+    color: #9ee9ff;
+
+    transition: 0.25s;
+}
+
+
+.class-card:hover .class-arrow {
+    transform: translateX(5px);
+}
+
+
+.class-card-special {
+    border-color:
+        rgba(255,216,92,0.5);
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(69,102,159,0.95),
+            rgba(31,52,105,0.95)
+        );
+}
+
+
+.class-card-special .class-icon {
+    filter:
+        drop-shadow(
+            0 0 8px
+            rgba(255,215,80,0.45)
+        );
+}
+
+
+/* =========================
+   TOOLS
+========================= */
+
+.math-tools {
+    display: grid;
+
+    grid-template-columns:
+        repeat(3, 1fr);
+
+    gap: 15px;
+
+    margin-top: 25px;
+}
+
+
+.math-tool {
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 14px 17px;
+
+    color: white;
+
+    text-align: left;
+
+    border:
+        1px solid
+        rgba(255,255,255,0.2);
+
+    border-radius: 16px;
+
+    cursor: pointer;
+
+    background:
+        rgba(15,40,78,0.75);
+
+    transition: 0.25s;
+}
+
+
+.math-tool:hover {
+    transform: translateY(-4px);
+
+    background:
+        rgba(35,77,130,0.9);
+}
+
+
+.math-tool > span {
+    font-size: 28px;
+}
+
+
+.math-tool div {
+    flex: 1;
+}
+
+
+.math-tool strong {
+    display: block;
+
+    font-size: 13px;
+}
+
+
+.math-tool small {
+    display: block;
+
+    margin-top: 3px;
+
+    font-size: 9px;
+
+    color: #b9dcf5;
+}
+
+
+.math-tool b {
+    font-size: 20px;
+
+    color: #8edfff;
+}
+
+
+/* =========================
+   AI
+========================= */
+
+.math-ai {
+    position: fixed;
+
+    right: 25px;
+    bottom: 20px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+
+    z-index: 30;
+}
+
+
+.math-ai-text {
+    text-align: right;
+
+    font-size: 11px;
+
+    line-height: 1.4;
+
+    text-shadow:
+        0 2px 4px
+        rgba(0,0,0,0.4);
+}
+
+
+.math-ai-text strong {
+    color: #fff;
+}
+
+
+.math-ai-text p {
+    color: #d8efff;
+}
+
+
+.math-ai-icon {
+    font-size: 38px;
+
+    filter:
+        drop-shadow(
+            0 4px 5px
+            rgba(0,0,0,0.35)
+        );
+}
+
+
+/* =========================
+   POPUP
+========================= */
+
+.math-popup-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    display: none;
+
+    align-items: center;
+    justify-content: center;
+
+    background:
+        rgba(4,15,35,0.7);
+
+    backdrop-filter: blur(7px);
+
+    z-index: 100;
+}
+
+
+.math-popup-overlay.show {
+    display: flex;
+}
+
+
+.math-popup {
+    position: relative;
+
+    width: min(420px, 90%);
+
+    padding: 35px;
+
+    text-align: center;
+
+    border-radius: 25px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #1c477d,
+            #102a55
+        );
+
+    border:
+        2px solid
+        rgba(156,219,255,0.5);
+
+    box-shadow:
+        0 30px 60px
+        rgba(0,0,0,0.5);
+
+    animation:
+        mathPopupIn 0.25s ease;
+}
+
+
+@keyframes mathPopupIn {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(25px)
+            scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+
+}
+
+
+.math-popup-close {
+    position: absolute;
+
+    top: 8px;
+    right: 14px;
+
+    border: none;
+
+    background: transparent;
+
+    color: white;
+
+    font-size: 28px;
+
+    cursor: pointer;
+}
+
+
+.math-popup-icon {
+    font-size: 52px;
+
+    margin-bottom: 8px;
+}
+
+
+.math-popup h2 {
+    font-size: 23px;
+
+    margin-bottom: 10px;
+}
+
+
+.math-popup p {
+    color: #cce8ff;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+
+    margin-bottom: 22px;
+}
+
+
+.math-popup-button {
+    border: none;
+
+    padding: 11px 28px;
+
+    border-radius: 12px;
+
+    color: white;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    background:
+        linear-gradient(
+            135deg,
+            #36b8ff,
+            #496eff
+        );
+
+    transition: 0.2s;
+}
+
+
+.math-popup-button:hover {
+    transform: scale(1.05);
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1000px) {
+
+    .class-grid {
+        grid-template-columns:
+            repeat(3, 1fr);
+    }
+
+}
+
+
+@media (max-width: 750px) {
+
+    .math-header {
+        padding: 10px 15px;
+    }
+
+
+    .math-title {
+        margin-left: 10px;
+    }
+
+
+    .math-title p {
+        display: none;
+    }
+
+
+    .math-player {
+        padding: 6px 8px;
+    }
+
+
+    .math-player-icon {
+        display: none;
+    }
+
+
+    .math-xp {
+        width: 70px;
+    }
+
+
+    .math-main {
+        padding-top: 105px;
+    }
+
+
+    .math-hero {
+        justify-content: flex-start;
+    }
+
+
+    .hero-book {
+        width: 70px;
+        height: 70px;
+
+        font-size: 40px;
+    }
+
+
+    .math-hero h2 {
+        font-size: 24px;
+    }
+
+
+    .class-grid {
+        grid-template-columns:
+            repeat(2, 1fr);
+    }
+
+
+    .math-tools {
+        grid-template-columns:
+            1fr;
+    }
+
+
+    .math-ai {
+        display: none;
+    }
+
+}
+
+
+@media (max-width: 480px) {
+
+    .math-title-icon {
+        width: 42px;
+        height: 42px;
+
+        font-size: 24px;
+    }
+
+
+    .math-title h1 {
+        font-size: 16px;
+    }
+
+
+    .math-player {
+        display: none;
+    }
+
+
+    .math-hero {
+        gap: 12px;
+    }
+
+
+    .hero-book {
+        display: none;
+    }
+
+
+    .class-grid {
+        grid-template-columns:
+            1fr 1fr;
+
+        gap: 10px;
+    }
+
+
+    .class-card {
+        min-height: 140px;
+
+        padding: 15px;
+    }
+
+}
+
+body.math-page {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* =========================================================
+   FIX SCROLL - PHYSICS GRADE
+========================================================= */
+
+html {
+    min-height: 100%;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+body.math-page {
+    min-height: 100vh;
+    height: auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* Trang Physics phải có thể cuộn */
+body.math-page .math-background {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Nội dung nằm trên background */
+body.math-page main {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+}
+
+/* =========================================================
+   POPUP - CHỈ KHÓA SCROLL KHI POPUP ĐANG MỞ
+========================================================= */
+
+body.popup-open {
+    overflow: hidden;
+}
+
+body:not(.popup-open) {
+    overflow-y: auto;
+}
+
+/* =========================================================
+   PHYSICS TOPIC GRID
+========================================================= */
+
+body.math-page .topics-grid,
+body.math-page #topicsGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* Topic card */
+body.math-page .topic-card {
+    position: relative;
+    min-height: 220px;
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 24px;
+
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+
+    background: rgba(255,255,255,0.10);
+    backdrop-filter: blur(12px);
+
+    color: white;
+    text-align: left;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+body.math-page .topic-card:hover {
+    transform: translateY(-5px);
+    background: rgba(255,255,255,0.16);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.20);
+}
+
+body.math-page .topic-icon {
+    font-size: 36px;
+    margin-bottom: 15px;
+}
+
+body.math-page .topic-card h3 {
+    margin: 0 0 10px;
+    font-size: 22px;
+    color: white;
+}
+
+body.math-page .topic-card p {
+    margin: 0 0 20px;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.5;
+}
+
+body.math-page .topic-progress {
+    margin-top: auto;
+}
+
+body.math-page .topic-progress-bar {
+    width: 100%;
+    height: 7px;
+    margin-top: 8px;
+
+    border-radius: 999px;
+    background: rgba(255,255,255,0.15);
+    overflow: hidden;
+}
+
+body.math-page .topic-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: white;
+}
+
+body.math-page .topic-arrow {
+    position: absolute;
+    right: 20px;
+    bottom: 20px;
+    font-size: 24px;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1000px) {
+
+    body.math-page .topics-grid,
+    body.math-page #topicsGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+
+@media (max-width: 650px) {
+
+    body.math-page .topics-grid,
+    body.math-page #topicsGrid {
+        grid-template-columns: 1fr;
+        padding: 12px;
+    }
+
+    body.math-page .topic-card {
+        min-height: 190px;
+    }
+
+}

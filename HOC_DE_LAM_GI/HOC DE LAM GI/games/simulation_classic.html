@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thử thách thực tế - HỌC ĐỂ LÀM GÌ?</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Segoe UI",Arial,sans-serif;background:linear-gradient(160deg,#0f2447,#1d4a7a 60%,#2b6a8f);color:#fff;min-height:100vh}
+header{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:rgba(0,0,0,.25)}
+button{font:inherit;cursor:pointer;border:0}
+.back{background:rgba(255,255,255,.15);color:#fff;padding:8px 14px;border-radius:10px}
+.score{font-weight:800;color:#ffd166}
+main{max-width:980px;margin:0 auto;padding:18px}
+.card{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);border-radius:18px;padding:20px;margin-bottom:16px;backdrop-filter:blur(6px)}
+h1{font-size:26px;margin-bottom:8px}h2{font-size:18px;margin-bottom:6px;color:#ffd166}
+p{line-height:1.55;margin:6px 0}
+.big{padding:12px 22px;border-radius:12px;background:#ffd166;color:#4a2c00;font-weight:800;font-size:16px;margin-top:10px}
+.big.alt{background:rgba(255,255,255,.18);color:#fff}
+.game{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+@media(max-width:760px){.game{grid-template-columns:1fr}}
+canvas{width:100%;border-radius:14px;background:#cfe8ff;display:block}
+.sl{margin:12px 0}.sl label{display:flex;justify-content:space-between;font-weight:700;font-size:14px}
+input[type=range]{width:100%;accent-color:#ffd166}
+.m{display:flex;justify-content:space-between;padding:7px 10px;border-radius:8px;background:rgba(0,0,0,.2);margin:5px 0;font-size:14px}
+.m.bad{background:rgba(255,80,80,.35)}
+.res{padding:12px;border-radius:12px;margin-top:12px;font-weight:600;line-height:1.5}
+.res.ok{background:rgba(60,200,120,.35)}.res.no{background:rgba(255,90,90,.35)}
+.dots span{display:inline-block;width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.3);margin-right:6px}
+.dots .on{background:#ffd166}.dots .done{background:#5ee08e}
+.tag{display:inline-block;background:#ffd166;color:#4a2c00;border-radius:20px;padding:2px 12px;font-weight:800;font-size:12px;margin:4px 4px 0 0}
+</style>
+</head>
+<body>
+<header>
+  <button class="back" onclick="goBack()">← Quay lại bài học</button>
+  <div class="score">⭐ <span id="score">0</span> điểm</div>
+</header>
+<main id="app"></main>
+
+<script>
+/* =========================================================
+   GAME TÌNH HUỐNG DÙNG CHUNG — lessons có game_type = "simulation"
+   Trang này tự đọc ?lesson_id=..., lấy bài học từ backend, rồi chọn
+   màn chơi trong SCENARIOS theo "topic" của bài.
+
+   ➜ THÊM MÀN CHƠI CHO BÀI MỚI: copy 1 khối trong SCENARIOS, đổi tên key
+     thành topic của bài (vd 'ap-suat'), sửa story / params / rounds / calc / draw / reveal.
+     Không cần sửa engine bên dưới.
+========================================================= */
+const API = window.HOC_API_BASE || 'http://127.0.0.1:8000/api';
+const Q = new URLSearchParams(location.search);
+const LESSON_ID = Q.get('lesson_id');
+const USER_ID = Number(localStorage.getItem('user_id')) || 1;
+const $ = id => document.getElementById(id);
+const fmt = (n, d = 2) => Number(n).toLocaleString('vi-VN', { maximumFractionDigits: d });
+
+/* ---------- Các bài dùng chung 1 màn chơi ---------- */
+const ALIAS = { 'toc-do': 'toc-do-chuyen-dong', 'dinh-luat-ohm': 'dien-tro', 'dong-dien': 'dien-tro' };
+
+/* =========================================================
+   KHO MÀN CHƠI (SCENARIOS)
+   params : thanh trượt người chơi điều chỉnh
+   rounds : mỗi vòng là 1 tình huống (env = điều kiện của vòng)
+   calc   : tính kết quả từ params + env -> {ok, why, lines:[[nhãn, giá trị, cảnh báo?]]}
+   draw   : vẽ minh hoạ lên canvas
+   reveal : phần "HỌC ĐỂ LÀM GÌ?" hiện khi kết thúc
+========================================================= */
+const SCENARIOS = {
+
+/* ---------- Vật lý 8: Lực đẩy Archimedes ---------- */
+'luc-day-archimedes': {
+  icon: '🚢', title: 'Thuyền chở hàng: nổi hay chìm?',
+  story: 'Bạn là chủ một chiếc thuyền chở hàng. Mỗi chuyến chở quá ít thì lỗ, chở quá nhiều thì thuyền chìm — mất cả hàng lẫn thuyền. Hãy chọn lượng hàng và bề rộng thuyền để chuyến đi vừa lời vừa an toàn.',
+  params: [
+    { k: 'load', label: 'Khối lượng hàng', unit: 'kg', min: 0, max: 5000, step: 50, v: 500 },
+    { k: 'w', label: 'Bề rộng thuyền', unit: 'm', min: 1, max: 4, step: 0.1, v: 2 }],
+  rounds: [
+    { brief: 'Sông nước ngọt. Hợp đồng yêu cầu chở ít nhất 2000 kg, mạn khô (phần thân thuyền còn nhô trên mặt nước) phải ≥ 15 cm.', env: { rho: 1000, L: 4, H: 0.6, hull: 400, need: 2000, free: 0.15, name: 'sông' } },
+    { brief: 'Ra biển có sóng. Cần chở ≥ 2500 kg và mạn khô ≥ 25 cm để sóng không tràn vào. Gợi ý: bề rộng thuyền ảnh hưởng thể tích chiếm chỗ.', env: { rho: 1025, L: 4, H: 0.6, hull: 400, need: 2500, free: 0.25, name: 'biển' } },
+    { brief: 'Thuyền ra biển rồi quay vào sông, nước ngọt nhẹ hơn nước mặn. Chở ≥ 3000 kg, mạn khô ≥ 20 cm, thân thuyền thấp hơn (H = 55 cm).', env: { rho: 1000, L: 4, H: 0.55, hull: 400, need: 3000, free: 0.2, name: 'sông' } }],
+  calc(p, e) {
+    const m = e.hull + p.load, V = e.L * p.w * e.H;
+    const draft = m / (e.rho * e.L * p.w), fa = e.rho * 10 * V, P = m * 10, free = e.H - draft;
+    const ok = free >= e.free && p.load >= e.need;
+    let why;
+    if (free < 0) why = `Chìm! Trọng lượng ${fmt(P / 1000)} kN lớn hơn lực đẩy tối đa ${fmt(fa / 1000)} kN, nước tràn vào thuyền.`;
+    else if (free < e.free) why = `Mạn khô chỉ còn ${fmt(free * 100, 1)} cm, thấp hơn mức an toàn ${e.free * 100} cm — sóng nhỏ cũng đủ làm thuyền ngập.`;
+    else if (p.load < e.need) why = `Thuyền an toàn nhưng chỉ chở ${p.load} kg, chưa đủ ${e.need} kg theo hợp đồng.`;
+    else why = `Thuyền nổi vững: lực đẩy Archimedes cân bằng trọng lượng, mạn khô ${fmt(free * 100, 1)} cm.`;
+    return { ok, why, lines: [['Trọng lượng (thuyền + hàng)', fmt(P / 1000) + ' kN'], ['Lực đẩy tối đa FA = d·V', fmt(fa / 1000) + ' kN'],
+      ['Mớn nước (phần chìm)', fmt(draft * 100, 1) + ' cm', draft > e.H], ['Mạn khô', fmt(free * 100, 1) + ' cm', free < e.free]], free, draft };
+  },
+  draw(c, p, e, r) {
+    const W = 640, H = 300, wy = 150; c.fillStyle = '#bfe3ff'; c.fillRect(0, 0, W, H);
+    c.fillStyle = '#2f80c9'; c.fillRect(0, wy, W, H - wy);
+    const bw = 120 + p.w * 55, bh = e.H * 180, draft = Math.max(0, Math.min(r.draft, e.H * 1.6)) * 180, x = (W - bw) / 2, top = wy - (bh - draft);
+    c.fillStyle = '#8b5a2b'; c.fillRect(x, top, bw, bh);
+    c.fillStyle = '#d9a441'; for (let i = 0; i < Math.min(8, p.load / 600); i++) c.fillRect(x + 10 + i * (bw - 30) / 8, top - 22, 28, 22);
+    c.fillStyle = 'rgba(47,128,201,.75)'; c.fillRect(0, wy, W, H - wy);
+    c.strokeStyle = r.free < e.free ? '#ff5a5a' : '#fff'; c.setLineDash([6, 5]); c.beginPath(); c.moveTo(0, wy); c.lineTo(W, wy); c.stroke(); c.setLineDash([]);
+    c.fillStyle = '#123'; c.font = 'bold 15px Arial'; c.fillText('Nước ' + e.name + ' (d = ' + e.rho * 10 + ' N/m³)', 12, 24);
+  },
+  reveal: { formula: 'FA = d · V   |   Thuyền nổi khi P ≤ FA', jobs: ['Kỹ sư đóng tàu', 'Thuyền trưởng / chủ tàu hàng', 'Cứu hộ cứu nạn đường thủy'],
+    text: 'Vạch ghi mớn nước (Plimsoll) trên thân tàu thật chính là bài học này: tàu từ biển vào sông phải chở ít hơn vì nước ngọt đẩy yếu hơn. Hiểu lực đẩy Archimedes giúp tính được tải an toàn trước khi nhận hàng.' }
+},
+
+/* ---------- Vật lý 9: Điện trở & định luật Ohm ---------- */
+'dien-tro': {
+  icon: '💡', title: 'Cứu chiếc đèn LED',
+  story: 'Bạn lắp mạch đèn LED cho bảng hiệu cửa hàng. LED rất "mong manh": dòng 10–20 mA thì sáng đẹp, vượt ~25 mA là cháy. Nguồn điện mỗi nơi một khác — chọn điện trở R để đèn sáng mà không cháy, và bản thân điện trở không nóng quá.',
+  params: [{ k: 'R', label: 'Điện trở R', unit: 'Ω', min: 50, max: 2000, step: 10, v: 1500 }],
+  rounds: [
+    { brief: 'Nguồn 3 V (2 pin AA). LED có hiệu điện thế làm việc 2 V.', env: { U: 3, Vf: 2, nguon: '2 pin AA' } },
+    { brief: 'Nguồn 5 V (cổng sạc USB).', env: { U: 5, Vf: 2, nguon: 'cổng USB' } },
+    { brief: 'Nguồn 9 V (pin vuông). Chú ý: điện trở chỉ chịu được 0,25 W, quá sẽ nóng và cháy.', env: { U: 9, Vf: 2, nguon: 'pin vuông 9 V' } },
+    { brief: 'Nguồn 12 V (ắc quy xe). Điện trở 0,25 W — chọn R sao cho dòng vừa đúng và R không quá nóng.', env: { U: 12, Vf: 2, nguon: 'ắc quy 12 V' } }],
+  calc(p, e) {
+    const I = (e.U - e.Vf) / p.R, mA = I * 1000, P = I * I * p.R;
+    const ok = mA >= 10 && mA <= 20 && P <= 0.25; let why;
+    if (mA > 25) why = `LED cháy! Dòng ${fmt(mA, 0)} mA vượt xa mức chịu đựng. Theo định luật Ohm I = (U − ULED)/R, R nhỏ thì dòng lớn.`;
+    else if (mA > 20) why = `Dòng ${fmt(mA, 0)} mA hơi cao, LED nhanh xuống cấp. Tăng R lên một chút.`;
+    else if (mA < 10) why = `Dòng chỉ ${fmt(mA, 1)} mA nên đèn rất mờ. Giảm R để dòng tăng.`;
+    else if (P > 0.25) why = `Dòng đúng nhưng điện trở toả ${fmt(P)} W > 0,25 W, sẽ nóng đến cháy. Cần điện trở công suất lớn hơn.`;
+    else why = `Chuẩn! Dòng ${fmt(mA, 1)} mA: LED sáng đẹp, điện trở chỉ toả ${fmt(P)} W.`;
+    return { ok, why, mA, P, lines: [['Dòng điện I = (U − 2)/R', fmt(mA, 1) + ' mA', mA > 20 || mA < 10], ['Công suất toả trên R', fmt(P) + ' W', P > 0.25], ['Trạng thái LED', mA > 25 ? 'Cháy ✖' : mA < 10 ? 'Quá mờ' : 'Sáng tốt ✔']] };
+  },
+  draw(c, p, e, r) {
+    c.fillStyle = '#1b2433'; c.fillRect(0, 0, 640, 300);
+    c.strokeStyle = '#ddd'; c.lineWidth = 3; c.strokeRect(60, 70, 520, 160);
+    c.fillStyle = '#1b2433'; c.fillRect(250, 60, 140, 20); c.fillStyle = r.P > 0.25 ? '#ff6b3d' : '#c9a15b'; c.fillRect(255, 62, 130, 16);
+    c.fillStyle = '#fff'; c.font = 'bold 14px Arial'; c.fillText('R = ' + p.R + ' Ω', 270, 52);
+    c.fillStyle = '#ffd166'; c.fillRect(46, 130, 28, 40); c.fillStyle = '#123'; c.fillText(e.U + 'V', 48, 155); c.fillStyle = '#fff'; c.fillText(e.nguon, 20, 190);
+    const burnt = r.mA > 25, a = Math.max(0.05, Math.min(1, r.mA / 20)), cx = 520, cy = 150;
+    if (!burnt) { const g = c.createRadialGradient(cx, cy, 5, cx, cy, 70 * a); g.addColorStop(0, `rgba(255,240,120,${a})`); g.addColorStop(1, 'rgba(255,240,120,0)'); c.fillStyle = g; c.fillRect(cx - 80, cy - 80, 160, 160); }
+    c.fillStyle = burnt ? '#222' : `rgba(255,${200 + 40 * a | 0},80,${0.35 + 0.65 * a})`; c.beginPath(); c.arc(cx, cy, 24, 0, 7); c.fill();
+    if (burnt) { c.fillStyle = '#aaa'; c.font = '28px Arial'; c.fillText('💨', cx - 14, cy - 30); }
+  },
+  reveal: { formula: 'I = U / R   |   P = I² · R', jobs: ['Kỹ sư điện tử', 'Thợ sửa thiết bị điện', 'Người làm đồ chơi / robot'],
+    text: 'Gần như mọi thiết bị điện tử đều có điện trở bảo vệ linh kiện. Biết định luật Ohm, bạn tự tính được cần điện trở bao nhiêu thay vì thử đến khi cháy — tiết kiệm tiền và an toàn.' }
+},
+
+/* ---------- Vật lý 7: Tốc độ chuyển động ---------- */
+'toc-do-chuyen-dong': {
+  icon: '🚚', title: 'Giao hàng đúng giờ',
+  story: 'Bạn lái xe giao hàng. Đi chậm thì trễ giờ bị phạt, đi quá tốc độ cho phép thì bị phạt nặng hơn và nguy hiểm. Hãy chọn tốc độ cho từng đoạn đường bằng kiến thức t = s / v.',
+  params: [{ k: 'v1', label: 'Tốc độ đoạn 1', unit: 'km/h', min: 10, max: 100, step: 1, v: 30 }, { k: 'v2', label: 'Tốc độ đoạn 2', unit: 'km/h', min: 10, max: 100, step: 1, v: 40 }],
+  rounds: [
+    { brief: 'Đoạn 1: 10 km khu dân cư (tối đa 40 km/h). Đoạn 2: 20 km quốc lộ (tối đa 60 km/h). Phải giao trong 40 phút.', env: { s1: 10, l1: 40, s2: 20, l2: 60, T: 40 } },
+    { brief: 'Đoạn 1: 12 km (tối đa 40 km/h). Đoạn 2: 18 km (tối đa 60 km/h). Hạn giao: 38 phút.', env: { s1: 12, l1: 40, s2: 18, l2: 60, T: 38 } },
+    { brief: 'Tắc đường! Đoạn 1: 6 km chỉ đi được tối đa 20 km/h. Đoạn 2: 24 km đường cao tốc (tối đa 80 km/h). Vẫn phải giao trong 40 phút — hãy tính tốc độ cần thiết cho đoạn 2.', env: { s1: 6, l1: 20, s2: 24, l2: 80, T: 40 } }],
+  calc(p, e) {
+    const t1 = e.s1 / p.v1 * 60, t2 = e.s2 / p.v2 * 60, t = t1 + t2, avg = (e.s1 + e.s2) / (t / 60);
+    const over = p.v1 > e.l1 || p.v2 > e.l2, late = t > e.T, ok = !over && !late; let why;
+    if (over) why = `Quá tốc độ cho phép (${p.v1 > e.l1 ? 'đoạn 1 tối đa ' + e.l1 : 'đoạn 2 tối đa ' + e.l2} km/h) — bị phạt và nguy hiểm.`;
+    else if (late) why = `Mất ${fmt(t, 1)} phút, trễ ${fmt(t - e.T, 1)} phút. Dùng t = s / v để tìm tốc độ đoạn còn lại đủ nhanh.`;
+    else why = `Đúng giờ! Tổng ${fmt(t, 1)} phút (hạn ${e.T} phút), tốc độ trung bình ${fmt(avg, 1)} km/h, không vi phạm giới hạn.`;
+    return { ok, why, t1, t2, t, lines: [['Thời gian đoạn 1 (t = s/v)', fmt(t1, 1) + ' phút'], ['Thời gian đoạn 2', fmt(t2, 1) + ' phút'], ['Tổng thời gian', fmt(t, 1) + ' / ' + e.T + ' phút', late], ['Tốc độ trung bình', fmt(avg, 1) + ' km/h'], ['Giới hạn', over ? 'Vượt tốc độ ✖' : 'Hợp lệ ✔', over]] };
+  },
+  draw(c, p, e, r) {
+    c.fillStyle = '#e9f4e3'; c.fillRect(0, 0, 640, 300); const tot = e.s1 + e.s2, w1 = 560 * e.s1 / tot, w2 = 560 - w1;
+    c.fillStyle = '#7a7f87'; c.fillRect(40, 90, w1, 40); c.fillStyle = '#4e5560'; c.fillRect(40 + w1, 90, w2, 40);
+    c.fillStyle = '#fff'; c.font = 'bold 13px Arial'; c.fillText(e.s1 + ' km · ≤' + e.l1, 46, 115); c.fillText(e.s2 + ' km · ≤' + e.l2, 46 + w1, 115);
+    c.fillStyle = '#123'; c.font = 'bold 15px Arial'; c.fillText('Đồng hồ giao hàng (hạn ' + e.T + ' phút)', 40, 180);
+    c.fillStyle = '#ccd'; c.fillRect(40, 195, 560, 26); const used = Math.min(1.4, r.t / e.T);
+    c.fillStyle = r.t > e.T ? '#ff5a5a' : '#3bb877'; c.fillRect(40, 195, 560 * used / 1.4, 26);
+    c.fillStyle = '#123'; c.fillRect(40 + 560 / 1.4 - 2, 190, 4, 36); c.fillText('⏰', 40 + 560 / 1.4 - 8, 245); c.font = '30px Arial'; c.fillText('🚚', 40 + Math.min(1, used / 1) * 520 / 1.4 * 1, 75);
+  },
+  reveal: { formula: 'v = s / t   |   t = s / v   |   s = v · t', jobs: ['Điều phối giao hàng / logistics', 'Tài xế công nghệ', 'Kỹ sư quy hoạch giao thông'],
+    text: 'Ứng dụng giao hàng và bản đồ ước tính giờ đến bằng chính công thức này. Biết tính, bạn tự chủ động hẹn giờ, lên lịch di chuyển mà không phải đoán, và hiểu vì sao giới hạn tốc độ tồn tại.' }
+}
+};
+
+/* =========================================================
+   ENGINE (không cần sửa)
+========================================================= */
+let S = null, sc = null, lesson = null, ri = 0, tries = 0, score = 0, sid = null, lastEv = 0;
+
+async function api(path, opt) {
+  const r = await fetch(API + path, { headers: { 'Content-Type': 'application/json' }, ...opt });
+  if (!r.ok) throw new Error(r.status); return r.json();
+}
+async function ev(action, data) { if (!sid) return; try { await api(`/games/sessions/${sid}/events`, { method: 'POST', body: JSON.stringify({ action, event_data: JSON.stringify(data || {}) }) }); } catch (e) { } }
+function goBack() { if (history.length > 1) history.back(); else location.href = '../index.html'; }
+
+async function init() {
+  let topic = Q.get('topic');
+  if (LESSON_ID) {
+    try { lesson = await api('/content/lessons/' + LESSON_ID); topic = lesson.topic; } catch (e) { console.warn('Không tải được bài học (chạy offline):', e.message); }
+  }
+  topic = ALIAS[topic] || topic; sc = SCENARIOS[topic];
+  if (!sc) return noScenario();
+  try { const g = await api(`/content/lessons/${LESSON_ID}/games`); if (g[0]) { const s = await api('/games/sessions', { method: 'POST', body: JSON.stringify({ user_id: USER_ID, game_id: g[0].id }) }); sid = s.id; } } catch (e) { }
+  intro();
+}
+
+function noScenario() {
+  $('app').innerHTML = `<div class="card"><h1>🚧 Màn chơi đang được xây dựng</h1><p>${lesson ? 'Bài "<b>' + lesson.title + '</b>" chưa có thử thách thực tế.' : 'Chưa xác định được bài học.'}</p>${lesson && lesson.real_life ? '<p><b>Ý tưởng:</b> ' + lesson.real_life + '</p>' : ''}<button class="big" onclick="goBack()">Quay lại</button></div>`;
+}
+function intro() {
+  $('app').innerHTML = `<div class="card"><h1>${sc.icon} ${sc.title}</h1><p>${sc.story}</p><p>🎯 Có <b>${sc.rounds.length} tình huống</b>, mỗi tình huống một thử thách khác nhau.</p><button class="big" onclick="round(0)">Bắt đầu</button></div>`;
+}
+function round(i) {
+  ri = i; tries = 0; const R = sc.rounds[i];
+  S = {}; sc.params.forEach(p => S[p.k] = p.v);
+  const dots = sc.rounds.map((_, k) => `<span class="${k < i ? 'done' : k === i ? 'on' : ''}"></span>`).join('');
+  $('app').innerHTML = `<div class="card"><div class="dots">${dots}</div><h2>Tình huống ${i + 1}/${sc.rounds.length}</h2><p>${R.brief}</p></div>
+  <div class="game"><div class="card"><canvas id="cv" width="640" height="300"></canvas></div>
+  <div class="card">${sc.params.map(p => `<div class="sl"><label><span>${p.label}</span><b id="v_${p.k}"></b></label><input type="range" id="r_${p.k}" min="${p.min}" max="${p.max}" step="${p.step}" value="${p.v}"></div>`).join('')}
+  <div id="mt"></div><button class="big" id="chk">✔ Kiểm tra</button><div id="out"></div></div></div>`;
+  sc.params.forEach(p => $('r_' + p.k).oninput = e => { S[p.k] = Number(e.target.value); live(); const n = Date.now(); if (n - lastEv > 800) { lastEv = n; ev('change_parameter', { round: i, ...S }); } });
+  $('chk').onclick = check; live();
+}
+function live() {
+  const R = sc.rounds[ri], res = sc.calc(S, R.env);
+  sc.params.forEach(p => $('v_' + p.k).textContent = fmt(S[p.k], 1) + ' ' + p.unit);
+  $('mt').innerHTML = res.lines.map(l => `<div class="m ${l[2] ? 'bad' : ''}"><span>${l[0]}</span><b>${l[1]}</b></div>`).join('');
+  sc.draw($('cv').getContext('2d'), S, R.env, res);
+}
+function check() {
+  const R = sc.rounds[ri], res = sc.calc(S, R.env); tries++;
+  if (res.ok) {
+    const gain = Math.max(30, 100 - (tries - 1) * 25); score += gain; $('score').textContent = score;
+    ev('success', { round: ri, tries, ...S });
+    $('out').innerHTML = `<div class="res ok">✅ ${res.why}<br>+${gain} điểm</div><button class="big" onclick="${ri + 1 < sc.rounds.length ? 'round(' + (ri + 1) + ')' : 'finish()'}">${ri + 1 < sc.rounds.length ? 'Tình huống tiếp theo →' : 'Xem kết quả →'}</button>`;
+    $('chk').style.display = 'none';
+  } else {
+    ev('wrong_answer', { round: ri, tries, ...S }); ev('retry', { round: ri, tries });
+    $('out').innerHTML = `<div class="res no">❌ ${res.why}<br>Hãy điều chỉnh rồi thử lại.</div>`;
+  }
+}
+async function finish() {
+  if (sid) { try { await api(`/games/sessions/${sid}/finish?score=${score}`, { method: 'POST' }); } catch (e) { } }
+  const rv = sc.reveal, max = sc.rounds.length * 100;
+  $('app').innerHTML = `<div class="card"><h1>🏁 Hoàn thành! ${score}/${max} điểm</h1></div>
+  <div class="card"><h2>🎓 HỌC ĐỂ LÀM GÌ?</h2><p>${rv.text}</p><p><b>Công thức bạn vừa dùng:</b> ${rv.formula}</p><p><b>Nghề dùng kiến thức này mỗi ngày:</b></p>${rv.jobs.map(j => `<span class="tag">${j}</span>`).join('')}
+  <div style="margin-top:14px"><button class="big" onclick="round(0);score=0;$('score').textContent=0">Chơi lại</button> <button class="big alt" onclick="goBack()">Về bài học</button></div></div>`;
+}
+init();
+</script>
+</body>
+</html>

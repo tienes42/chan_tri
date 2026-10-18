@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Ca đêm kho lạnh - HỌC ĐỂ LÀM GÌ?</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#0b1424;overflow:hidden;font-family:"Segoe UI",Arial,sans-serif;color:#fff;user-select:none;touch-action:none}
+#stage{position:absolute;left:0;top:0;width:960px;height:540px;transform-origin:0 0;overflow:hidden;border-radius:14px}
+canvas{position:absolute;inset:0;width:960px;height:540px}
+.hud{position:absolute;display:flex;gap:8px;align-items:center}
+.pill{background:rgba(10,25,50,.72);border:2px solid rgba(255,255,255,.35);border-radius:16px;padding:6px 12px;font-weight:800;font-size:14px;backdrop-filter:blur(4px)}
+button{font:inherit;cursor:pointer;border:0;color:inherit}
+.btn{background:linear-gradient(#ffd166,#f4a300);color:#4a2c00;font-weight:900;border-radius:14px;padding:10px 18px;box-shadow:0 4px 0 #b06e00}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #b06e00}
+.btn.g{background:linear-gradient(#6ee7a0,#22b866);color:#053;box-shadow:0 4px 0 #14804a}
+.btn.s{padding:7px 12px;font-size:13px}.go{position:absolute;right:22px;bottom:22px;font-size:26px;padding:18px 34px;border-radius:20px;display:none;z-index:5}.go.ready{animation:pl .8s infinite}@keyframes pl{50%{transform:scale(1.08);box-shadow:0 4px 0 #14804a,0 0 26px #7dffa6}}
+.btn.sel{outline:3px solid #fff}
+#dlg{position:absolute;left:30px;right:30px;bottom:14px;background:rgba(8,20,42,.92);border:3px solid #ffd166;border-radius:18px;padding:16px 22px;min-height:96px;display:none;cursor:pointer}
+#nm{position:absolute;top:-17px;left:22px;background:#ffd166;color:#4a2c00;font-weight:900;padding:2px 16px;border-radius:12px}
+#tx{font-size:18px;line-height:1.5}
+#nx{position:absolute;right:16px;bottom:6px;font-size:12px;opacity:.7;animation:bl 1s infinite}
+@keyframes bl{50%{opacity:.1}}
+#pop{position:absolute;inset:0;background:rgba(5,12,28,.82);display:none;align-items:center;justify-content:center}
+#pop .card{background:#fff7e0;color:#3a2a10;border-radius:20px;padding:24px 30px;max-width:640px;border:5px solid #c98a2b;box-shadow:0 10px 40px #000a}
+#pop h2{color:#a8590a;margin-bottom:8px}#pop p{line-height:1.55;margin:6px 0}
+.tag{display:inline-block;background:#ffd166;border-radius:20px;padding:3px 12px;font-weight:800;font-size:13px;margin:3px 3px 0 0}
+</style>
+</head><body>
+<div id="stage"><canvas id="cv" width="960" height="540"></canvas>
+<div class="hud" style="left:14px;top:12px"><div class="pill" id="hAct"></div><div class="pill">⭐ <span id="hSc">0</span></div></div>
+<div class="hud" style="left:14px;top:58px"><button class="btn s" id="bExit">← Thoát</button><button class="btn s" id="bSnd">🔊</button></div><div class="hud" style="left:50%;top:12px;transform:translateX(-50%)"><div class="pill" id="meter"></div></div>
+<div class="hud" style="right:14px;top:12px"><button class="btn s" id="bNote">📓 Sổ tay</button></div><button class="btn g go" id="bGo">⛵ XUẤT BẾN!</button>
+<div id="dlg"><div id="nm"></div><div id="tx"></div><div id="nx">chạm để tiếp ▶</div></div>
+<div id="pop"></div></div>
+<script>
+/* GAME: NHIỆT ĐỘ (phần dùng chung lấy từ simulation.html) */
+const API=window.HOC_API_BASE||'http://127.0.0.1:8000/api',Q=new URLSearchParams(location.search),LESSON_ID=Q.get('lesson_id'),USER_ID=Number(localStorage.getItem('user_id'))||1;
+const $=i=>document.getElementById(i),fmt=(n,d=1)=>Number(n).toLocaleString('vi-VN',{maximumFractionDigits:d});
+
+const cv=$('cv'),c=cv.getContext('2d'),stage=$('stage');
+let story,st,score=0,sid=null,topic,P=[],T=0,dlgQ=[],dlgCB=null,typed=0,full='';
+const rr=(x,y,w,h,r)=>{c.beginPath();c.roundRect?c.roundRect(x,y,w,h,r):c.rect(x,y,w,h)};
+async function api(p,o){const r=await fetch(API+p,{headers:{'Content-Type':'application/json'},...o});if(!r.ok)throw 0;return r.json()}
+async function ev(a,d){if(!sid)return;try{await api(`/games/sessions/${sid}/events`,{method:'POST',body:JSON.stringify({action:a,event_data:JSON.stringify(d||{})})})}catch(e){}}
+/* ===== ÂM THANH: tạo bằng WebAudio, không cần file mp3. Chỉnh âm lượng ở các số v / MUSIC_VOL ===== */
+let AC,MG,lastAl=0,mute=localStorage.getItem('hdlg_mute')=='1';const MUSIC_VOL=.03;
+function ac(){if(!AC){AC=new(window.AudioContext||window.webkitAudioContext)();MG=AC.createGain();MG.gain.value=mute?0:1;MG.connect(AC.destination);ambient()}if(AC.state=='suspended')AC.resume();return AC}
+function tone(f,d=.15,t='sine',v=.07,at=0,fe=0){const a=ac(),o=a.createOscillator(),g=a.createGain(),s=a.currentTime+at;o.type=t;o.frequency.setValueAtTime(f,s);if(fe)o.frequency.exponentialRampToValueAtTime(fe,s+d);g.gain.setValueAtTime(v,s);g.gain.exponentialRampToValueAtTime(.001,s+d);o.connect(g);g.connect(MG);o.start(s);o.stop(s+d)}
+function noise(d=.3,f=1200,v=.1,ty='lowpass'){const a=ac(),n=a.sampleRate*d|0,b=a.createBuffer(1,n,a.sampleRate),x=b.getChannelData(0);for(let i=0;i<n;i++)x[i]=Math.random()*2-1;const s=a.createBufferSource(),fl=a.createBiquadFilter(),g=a.createGain(),t=a.currentTime;s.buffer=b;fl.type=ty;fl.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);s.connect(fl);fl.connect(g);g.connect(MG);s.start(t)}
+function ambient(){const a=AC,n=a.sampleRate*3,b=a.createBuffer(1,n,a.sampleRate),x=b.getChannelData(0);let l=0;for(let i=0;i<n;i++){l=(l+.02*(Math.random()*2-1))/1.02;x[i]=l*3.5}
+ const s=a.createBufferSource(),f=a.createBiquadFilter(),g=a.createGain(),o=a.createOscillator(),lg=a.createGain();s.buffer=b;s.loop=true;f.type='lowpass';f.frequency.value=600;g.gain.value=.55;o.frequency.value=.15;lg.gain.value=.3;o.connect(lg);lg.connect(g.gain);s.connect(f);f.connect(g);g.connect(MG);s.start();o.start();
+ const sc=[523,587,659,784,880,784,659,587];let k=0;setInterval(()=>{if(mute)return;k=Math.max(0,Math.min(7,k+(Math.random()<.5?-1:1)));if(Math.random()<.7)tone(sc[k],1.1,'sine',MUSIC_VOL);if(Math.random()<.25)tone(sc[k]/2,1.6,'triangle',MUSIC_VOL*.8)},650);
+ setInterval(()=>{if(!mute&&st&&st.a&&st.a.env=='sea'&&Math.random()<.5){tone(1500,.18,'sine',.03,0,1000);tone(1450,.22,'sine',.03,.22,900)}},6000)}
+const SND={pick:()=>tone(430,.08,'triangle',.06),thud:()=>{tone(130,.14,'sine',.12,0,55);noise(.12,500,.1)},splash:()=>noise(.35,1800,.12,'bandpass'),
+ talk:w=>tone(w=='tu'?140+Math.random()*30:w=='na'?330+Math.random()*50:240,.05,'triangle',.05),horn:()=>{tone(196,.8,'sawtooth',.07);tone(247,.8,'sawtooth',.05)},
+ sink:()=>{noise(1.3,450,.14);tone(320,1.2,'sine',.08,0,60);splash(0,0,0)},alarm:()=>tone(880,.12,'square',.035),fail:()=>tone(230,.45,'sawtooth',.06,0,110),
+ note:()=>{tone(880,.1,'sine',.06);tone(1175,.16,'sine',.06,.1)},win:()=>[523,659,784,1047].forEach((f,i)=>tone(f,i==3?.5:.16,'triangle',.08,i*.13))};
+addEventListener('pointerdown',()=>ac(),{once:true});addEventListener('keydown',()=>ac(),{once:true});
+function fit(){const s=Math.min(innerWidth/960,innerHeight/540);stage.style.transform=`translate(${(innerWidth-960*s)/2}px,${(innerHeight-540*s)/2}px) scale(${s})`;stage._s=s}
+addEventListener('resize',fit);fit();
+
+
+/* ---- hội thoại kiểu visual novel ---- */
+function say(lines,cb){dlgQ=lines.slice();dlgCB=cb;$('dlg').style.display='block';st.mode='talk';next()}
+function next(){if(typed<full.length){typed=full.length;return show()}const l=dlgQ.shift();if(!l){$('dlg').style.display='none';const f=dlgCB;dlgCB=null;f&&f();return}st.who=l[0];$('nm').textContent=WHO[l[0]];full=l[1];typed=0}
+const show=()=>$('tx').textContent=full.slice(0,Math.floor(typed));
+$('dlg').onclick=next;addEventListener('keydown',e=>{if(e.key==' '||e.key=='Enter')next()});
+
+
+function exitGame(){history.length>1?history.back():location.href='../index.html'}
+function askExit(){if(st.mode=='end')return exitGame();$('pop').style.display='flex';$('pop').innerHTML=`<div class="card"><h2>Thoát khỏi game?</h2><p>Tiến trình của chặng hiện tại sẽ không được lưu.</p><p style="margin-top:12px"><button class="btn g" onclick="$('pop').style.display='none'">▶ Chơi tiếp</button> <button class="btn" onclick="ev('exit',{act:st.i,score});exitGame()">Thoát</button></p></div>`}
+$('bExit').onclick=askExit;$('bSnd').textContent=mute?'🔇':'🔊';$('bSnd').onclick=()=>{mute=!mute;localStorage.setItem('hdlg_mute',mute?'1':'0');$('bSnd').textContent=mute?'🔇':'🔊';if(MG)MG.gain.value=mute?0:1;ac()};addEventListener('keydown',e=>{if(e.key=='Escape')askExit()});
+function finish(){st.mode='end';SND.win();const r=story.reveal;if(sid)api(`/games/sessions/${sid}/finish?score=${score}`,{method:'POST'}).catch(()=>{});
+ $('pop').style.display='flex';$('pop').innerHTML=`<div class="card"><h2>🏁 Hoàn thành! ${score}/${story.acts.length*100} điểm</h2><h2 style="margin-top:10px">🎓 HỌC ĐỂ LÀM GÌ?</h2><p>${r.text}</p><p><b>Công thức bạn vừa dùng:</b> ${r.formula}</p><p><b>Nghề dùng kiến thức này mỗi ngày:</b></p>${r.jobs.map(j=>`<span class="tag">${j}</span>`).join('')}<p style="margin-top:14px"><button class="btn" onclick="location.reload()">Chơi lại</button> <button class="btn g" onclick="history.length>1?history.back():location.href='../index.html'">Về bài học</button></p></div>`}
+
+
+/* ---- hạt: bọt nước, pháo giấy ---- */
+function splash(x,y,n,col='rgba(255,255,255,.85)',up=3){for(let i=0;i<n;i++)P.push({x,y,vx:(Math.random()-.5)*4,vy:-Math.random()*up-1,l:40+Math.random()*20,col,r:2+Math.random()*3})}
+function confetti(){for(let i=0;i<60;i++)P.push({x:480+(Math.random()-.5)*300,y:60,vx:(Math.random()-.5)*5,vy:Math.random()*2,l:120,col:`hsl(${Math.random()*360},90%,60%)`,r:4,g:.08})}
+
+/* ---- vẽ cảnh ---- */
+function person(x,y,o,talk,hot){c.save();c.translate(x,y+Math.sin(T*2+o.ph)*(hot?3:1.5));const s=o.s*(hot?1.06:1);c.scale(s,s);c.globalAlpha=hot||!st.who?1:.78;
+ c.fillStyle='#2f4a6b';c.fillRect(-13,-40,10,40);c.fillRect(3,-40,10,40);c.fillStyle=o.shirt;rr(-18,-94,36,58,9);c.fill();
+ c.fillStyle=o.skin;c.beginPath();c.arc(0,-110,18,0,7);c.fill();c.fillRect(-26,-88,8,26);c.fillRect(18,-88,8,26);
+ c.fillStyle='#2b1d10';c.beginPath();c.arc(-6,-112,2.4,0,7);c.arc(6,-112,2.4,0,7);c.fill();
+ c.strokeStyle='#7a3b2a';c.lineWidth=2;c.beginPath();talk?c.ellipse(0,-102,4,2+Math.abs(Math.sin(T*14))*3,0,0,7):(c.moveTo(-5,-102),c.quadraticCurveTo(0,-98,5,-102));c.stroke();
+ if(o.hat){c.fillStyle='#e8d28a';c.beginPath();c.moveTo(-36,-118);c.lineTo(36,-118);c.lineTo(0,-158);c.closePath();c.fill();c.strokeStyle='#b99a4a';c.stroke()}
+ else{c.fillStyle='#2b1d10';c.beginPath();c.arc(0,-116,19,Math.PI,0);c.fill();c.beginPath();c.arc(-22,-100,7,0,7);c.arc(22,-100,7,0,7);c.fill()}c.restore()}
+
+function ambient(){const sc=[392,440,523,587,659,587,523,440];let k=0;setInterval(()=>{if(mute)return;k=(k+1)%8;if(Math.random()<.7)tone(sc[k],.5,'triangle',MUSIC_VOL*1.2);if(k%4==0)tone(sc[k]/2,1.2,'sine',MUSIC_VOL)},480)}
+const TL=(k,n)=>({x:480-(n-1)*95-85+k*190,y:440});
+function newAct(i,re){const a=story.acts[i];st={i,a,mode:'talk',tries:st.i===i?st.tries:0,hints:st.i===i?st.hints:0,noted:0,ti:0,cs:null,tools:[],ex:480,val:100,rd:0};
+ $('hAct').textContent=`Chặng ${i+1}/${story.acts.length} · ${a.name}`;$('hSc').textContent=score;$('meter').textContent=a.goal;
+ const go=()=>{st.mode='play';st.tools=(a.tools||[]).map((t,k)=>({...t,k,x:TL(k,a.tools.length).x,y:440}));a.type=='input'&&openInput()};re?go():say(a.intro,go)}
+function actWin(){SND.win();confetti();const a=st.a,g=Math.max(30,100-st.tries*15-st.hints*10);score+=g;$('hSc').textContent=score;ev('success',{act:st.i,tries:st.tries});say([...a.win,['me',`+${g} điểm`]],()=>st.i+1<story.acts.length?newAct(st.i+1):finish())}
+function oops(m){st.tries++;SND.fail();ev('wrong_answer',{act:st.i,tries:st.tries});$('dlg').style.display='none';say([[st.a.mentor,m]],()=>{st.mode='play';st.cs=null})}
+function openInput(){const a=st.a;st.mode='input';$('pop').style.display='flex';$('pop').innerHTML=`<div class="card"><h2>${a.title}</h2><p>${a.prompt}</p>${a.fields.map((f,k)=>`<p>${f.label} <input id="f${k}" type="number" step="any" style="width:120px;font-size:18px;padding:4px"> ${f.unit}</p>`).join('')}<p id="fe" style="color:#a33;font-weight:700"></p><p><button class="btn" onclick="checkInput()">✔ Xác nhận</button> <button class="btn s" onclick="hintInput()">📓 Gợi ý</button></p></div>`}
+function hintInput(){if(!st.noted){st.noted=1;st.hints++}ev('hint',{act:st.i});SND.note();$('fe').innerHTML=st.a.note}
+function checkInput(){const bad=st.a.fields.filter((f,k)=>!(Math.abs(parseFloat($('f'+k).value)-f.ans)<=(f.tol||0)));$('pop').style.display='none';bad.length?oops(bad.map(f=>f.hint).join(' ')):actWin()}
+$('bNote').onclick=()=>{if(st.mode!='play')return;if(!st.noted){st.noted=1;const t=+localStorage.getItem('hdlg_hints')||0;if(t>0)localStorage.setItem('hdlg_hints',t-1);else st.hints++}ev('hint',{act:st.i});SND.note();$('pop').style.display='flex';$('pop').innerHTML=`<div class="card"><h2>📓 Sổ tay</h2>${st.a.note}<p style="margin-top:12px"><button class="btn" onclick="$('pop').style.display='none'">Đã hiểu</button></p></div>`};
+let drag=null;const pt=e=>{const r=stage.getBoundingClientRect();return{x:(e.clientX-r.left)/stage._s,y:(e.clientY-r.top)/stage._s}};
+function pickDown(m){for(const t of st.tools)if(m.x>t.x&&m.x<t.x+170&&m.y>t.y&&m.y<t.y+70){drag={t,dx:m.x-t.x,dy:m.y-t.y};SND.pick();return}}
+cv.onpointermove=e=>{if(drag){const m=pt(e);drag.t.x=m.x-drag.dx;drag.t.y=m.y-drag.dy}};
+cv.onpointerup=()=>{if(!drag)return;const t=drag.t;drag=null;if(Math.hypot(t.x+85-480,t.y+35-205)<150&&st.a.type=='pick'){const k=st.a.tasks[st.ti],r=st.a.judge(t,k,st.tools);ev('change_parameter',{tool:t.n,task:k.n,ok:!!r.ok});if(r.ok){st.ti++;SND.thud();st.ti>=st.a.tasks.length?actWin():say([[st.a.mentor,r.msg]],()=>st.mode='play')}else oops(r.msg)}else SND.pick()};
+cv.onpointerdown=e=>{if(st.mode=='play'&&st.a.type=='pick')pickDown(pt(e))};
+function pickDraw(){const a=st.a,k=a.tasks[Math.min(st.ti,a.tasks.length-1)];c.fillStyle='rgba(255,247,224,.96)';rr(330,96,300,214,18);c.fill();c.strokeStyle='#c98a2b';c.lineWidth=5;c.stroke();c.textAlign='center';c.fillStyle='#a8590a';c.font='bold 13px Arial';c.fillText(`NHIỆM VỤ ${Math.min(st.ti+1,a.tasks.length)}/${a.tasks.length}`,480,120);c.font='64px serif';c.fillStyle='#000';c.fillText(k.e,480,196);c.fillStyle='#3a2a10';c.font='bold 22px Arial';c.fillText(k.n,480,238);c.font='14px Arial';c.fillText(k.t,480,266);c.fillStyle='#8a6a3a';c.font='12px Arial';c.fillText('⬇ kéo dụng cụ phù hợp thả vào đây',480,296);
+ st.tools.forEach(t=>{if(!(drag&&drag.t==t)){const q=TL(t.k,st.tools.length);t.x+=(q.x-t.x)*.3;t.y+=(q.y-t.y)*.3}});[...st.tools].sort((x,y)=>(drag&&drag.t==x)-(drag&&drag.t==y)).forEach(t=>{c.fillStyle='#fff7e0';rr(t.x,t.y,170,70,14);c.fill();c.strokeStyle='#c98a2b';c.lineWidth=4;c.stroke();c.fillStyle='#3a2a10';c.font='bold 15px Arial';c.fillText(t.e+' '+t.n,t.x+85,t.y+30);c.font='11.5px Arial';c.fillStyle='#6a4a1a';c.fillText(t.s,t.x+85,t.y+52)})}
+function loop(t){T=t/1000;const a=st.a;$('bGo').style.display=(st.mode=='play'&&a.type=='cold')?'block':'none';if(typed<full.length){const b4=Math.floor(typed);typed+=.9;if(Math.floor(typed)!=b4&&b4%2==0&&full[b4]!=' ')SND.talk(st.who);show()}draw();requestAnimationFrame(loop)}
+function peopleAndParticles(){if(st.mode=='talk')PEO.forEach(q=>person(q.x,470,q,st.who==q.id&&typed<full.length,st.who==q.id));P=P.filter(p=>p.l-->0);P.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=p.g||.15;c.fillStyle=p.col;c.beginPath();c.arc(p.x,p.y,p.r,0,7);c.fill()})}
+const start=async()=>{if(LESSON_ID){try{const g=await api(`/content/lessons/${LESSON_ID}/games`);if(g[0])sid=(await api('/games/sessions',{method:'POST',body:JSON.stringify({user_id:USER_ID,game_id:g[0].id})})).id}catch(e){}}st={i:-1,a:story.acts[0]};newAct(0);requestAnimationFrame(loop)};
+
+const WHO={minh:'Chị Minh · quản lý kho lạnh',dung:'Anh Dũng · kỹ thuật viên điện lạnh',me:'Bạn · quản lý ca đêm'};
+/* =========================================================
+   SỐ LIỆU (sửa tại đây): lo–hi = khoảng nhiệt độ an toàn (°C), C = công suất làm lạnh (°C/giây),
+   P = điện tiêu thụ khi máy nén chạy. Ngoài trời 34 °C, nhiệt rò vào buồng liên tục.
+========================================================= */
+const OUT=34,KL=.006,CH=[{n:'Hải sản xuất khẩu',e:'🦐',lo:0,hi:4,C:.5,P:1},{n:'Kem',e:'🍦',lo:-22,hi:-16,C:.6,P:1.5},{n:'Vắc-xin y tế',e:'💉',lo:2,hi:8,C:.5,P:1}];
+const STORY={reveal:{formula:'°C: độ C · 0 °C là nhiệt độ nước đóng băng · chọn nhiệt kế có GHĐ ≥ nhiệt độ cần đo, ĐCNN ≤ độ chính xác cần',jobs:['Quản lý kho lạnh / logistics thực phẩm','Kỹ thuật viên điện lạnh','Nhân viên bảo quản vắc-xin, dược phẩm'],text:'Thực phẩm, thuốc và vắc-xin đều có khoảng nhiệt độ bảo quản an toàn. Theo dõi nhiệt độ đúng, bật tắt thiết bị làm lạnh đúng lúc và đóng cửa kịp thời là cách cả chuỗi cung ứng lạnh tránh thiệt hại hàng tỷ đồng mỗi năm.'},acts:[
+{name:'Đo cho đúng',type:'pick',mentor:'dung',goal:'Kéo nhiệt kế phù hợp vào vị trí cần đo',
+ tools:[{n:'Nhiệt kế y tế',e:'🌡️',s:'35 đến 42 °C · ĐCNN 0,1 °C',lo:35,hi:42,d:.1},{n:'Nhiệt kế rượu',e:'🧪',s:'−20 đến 110 °C · ĐCNN 1 °C',lo:-20,hi:110,d:1},{n:'Nhiệt kế điện tử',e:'📟',s:'−50 đến 50 °C · ĐCNN 0,5 °C',lo:-50,hi:50,d:.5}],
+ tasks:[{e:'🍦',n:'Buồng kem',t:'Khoảng −18 °C · cần chính xác 1 °C',v:-18,p:1},{e:'💉',n:'Buồng vắc-xin',t:'Khoảng 5 °C · cần chính xác 0,5 °C',v:5,p:.5},{e:'🤒',n:'Nhân viên đang sốt',t:'Khoảng 38,5 °C · cần chính xác 0,1 °C',v:38.5,p:.1}],
+ judge:(t,k)=>k.v<t.lo||k.v>t.hi?{msg:`${t.n} chỉ đo từ ${t.lo} đến ${t.hi} °C nên không đo được ${k.v} °C. Giá trị cần đo phải nằm trong GHĐ của nhiệt kế.`}:t.d>k.p?{msg:`${t.n} có ĐCNN ${t.d} °C, quá thô để đo chính xác ${k.p} °C. Chọn nhiệt kế có ĐCNN nhỏ hơn.`}:{ok:1,msg:'Đúng nhiệt kế rồi. Số đo chuẩn thì quyết định mới chuẩn.'},
+ note:'<p><b>GHĐ</b> của nhiệt kế là khoảng nhiệt độ đo được, <b>ĐCNN</b> là độ chia nhỏ nhất. Nhiệt kế y tế chỉ đo 35–42 °C nên không đo nổi kho lạnh.</p><p>Chọn nhiệt kế có nhiệt độ cần đo nằm trong GHĐ, và ĐCNN không lớn hơn độ chính xác yêu cầu.</p>',
+ intro:[['me','22 giờ. Bạn nhận ca đêm đầu tiên ở trung tâm logistics thực phẩm lạnh. Ba buồng lạnh, hàng trị giá hàng tỷ đồng.'],['minh','Hải sản xuất khẩu giữ 0 đến 4 độ, kem âm 16 đến âm 22, còn lô vắc-xin bệnh viện chỉ được ở 2 đến 8 độ. Lệch khỏi khoảng đó quá lâu là hủy cả lô.'],['dung','Trước khi chỉnh máy, em phải đo cho đúng. Trong tủ có ba loại nhiệt kế. Nhìn giới hạn đo và độ chia nhỏ nhất rồi chọn cái phù hợp.']],win:[['dung','Đúng loại nhiệt kế mới tin được con số. Số đo sai là quyết định sai.']]},
+{name:'Giữ lạnh',type:'cold',mentor:'minh',goal:'Bật tắt máy nén, đóng cửa kịp thời, giữ cả 3 buồng trong vạch xanh',dur:60,budget:170,doors:1,limit:3,start:[2,-19,5],crit:[0,1,2],
+ note:'<p>Máy nén <b>bật</b> thì buồng lạnh dần (có độ trễ), <b>tắt</b> thì nhiệt rò vào làm ấm lên. Bật khi nhiệt độ sắp chạm giới hạn trên, tắt khi gần giới hạn dưới.</p><p>Cửa mở thì nhiệt rò vào nhanh gấp <b>4 lần</b>. Quá lạnh cũng hỏng hàng (hải sản bị đông, vắc-xin bị đóng băng). Bật liên tục thì vượt ngân sách điện.</p>',
+ intro:[['minh','Ngoài trời đang 34 độ, nhiệt cứ rò vào các buồng. Tối nay có xe nhập hàng, nhân viên ra vào mở cửa liên tục.'],['dung','Máy nén bật thì lạnh dần, tắt thì ấm lên. Bật cả ba cùng lúc thì lạnh hết nhưng hóa đơn điện chị Minh không tha. Cửa mở thì nhiệt rò vào cực nhanh, thấy cửa mở nhớ bấm đóng lại.'],['minh','Cả ca 60 giây trên bảng giám sát này. Giữ cả ba buồng trong vạch xanh, và điện trong ngân sách nhé.']],win:[['minh','Cả ca không hỏng lô nào và điện nằm trong ngân sách. Chị yên tâm giao kho cho em.']]},
+{name:'Mất điện lưới',type:'cold',mentor:'minh',goal:'Máy phát chỉ nuôi 1 máy nén: cân nhắc cứu buồng nào',dur:60,budget:9999,doors:0,limit:1,start:[3,-17,6],crit:[0,2],
+ note:'<p>Máy phát chỉ nuôi <b>một máy nén tại một thời điểm</b>: bật buồng này thì buồng kia tự tắt.</p><p>Không giữ được cả ba. Vắc-xin (cứu người) và hải sản (hợp đồng xuất khẩu) phải còn nguyên. Buồng kem chịu thiệt hại nếu cần.</p>',
+ intro:[['dung','Mất điện lưới! Máy phát chỉ nuôi được một máy nén tại một thời điểm.'],['minh','Không giữ được hết đâu. Vắc-xin là cứu người, hải sản là hợp đồng xuất khẩu, còn kem thì... em tự cân nhắc. Quyết nhanh!']],win:[['minh','Vắc-xin và hải sản còn nguyên. Mất lô kem là thiệt hại chấp nhận được. Em đã ưu tiên đúng.']]}]};
+story=STORY;
+const PEO=[{x:110,ph:0,s:1,shirt:'#2f7a9a',skin:'#e8b890',hat:0,id:'minh'},{x:190,ph:2,s:.95,shirt:'#c9772b',skin:'#d9a06f',hat:0,id:'dung'}];
+/* ---- vật lý (hàm thuần) ---- */
+const CS0=a=>({t:0,T:a.start.slice(),on:[0,0,0],cur:[0,0,0],door:[0,0,0],spoil:[0,0,0],energy:0,nd:[7,11,15],hist:[[],[],[]],lh:-1});
+function cstep(a,cs,dt,rnd){cs.t+=dt;CH.forEach((ch,i)=>{cs.cur[i]+=((cs.on[i]?ch.C:0)-cs.cur[i])*Math.min(1,dt/1.2);cs.T[i]+=(KL*(cs.door[i]?4:1)*(OUT-cs.T[i])-cs.cur[i])*dt;cs.energy+=cs.on[i]*ch.P*dt;if(cs.T[i]<ch.lo||cs.T[i]>ch.hi)cs.spoil[i]=Math.min(1,cs.spoil[i]+dt/9);
+  if(a.doors){if(cs.door[i]&&cs.t>cs.dc[i]){cs.door[i]=0}if(!cs.door[i]&&cs.t>cs.nd[i]){cs.door[i]=1;cs.dc[i]=cs.t+12;cs.nd[i]=cs.t+13+rnd()*8;cs.ev=i}}})}
+const cOut=(a,cs)=>{const b=a.crit.find(i=>cs.spoil[i]>=1);if(b!=null)return{k:'spoil',i:b};if(cs.t>=a.dur)return cs.energy>a.budget?{k:'energy'}:{k:'win'};return null};
+/* ---- điều khiển ---- */
+const PX0=i=>30+i*310,PY0=110;
+const toggleComp=i=>{const cs=st.cs;if(!cs||st.mode!='run')return;const a=st.a;if(!cs.on[i]&&a.limit==1)cs.on=[0,0,0];cs.on[i]=cs.on[i]?0:1;SND.thud();ev('change_parameter',{comp:i,on:cs.on[i],T:+cs.T[i].toFixed(1)})};
+const toggleDoor=i=>{const cs=st.cs;if(!cs||st.mode!='run'||!cs.door[i])return;cs.door[i]=0;SND.pick()};
+cv.onpointerdown=e=>{const m=pt(e);if(st.a.type=='pick'){if(st.mode=='play')pickDown(m);return}for(let i=0;i<3;i++){const x=PX0(i);if(m.y>PY0+205&&m.y<PY0+241){if(m.x>x+20&&m.x<x+140)toggleDoor(i);else if(m.x>x+150&&m.x<x+270)toggleComp(i)}}};
+addEventListener('keydown',e=>{if('123'.includes(e.key)&&e.key)toggleComp(+e.key-1)});
+$('bGo').textContent='❄️ BẮT ĐẦU CA TRỰC';$('bGo').onclick=()=>{if(st.mode!='play'||st.a.type!='cold')return;$('dlg').style.display='none';st.cs=st.cs||CS0(st.a);st.cs.dc=[0,0,0];st.mode='run'};
+function finish2(o){const a=st.a,cs=st.cs;if(o.k=='win'){actWin();return}
+ const m=o.k=='spoil'?`Lô ${CH[o.i].n.toLowerCase()} nằm ngoài khoảng ${CH[o.i].lo} đến ${CH[o.i].hi} °C quá lâu nên bị hủy. ${cs.T[o.i]<CH[o.i].lo?'Quá lạnh cũng hỏng hàng: tắt máy nén sớm hơn.':'Quá nóng: bật máy nén sớm hơn và đừng để cửa mở.'}`:`Hóa đơn điện vượt ngân sách (${fmt(cs.energy,0)}/${a.budget}). Bật máy liên tục là lãng phí: chỉ bật khi nhiệt độ sắp chạm giới hạn trên.`;oops(m)}
+/* ---- vẽ ---- */
+function draw(){const a=st.a;c.clearRect(0,0,960,540);c.fillStyle='#16202c';c.fillRect(0,0,960,540);c.fillStyle='#1d2a3a';for(let x=0;x<960;x+=60)c.fillRect(x,0,2,540);
+ if(a.type=='pick'){c.fillStyle='#223247';rr(40,40,880,320,12);c.fill();c.fillStyle='#31465f';c.fillRect(0,400,960,140);pickDraw();peopleAndParticles();return}
+ if(!st.cs){st.cs=CS0(a);st.cs.dc=[0,0,0]}const cs=st.cs,dt=Math.min(.05,T-(st.lt||T));st.lt=T;
+ if(st.mode=='run'){cstep(a,cs,dt,Math.random);if(cs.ev!=null){SND.alarm();ev('door_open',{i:cs.ev});cs.ev=null}if(Math.floor(cs.t*2)!=cs.lh){cs.lh=Math.floor(cs.t*2);CH.forEach((_,i)=>cs.hist[i].push(cs.T[i]));if(cs.T.some((t,i)=>t<CH[i].lo||t>CH[i].hi)&&cs.lh%2==0)SND.alarm()}
+  const o=cOut(a,cs);if(o){st.mode='end';setTimeout(()=>finish2(o),o.k=='win'?400:900)}}
+ CH.forEach((ch,i)=>{const x=PX0(i),y=PY0,T0=cs.T[i],ok=T0>=ch.lo&&T0<=ch.hi,crit=a.crit.includes(i);c.fillStyle=ok?'rgba(30,60,90,.9)':'rgba(90,25,30,.9)';rr(x,y,290,285,16);c.fill();c.strokeStyle=ok?'#4a90c8':'#ff5a5a';c.lineWidth=3;c.stroke();
+  c.fillStyle='#fff';c.textAlign='left';c.font='bold 16px Arial';c.fillText(ch.e+' '+ch.n,x+16,y+26);c.font='11px Arial';c.fillStyle='#9fc2e0';c.fillText(`An toàn: ${ch.lo} đến ${ch.hi} °C`+(a.limit==1&&crit?'  ★ ưu tiên':''),x+16,y+43);
+  const ty=t=>y+190-(Math.max(-30,Math.min(40,t))+30)/70*130,tx=x+20;c.fillStyle='#0b1118';rr(tx,y+60,22,140,10);c.fill();c.fillStyle='rgba(60,220,120,.45)';c.fillRect(tx,ty(ch.hi),22,ty(ch.lo)-ty(ch.hi));c.fillStyle=ok?'#6fd3ff':'#ff6b6b';c.fillRect(tx+6,ty(T0),10,y+196-ty(T0));
+  c.fillStyle=ok?'#7dffa6':'#ff8080';c.font='bold 30px monospace';c.fillText(fmt(T0)+'°C',x+64,y+84);
+  c.fillStyle='rgba(0,0,0,.35)';c.fillRect(x+64,y+100,210,92);const lo=ch.lo-10,hi=ch.hi+10,yy=t=>y+192-(Math.max(lo,Math.min(hi,t))-lo)/(hi-lo)*92;c.fillStyle='rgba(60,220,120,.25)';c.fillRect(x+64,yy(ch.hi),210,yy(ch.lo)-yy(ch.hi));c.strokeStyle='#ffe27a';c.lineWidth=2;c.beginPath();cs.hist[i].forEach((t,k)=>{const px=x+64+k/120*210;k?c.lineTo(px,yy(t)):c.moveTo(px,yy(t))});c.stroke();
+  const dn=cs.door[i],blink=dn&&Math.sin(T*12)>0;c.fillStyle=dn?(blink?'#ff3b3b':'#a62020'):'#2a6a44';rr(x+20,y+205,120,36,10);c.fill();c.fillStyle='#fff';c.font='bold 13px Arial';c.textAlign='center';c.fillText(dn?'🚪 CỬA MỞ! ĐÓNG':'🚪 Cửa đóng',x+80,y+228);
+  c.fillStyle=cs.on[i]?'#1e90ff':'#3a4452';rr(x+150,y+205,120,36,10);c.fill();c.fillStyle='#fff';c.fillText(cs.on[i]?'❄️ MÁY NÉN: BẬT':'Máy nén: tắt',x+210,y+228);c.font='10px Arial';c.fillStyle='#8fa6bd';c.fillText('phím '+(i+1),x+210,y+254);
+  c.fillStyle='#0b1118';rr(x+20,y+262,250,10,5);c.fill();c.fillStyle=cs.spoil[i]>.6?'#ff4a4a':'#ffb347';rr(x+20,y+262,250*cs.spoil[i]+.01,10,5);c.fill();c.fillStyle='#9fc2e0';c.textAlign='left';c.font='10px Arial';c.fillText('Mức hư hỏng của lô hàng',x+20,y+258)});
+ c.textAlign='left';c.fillStyle='#fff';c.font='bold 13px Arial';c.fillText('⚡ Điện năng: '+fmt(cs.energy,0)+(a.budget<9999?' / '+a.budget:''),30,430);c.fillStyle='#0b1118';rr(30,438,600,16,8);c.fill();c.fillStyle=cs.energy>a.budget*.9?'#ff5a5a':'#ffd84a';rr(30,438,Math.min(600,600*cs.energy/(a.budget<9999?a.budget:200))+.01,16,8);c.fill();
+ c.fillStyle='#fff';c.font='bold 22px Arial';c.textAlign='right';c.fillText('⏱ Còn '+Math.max(0,Math.ceil(a.dur-cs.t))+' s',930,448);
+ const txt=st.mode=='run'?'Click vào nút máy nén và cửa trên từng buồng (hoặc phím 1, 2, 3)':st.mode=='play'?a.goal:null;if(txt&&txt!=st.mm){st.mm=txt;$('meter').textContent=txt}
+ peopleAndParticles()}
+start();
+</script></body></html>
