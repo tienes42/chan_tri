@@ -161,16 +161,12 @@ const progressButton =
     );
 
 
-calculatorButton.addEventListener(
-    "click",
-    function () {
 
-        alert(
-            "Máy tính Toán học sẽ được xây dựng ở bước tiếp theo."
-        );
-
-    }
-);
+    if (calculatorButton) {
+    calculatorButton.addEventListener("click", function () {
+        window.location.href = "calculator.html";
+    });
+}
 
 
 challengeButton.addEventListener(
@@ -195,3 +191,4 @@ progressButton.addEventListener(
 
     }
 );
+

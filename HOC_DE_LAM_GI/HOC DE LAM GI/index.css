@@ -1,10 +1,698 @@
-/* CSS RIÊNG CHO INDEX — không ảnh hưởng style.css của các môn học */
-*{box-sizing:border-box}html,body{width:100%;height:100%;margin:0}body{overflow:hidden;font-family:"Segoe UI",Arial,sans-serif;background:#17385f}button{font:inherit}.home{position:relative;width:100vw;height:100vh;min-height:520px;overflow:hidden;isolation:isolate;color:#fff}.artwork{position:absolute;inset:0;background:url("assets/index-world.jpg") center/100% 100% no-repeat}
-.player-card{position:absolute;z-index:5;left:1.5%;top:2%;width:min(290px,23vw);min-width:220px;height:76px;display:flex;align-items:center;gap:10px;padding:8px 10px;border:2px solid rgba(164,218,255,.78);border-radius:18px;background:rgba(8,38,72,.94);box-shadow:0 10px 28px #00152e55}.avatar{flex:0 0 56px;height:56px;display:grid;place-items:center;border:3px solid white;border-radius:50%;background:linear-gradient(#e8f5ff,#7caed9);font-size:29px}.player-info{min-width:0;flex:1}.player-info strong{display:block;margin-bottom:7px;font-size:14px;white-space:nowrap}.xp-line{display:flex;align-items:center;gap:6px;font-size:10px}.xp-line b{color:#ffdf69}.xp-line small{white-space:nowrap}.xp-bar{flex:1;height:8px;overflow:hidden;border-radius:8px;background:#061d3b}.xp-bar i{display:block;width:0;height:100%;background:#62d7ff}
-.top-actions{position:absolute;z-index:5;top:2%;right:1.5%;display:flex;gap:8px}.top-button{min-height:60px;display:flex;align-items:center;justify-content:center;gap:9px;padding:8px 14px;border:2px solid #ffffff99;border-radius:18px;color:#fff;font-weight:700;cursor:pointer;box-shadow:0 8px 22px #00143244;transition:filter .2s,transform .2s}.top-button:hover{filter:brightness(1.1);transform:translateY(-2px)}.class-button{min-width:118px;background:linear-gradient(135deg,#28b66e,#087c57)}.ranking-button{min-width:195px;background:linear-gradient(135deg,#388ee4,#2456a7)}.top-button>span:first-child{font-size:20px}.top-button em{font-size:26px;font-style:normal}
-.ranking-panel{position:absolute;z-index:5;right:1.2%;bottom:12%;width:215px;padding:10px;border:2px solid #96d8ff88;border-radius:18px;background:rgba(8,40,73,.95);box-shadow:0 12px 32px #00122d66}.ranking-panel h3{margin:2px 0 8px;text-align:center;font-size:13px}.rank-row{display:grid;grid-template-columns:23px 1fr 42px;gap:4px;align-items:center;padding:7px 2px;border-top:1px solid #ffffff1a;font-size:11px}.rank-row b{font-weight:500}.rank-row strong{color:#ffd65d;text-align:right}.rank-row.current{background:#ffffff12}.ai-hint{position:absolute;z-index:5;right:1.5%;bottom:2%;display:flex;align-items:center;gap:8px;text-align:right;text-shadow:0 2px 5px #16304f}.ai-hint span{color:#ffe681;font-size:22px}.ai-hint i{font-size:12px;font-weight:700}.ai-hint b{font-size:29px}
-.hotspots{position:absolute;inset:0;z-index:6}.hit{position:absolute;display:block;margin:0;padding:0;border:0;border-radius:18px;background:transparent;cursor:pointer}.hit:hover{background:#ffe68212;box-shadow:0 0 22px #ffe28226}
-/* Tọa độ tương đối theo artwork 1367 × 768 */.math{left:15%;top:23%;width:17%;height:13%}.physics{left:34%;top:16%;width:14%;height:11%}.chemistry{left:52%;top:15%;width:15%;height:11%}.literature{left:70%;top:20%;width:15%;height:14%}.sport{left:2%;top:42%;width:16%;height:13%}.art{left:18%;top:56%;width:15%;height:13%}.biology{right:1%;top:43%;width:15%;height:13%}.geography{left:68%;top:63%;width:16%;height:12%}.computer{left:7%;top:77%;width:15%;height:11%}.english{left:28%;top:77%;width:15%;height:11%}.history{left:54%;top:81%;width:15%;height:11%}.center{left:39%;top:30%;width:23%;height:27%;border-radius:50%}
-/* Chỉ phủ lên các icon gốc dưới trái, không tạo biểu tượng thay thế */.settings{left:1.5%;bottom:.5%;width:5.8%;height:13%}.rewards{left:7.7%;bottom:.5%;width:6.4%;height:13%}.missions{left:14.1%;bottom:.5%;width:6.5%;height:13%}.exit{left:20.5%;bottom:.5%;width:5.8%;height:13%}
-.dialog{position:fixed;inset:0;z-index:20;display:none;place-items:center;padding:20px;background:#041126ad;backdrop-filter:blur(5px)}.dialog.open{display:grid}.dialog-card{position:relative;width:min(440px,92vw);padding:30px;border:1px solid #c1e4ffb3;border-radius:22px;color:#fff;text-align:center;background:linear-gradient(145deg,#194a7c,#0b2548);box-shadow:0 25px 70px #0006}.close{position:absolute;right:12px;top:5px;border:0;color:#fff;background:transparent;font-size:30px;cursor:pointer}.dialog-icon{font-size:38px}.dialog-card h2{margin:8px 0}.dialog-card p{line-height:1.55;color:#d9edff}.confirm{padding:10px 24px;border:0;border-radius:10px;color:#fff;background:#247ed1;font-weight:700;cursor:pointer}
-@media(max-width:850px){.player-card{transform:scale(.82);transform-origin:top left}.top-actions{transform:scale(.82);transform-origin:top right}.ranking-panel{display:none}.ai-hint{transform:scale(.85);transform-origin:bottom right}}@media(max-width:560px){.artwork{background-size:auto 100%}.player-card{min-width:200px}.top-actions{top:90px}.ai-hint{display:none}}
+/* CSS RIÊNG CHO INDEX — Tối ưu tỷ lệ cho Đảo Môn Học Đồ Sộ & Đại Đảo Trung Tâm */
+* { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; margin: 0; }
+body {
+  overflow: hidden;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: #050b1a;
+  user-select: none;
+}
+button { font: inherit; }
+
+.home {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  min-height: 580px;
+  overflow: hidden;
+  isolation: isolate;
+  color: #fff;
+}
+
+/* ================= 1. BẦU TRỜI ĐIỆN ẢNH TỪ ASSETS/SKY-BG.PNG ================= */
+.sky-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, #050b1a 0%, #163668 50%, #e59866 88%, #fde08d 100%);
+  overflow: hidden;
+}
+
+.artwork-sky {
+  position: absolute;
+  inset: -4%;
+  background: url("assets/sky-bg.png") center/cover no-repeat;
+  transition: transform 0.25s ease-out;
+  filter: contrast(1.05) saturate(1.1);
+}
+
+.god-rays {
+  position: absolute;
+  left: 50%; top: -25%;
+  width: 160vw; height: 160vh;
+  transform: translateX(-50%) rotate(-10deg);
+  background: repeating-conic-gradient(
+    from 0deg at 50% 0%,
+    rgba(255, 248, 210, 0.12) 0deg,
+    rgba(255, 248, 210, 0.0) 6deg,
+    rgba(56, 189, 248, 0.08) 12deg,
+    rgba(255, 248, 210, 0.0) 18deg
+  );
+  pointer-events: none;
+  animation: raySway 14s ease-in-out infinite alternate;
+}
+@keyframes raySway {
+  from { transform: translateX(-50%) rotate(-10deg) scale(1); }
+  to   { transform: translateX(-50%) rotate(-3deg) scale(1.06); }
+}
+
+#cinematicCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Lớp Mây 3D & Chim bay */
+.sky-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 3;
+}
+
+.cloud {
+  position: absolute;
+  width: clamp(120px, 13vw, 195px);
+  aspect-ratio: 1 / 1;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.92;
+  filter: drop-shadow(0 10px 14px rgba(4, 15, 36, 0.35));
+  animation: cloudMove linear infinite;
+}
+.cloud.c1 { top: 3%;  width: 175px; animation-duration: 52s; animation-delay: -6s; }
+.cloud.c2 { top: 18%; width: 140px; opacity: 0.78; animation-duration: 68s; animation-delay: -26s; }
+.cloud.c3 { top: 44%; width: 195px; opacity: 0.65; animation-duration: 58s; animation-delay: -15s; }
+.cloud.c4 { top: 66%; width: 160px; opacity: 0.82; animation-duration: 48s; animation-delay: -34s; }
+.cloud.c5 { top: 11%; width: 125px; opacity: 0.6;  animation-duration: 76s; animation-delay: -45s; }
+
+@keyframes cloudMove {
+  0%   { transform: translateX(-22vw) translateY(0); }
+  50%  { transform: translateX(50vw) translateY(-12px); }
+  100% { transform: translateX(122vw) translateY(0); }
+}
+
+.flying-bird-group {
+  position: absolute;
+  pointer-events: none;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  animation: flyAcross linear forwards;
+}
+.bird-sprite {
+  width: 54px;
+  height: 54px;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 6px 8px rgba(0, 12, 32, 0.45));
+  animation: birdBob 0.38s ease-in-out infinite alternate;
+}
+.bird-sprite.small-mate {
+  width: 38px;
+  height: 38px;
+  margin-left: -10px;
+  margin-top: 12px;
+  animation-delay: 0.18s;
+}
+@keyframes birdBob {
+  from { transform: translateY(-5px) rotate(-4deg); }
+  to   { transform: translateY(5px) rotate(4deg); }
+}
+@keyframes flyAcross {
+  0%   { transform: translate(-12vw, 0); }
+  25%  { transform: translate(25vw, -18px); }
+  50%  { transform: translate(55vw, 8px); }
+  75%  { transform: translate(85vw, -14px); }
+  100% { transform: translate(115vw, 4px); }
+}
+
+.bottom-cloud-sea {
+  position: absolute;
+  left: -10%; right: -10%; bottom: -5%; height: 18vh;
+  z-index: 4;
+  background: linear-gradient(180deg, transparent 0%, rgba(253, 224, 141, 0.28) 55%, rgba(125, 211, 252, 0.42) 100%);
+  filter: blur(10px);
+  pointer-events: none;
+}
+
+.cinematic-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 7;
+  background: radial-gradient(circle at 50% 48%, transparent 62%, rgba(2, 6, 18, 0.52) 100%);
+  pointer-events: none;
+}
+
+/* ================= 2. GIAO DIỆN NGƯỜI CHƠI ================= */
+.player-card {
+  position: absolute; z-index: 10; left: 1.5%; top: 2%;
+  width: min(290px, 23vw); min-width: 220px; height: 76px;
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+  border: 2px solid rgba(164, 218, 255, .82); border-radius: 18px;
+  background: rgba(8, 38, 72, .92); box-shadow: 0 12px 32px #000b1d99;
+  backdrop-filter: blur(8px);
+}
+.avatar {
+  flex: 0 0 56px; height: 56px; display: grid; place-items: center;
+  border: 3px solid white; border-radius: 50%;
+  background: linear-gradient(#e8f5ff, #7caed9); font-size: 29px;
+}
+.player-info { min-width: 0; flex: 1; }
+.player-info strong { display: block; margin-bottom: 7px; font-size: 14px; white-space: nowrap; }
+.xp-line { display: flex; align-items: center; gap: 6px; font-size: 10px; }
+.xp-line b { color: #ffdf69; }
+.xp-line small { white-space: nowrap; }
+.xp-bar { flex: 1; height: 8px; overflow: hidden; border-radius: 8px; background: #061d3b; }
+.xp-bar i { display: block; width: 35%; height: 100%; background: #62d7ff; }
+
+.top-actions { position: absolute; z-index: 10; top: 2%; right: 1.5%; display: flex; gap: 8px; }
+.top-button {
+  min-height: 60px; display: flex; align-items: center; justify-content: center;
+  gap: 9px; padding: 8px 14px; border: 2px solid #ffffff99; border-radius: 18px;
+  color: #fff; font-weight: 700; cursor: pointer;
+  box-shadow: 0 8px 24px #00143277; transition: filter .2s, transform .2s;
+}
+.top-button:hover { filter: brightness(1.12); transform: translateY(-2px); }
+.class-button { min-width: 118px; background: linear-gradient(135deg, #28b66e, #087c57); }
+.ranking-button { min-width: 195px; background: linear-gradient(135deg, #388ee4, #2456a7); }
+.top-button > span:first-child { font-size: 20px; }
+.top-button em { font-size: 26px; font-style: normal; }
+
+.ranking-panel {
+  position: absolute; z-index: 10; right: 1.2%; bottom: 12%;
+  width: 215px; padding: 10px; border: 2px solid #96d8ff88; border-radius: 18px;
+  background: rgba(8, 40, 73, .92); box-shadow: 0 12px 32px #00122d99;
+  backdrop-filter: blur(8px);
+}
+.ranking-panel h3 { margin: 2px 0 8px; text-align: center; font-size: 13px; }
+.rank-row {
+  display: grid; grid-template-columns: 23px 1fr 42px; gap: 4px;
+  align-items: center; padding: 7px 2px; border-top: 1px solid #ffffff1a; font-size: 11px;
+}
+.rank-row b { font-weight: 500; }
+.rank-row strong { color: #ffd65d; text-align: right; }
+.rank-row.current { background: #ffffff12; }
+
+.ai-hint {
+  position: absolute; z-index: 10; right: 1.5%; bottom: 2%;
+  display: flex; align-items: center; gap: 8px; text-align: right;
+  text-shadow: 0 2px 6px #07162c;
+  animation: aiBob 3s ease-in-out infinite;
+}
+.ai-hint span { color: #ffe681; font-size: 22px; }
+.ai-hint i { font-size: 12px; font-weight: 700; }
+.ai-hint b { font-size: 29px; }
+@keyframes aiBob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+/* ================= 3. QUẦN ĐẢO ĐỒ SỘ MỚI & PHÂN CẤP ĐẠI ĐẢO TRUNG TÂM ================= */
+.hotspots {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  transition: transform 0.15s ease-out;
+}
+.hit {
+  position: absolute; display: block; margin: 0; padding: 0;
+  border: 0; background: transparent; cursor: pointer;
+  transition: filter 0.25s, transform 0.25s;
+}
+.hit:hover {
+  filter: brightness(1.14) drop-shadow(0 0 22px rgba(253, 224, 71, 0.85));
+  z-index: 9;
+}
+
+.island-float { animation: floatIsland 4.4s ease-in-out infinite; }
+.island-float-center {
+  z-index: 7;
+  animation: floatCenter 5.4s ease-in-out infinite;
+}
+.f-delay-1 { animation-delay: 0s;    animation-duration: 4.1s; }
+.f-delay-2 { animation-delay: -0.9s; animation-duration: 4.6s; }
+.f-delay-3 { animation-delay: -1.8s; animation-duration: 3.9s; }
+.f-delay-4 { animation-delay: -2.7s; animation-duration: 4.8s; }
+.f-delay-5 { animation-delay: -3.4s; animation-duration: 4.3s; }
+
+@keyframes floatIsland {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50%      { transform: translateY(-12px) rotate(0.7deg); }
+}
+@keyframes floatCenter {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50%      { transform: translateY(-16px) scale(1.025); }
+}
+
+/* Đảo Môn Học Đồ Sộ Mới (Phóng to 146% để thấy rõ cổng vòm cổ đại, trụ Rune & thác nước) */
+.island-art {
+  position: absolute;
+  left: -22%; bottom: -46%;
+  width: 144%; height: 162%;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 18px 22px rgba(2, 8, 24, 0.78));
+  pointer-events: none;
+}
+
+/* Giữ nguyên màu đá và cổng cổ tự nhiên, chỉ tạo sắc thái riêng nhẹ nhàng */
+.hue-math    { filter: hue-rotate(10deg) saturate(1.1) drop-shadow(0 18px 22px rgba(2, 8, 24, 0.78)); }
+.hue-physics { filter: hue-rotate(22deg) saturate(1.15) drop-shadow(0 18px 22px rgba(2, 8, 24, 0.78)); }
+.hue-chem    { filter: hue-rotate(0deg) saturate(1.18) drop-shadow(0 18px 22px rgba(2, 8, 24, 0.78)); }
+.hue-lit     { filter: hue-rotate(-14deg) saturate(1.12) drop-shadow(0 18px 22px rgba(2, 8, 24, 0.78)); }
+.hue-sport   { filter: hue-rotate(-22deg) saturate(1.18) drop-shadow(0 18px 22px rgba(2, 8, 24, 0.78)); }
+.hue-art     { filter: hue-rotate(-10deg) brightness(1.04) drop-shadow(0 18px 22px rgba(2, 8, 24, 0.78)); }
+.hue-bio     { filter: hue-rotate(6deg) saturate(1.22) drop-shadow(0 18px 22px rgba(2, 8, 24, 0.78)); }
+.hue-geo     { filter: hue-rotate(-12deg) contrast(1.06) drop-shadow(0 18px 22px rgba(2, 8, 24, 0.78)); }
+.hue-it      { filter: hue-rotate(25deg) saturate(1.18) drop-shadow(0 18px 22px rgba(2, 8, 24, 0.78)); }
+.hue-eng     { filter: hue-rotate(15deg) saturate(1.1) drop-shadow(0 18px 22px rgba(2, 8, 24, 0.78)); }
+.hue-hist    { filter: hue-rotate(-24deg) contrast(1.08) drop-shadow(0 18px 22px rgba(2, 8, 24, 0.78)); }
+
+/* ĐẠI ĐẢO TRUNG TÂM SIÊU ĐỒ SỘ (Mở rộng vượt trội làm tâm điểm toàn cảnh) */
+.island-center-art {
+  position: absolute;
+  left: -24%; bottom: -34%;
+  width: 148%; height: 162%;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 26px 34px rgba(2, 6, 20, 0.88)) drop-shadow(0 0 28px rgba(56, 189, 248, 0.32));
+  pointer-events: none;
+}
+.center-aura-ring {
+  position: absolute;
+  left: -10%; right: -10%; top: 18%; bottom: 10%;
+  border-radius: 50%;
+  border: 3px dashed rgba(253, 224, 71, 0.7);
+  box-shadow: 0 0 42px rgba(56, 189, 248, 0.5);
+  animation: auraSpin 24s linear infinite;
+  pointer-events: none;
+}
+@keyframes auraSpin {
+  from { transform: rotateX(68deg) rotateZ(0deg); }
+  to   { transform: rotateX(68deg) rotateZ(360deg); }
+}
+
+/* Nhãn tên môn học */
+.island-label {
+  position: absolute;
+  bottom: -18px; left: 50%; transform: translateX(-50%);
+  padding: 5px 15px; border-radius: 16px;
+  background: linear-gradient(135deg, #0f3868 0%, #051329 100%);
+  border: 1.5px solid #7dd3fc;
+  color: #fff; font-size: 12px; font-weight: 800;
+  white-space: nowrap; pointer-events: none;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.78);
+  z-index: 8;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.center-title {
+  bottom: -14px; font-size: 15px; padding: 7px 24px;
+  background: linear-gradient(135deg, #f59e0b 0%, #b45309 100%);
+  border: 2px solid #fef08a;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.88), 0 0 24px rgba(250, 204, 21, 0.65);
+}
+.hit:hover .island-label {
+  transform: translateX(-50%) scale(1.12);
+  border-color: #fde047;
+}
+
+/* Sân khấu chứa các Đồ dùng học tập nằm ngay giữa sân cỏ của đảo mới */
+.stage {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+}
+.actor {
+  position: absolute;
+  display: block;
+  width: clamp(42px, 4vw, 58px);
+  height: clamp(42px, 4vw, 58px);
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.58));
+  will-change: transform, opacity;
+}
+
+/* ================= 4. KỊCH BẢN VÒNG LẶP CHO 11 ĐẢO ================= */
+
+/* --- 1. ĐẢO HÓA HỌC --- */
+.bush-l      { left: 6%;  bottom: 46%; width: 42px; height: 42px; z-index: 7; }
+.bush-r      { right: 6%; bottom: 46%; width: 42px; height: 42px; z-index: 7; transform: scaleX(-1); }
+.flask-left  { left: 12%; bottom: 48%; animation: chemLeft 5.2s ease-in-out infinite; }
+.flask-right { right: 12%; bottom: 48%; animation: chemRight 5.2s ease-in-out infinite; }
+.chem-boom   { left: 50%; bottom: 42%; width: 90px; height: 90px; animation: chemBoom 5.2s ease-out infinite; z-index: 8; }
+.chem-smoke  { left: 50%; bottom: 54%; width: 78px; height: 78px; animation: chemSmoke 5.2s ease-out infinite; z-index: 7; }
+
+@keyframes chemLeft {
+  0%        { transform: translate(-14px, 8px) scale(0); opacity: 0; }
+  12%       { transform: translate(0, 0) scale(1) rotate(-10deg); opacity: 1; }
+  24%       { transform: translate(14px, -18px) rotate(12deg); }
+  36%       { transform: translate(24px, 0) rotate(-8deg); }
+  46%       { transform: translate(36px, -20px) rotate(22deg); }
+  52%       { transform: translate(44px, -4px) scale(1.15) rotate(35deg); opacity: 1; }
+  54%, 100% { transform: translate(44px, -4px) scale(0); opacity: 0; }
+}
+@keyframes chemRight {
+  0%        { transform: translate(14px, 8px) scale(0); opacity: 0; }
+  12%       { transform: translate(0, 0) scale(1) rotate(10deg); opacity: 1; }
+  24%       { transform: translate(-14px, -18px) rotate(-12deg); }
+  36%       { transform: translate(-24px, 0) rotate(8deg); }
+  46%       { transform: translate(-36px, -20px) rotate(-22deg); }
+  52%       { transform: translate(-44px, -4px) scale(1.15) rotate(-35deg); opacity: 1; }
+  54%, 100% { transform: translate(-44px, -4px) scale(0); opacity: 0; }
+}
+@keyframes chemBoom {
+  0%, 51%   { transform: translate(-50%, 0) scale(0); opacity: 0; }
+  55%       { transform: translate(-50%, -6px) scale(1.38) rotate(12deg); opacity: 1; }
+  64%       { transform: translate(-50%, -10px) scale(1.08) rotate(-8deg); opacity: 1; }
+  74%, 100% { transform: translate(-50%, -16px) scale(0); opacity: 0; }
+}
+@keyframes chemSmoke {
+  0%, 54%   { transform: translate(-50%, 0) scale(0.3); opacity: 0; }
+  66%       { transform: translate(-50%, -22px) scale(1.35); opacity: 0.95; }
+  88%, 100% { transform: translate(-50%, -46px) scale(1.9); opacity: 0; }
+}
+
+/* --- 2. ĐẢO TOÁN HỌC --- */
+.ruler   { left: 16%; bottom: 48%; animation: mathToolL 4.8s ease-in-out infinite; }
+.compass { right: 16%; bottom: 48%; animation: mathToolR 4.8s ease-in-out infinite; }
+.fx-math {
+  left: 50%; bottom: 68%; width: auto; height: auto;
+  font-size: clamp(16px, 1.8vw, 24px); font-weight: 900; color: #fef08a;
+  text-shadow: 0 2px 8px #b45309, 0 0 12px #fde047;
+  white-space: nowrap;
+  animation: mathPop 4.8s ease-out infinite;
+}
+
+@keyframes mathToolL {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25%      { transform: translate(14px, -14px) rotate(-25deg); }
+  50%      { transform: translate(22px, -6px) rotate(15deg); }
+}
+@keyframes mathToolR {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  30%      { transform: translate(-14px, -14px) rotate(35deg); }
+  55%      { transform: translate(-20px, -4px) rotate(-20deg); }
+}
+@keyframes mathPop {
+  0%, 38%   { transform: translate(-50%, 10px) scale(0); opacity: 0; }
+  55%       { transform: translate(-50%, -14px) scale(1.22); opacity: 1; }
+  82%, 100% { transform: translate(-50%, -32px) scale(0.5); opacity: 0; }
+}
+
+/* --- 3. ĐẢO VẬT LÝ --- */
+.magnet { left: 36%; bottom: 46%; animation: magnetShake 4.8s ease-in-out infinite; }
+.apple  { left: 38%; top: -10%; width: 40px; height: 40px; animation: appleDrop 4.8s ease-in infinite; }
+.spark  { left: 50%; bottom: 52%; width: 72px; height: 72px; animation: sparkFlash 4.8s ease-out infinite; }
+
+@keyframes appleDrop {
+  0%        { transform: translateY(-6px) scale(0); opacity: 0; }
+  15%, 30%  { transform: translateY(0) scale(1); opacity: 1; }
+  48%       { transform: translateY(38px) scale(1.05); opacity: 1; }
+  52%, 100% { transform: translateY(42px) scale(0); opacity: 0; }
+}
+@keyframes magnetShake {
+  0%, 46%, 100% { transform: scale(1) rotate(0); }
+  50%           { transform: scale(1.25, 0.8) rotate(-14deg); }
+  58%           { transform: scale(0.9, 1.15) rotate(14deg); }
+}
+@keyframes sparkFlash {
+  0%, 48%   { transform: translate(-50%, 0) scale(0); opacity: 0; }
+  55%       { transform: translate(-50%, -10px) scale(1.3); opacity: 1; }
+  76%, 100% { transform: translate(-50%, -22px) scale(0); opacity: 0; }
+}
+
+/* --- 4. ĐẢO NGỮ VĂN --- */
+.book       { left: 22%; bottom: 46%; animation: bookPulse 5.2s ease-in-out infinite; }
+.quill      { left: 46%; bottom: 54%; animation: quillWrite 5.2s ease-in-out infinite; }
+.bird-paper { left: 44%; bottom: 58%; animation: birdFlyOut 5.2s ease-out infinite; }
+
+@keyframes bookPulse {
+  0%, 100% { transform: scale(1); }
+  40%, 60% { transform: scale(1.18) rotate(-4deg); }
+}
+@keyframes quillWrite {
+  0%, 15%   { transform: translate(-15px, -10px); opacity: 0; }
+  25%       { opacity: 1; }
+  35%       { transform: translate(0px, 0px) rotate(-25deg); }
+  50%       { transform: translate(12px, -8px) rotate(12deg); opacity: 1; }
+  70%, 100% { transform: translate(15px, -15px) scale(0.4); opacity: 0; }
+}
+@keyframes birdFlyOut {
+  0%, 50%   { transform: translate(0, 0) scale(0); opacity: 0; }
+  65%       { transform: translate(12px, -16px) scale(1.15); opacity: 1; }
+  92%, 100% { transform: translate(38px, -44px) scale(0.5); opacity: 0; }
+}
+
+/* --- 5. ĐẢO THỂ DỤC --- */
+.shoe { left: 10%; bottom: 48%; animation: shoeKick 4.6s ease-in-out infinite; }
+.ball { left: 28%; bottom: 48%; width: 42px; height: 42px; animation: ballArc 4.6s ease-in-out infinite; }
+.goal { right: 10%; bottom: 46%; animation: goalWin 4.6s ease-out infinite; }
+
+@keyframes shoeKick {
+  0%, 15%   { transform: translateX(-10px) rotate(15deg); }
+  28%       { transform: translateX(6px) rotate(-30deg) scale(1.15); }
+  45%, 100% { transform: translateX(0) rotate(0deg); }
+}
+@keyframes ballArc {
+  0%, 24%   { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+  42%       { transform: translate(36px, -28px) rotate(180deg); }
+  56%       { transform: translate(68px, -4px) rotate(360deg); opacity: 1; }
+  62%, 100% { transform: translate(72px, 0) scale(0); opacity: 0; }
+}
+@keyframes goalWin {
+  0%, 54%   { transform: scale(0.9); }
+  62%       { transform: scale(1.35) rotate(8deg); }
+  85%, 100% { transform: scale(0.9); }
+}
+
+/* --- 6. ĐẢO MỸ THUẬT --- */
+.palette { left: 18%; bottom: 46%; animation: paletteDance 5s ease-in-out infinite; }
+.brush   { right: 18%; bottom: 50%; animation: brushPaint 5s ease-in-out infinite; }
+.rainbow { left: 50%; bottom: 58%; width: 66px; height: 66px; animation: rainbowShow 5s ease-out infinite; }
+
+@keyframes paletteDance {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  35%      { transform: rotate(-15deg) scale(1.12); }
+  55%      { transform: rotate(12deg) scale(1.15); }
+}
+@keyframes brushPaint {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  25%      { transform: translate(-22px, 4px) rotate(-35deg); }
+  45%      { transform: translate(12px, -18px) rotate(25deg); }
+}
+@keyframes rainbowShow {
+  0%, 40%   { transform: translate(-50%, 10px) scale(0); opacity: 0; }
+  58%       { transform: translate(-50%, -10px) scale(1.22); opacity: 1; }
+  85%, 100% { transform: translate(-50%, -22px) scale(0); opacity: 0; }
+}
+
+/* --- 7. ĐẢO SINH HỌC --- */
+.sprout    { left: 36%; bottom: 46%; animation: bioSprout 5.6s ease-in-out infinite; }
+.flower    { left: 36%; bottom: 46%; width: 62px; height: 62px; animation: bioFlower 5.6s ease-in-out infinite; }
+.butterfly { left: 46%; bottom: 58%; animation: bioButterfly 5.6s ease-in-out infinite; }
+
+@keyframes bioSprout {
+  0%        { transform: scale(0); opacity: 0; }
+  15%, 35%  { transform: scale(1.1); opacity: 1; }
+  45%, 100% { transform: scale(0); opacity: 0; }
+}
+@keyframes bioFlower {
+  0%, 38%   { transform: scale(0) rotate(-30deg); opacity: 0; }
+  50%, 80%  { transform: scale(1.22) rotate(0deg); opacity: 1; }
+  92%, 100% { transform: scale(0); opacity: 0; }
+}
+@keyframes bioButterfly {
+  0%, 48%   { transform: translate(0, 0) scale(0); opacity: 0; }
+  62%       { transform: translate(-16px, -14px) scale(1); opacity: 1; }
+  78%       { transform: translate(18px, -26px) scale(1.1); opacity: 1; }
+  95%, 100% { transform: translate(32px, -45px) scale(0); opacity: 0; }
+}
+
+/* --- 8. ĐẢO ĐỊA LÝ --- */
+.globe   { left: 16%; bottom: 48%; animation: globeSpin 5.4s ease-in-out infinite; }
+.volcano { right: 14%; bottom: 46%; width: 62px; height: 62px; animation: volcanoRumble 5.4s ease-in-out infinite; }
+.lava    { right: 14%; bottom: 62%; width: 62px; height: 62px; animation: lavaErupt 5.4s ease-out infinite; }
+
+@keyframes globeSpin {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%      { transform: translateY(-8px) rotate(18deg); }
+}
+@keyframes volcanoRumble {
+  0%, 35%, 100% { transform: translateX(0) scale(1); }
+  42%           { transform: translateX(-3px) scale(1.1, 0.92); }
+  48%           { transform: translateX(3px) scale(0.95, 1.15); }
+}
+@keyframes lavaErupt {
+  0%, 45%   { transform: translateY(10px) scale(0); opacity: 0; }
+  56%       { transform: translateY(-18px) scale(1.25); opacity: 1; }
+  78%, 100% { transform: translateY(-34px) scale(0); opacity: 0; }
+}
+
+/* --- 9. ĐẢO TIN HỌC --- */
+.laptop { left: 14%; bottom: 46%; width: 62px; height: 62px; animation: laptopType 5s ease-in-out infinite; }
+.bug    { right: 18%; bottom: 48%; animation: bugCrawl 5s ease-in-out infinite; }
+.hammer { right: 14%; bottom: 60%; animation: hammerSmash 5s ease-in-out infinite; }
+
+@keyframes laptopType {
+  0%, 100% { transform: scale(1); }
+  20%, 40% { transform: scale(1.08) translateY(-3px); }
+}
+@keyframes bugCrawl {
+  0%, 18% { transform: translate(-20px, 8px) scale(0); opacity: 0; }
+  28%     { transform: translate(-10px, -6px) scale(1); opacity: 1; }
+  42%     { transform: translate(4px, 0px) rotate(15deg); opacity: 1; }
+  56%     { transform: translate(0, 6px) scale(1.4, 0.2); opacity: 0; }
+  100%    { opacity: 0; }
+}
+@keyframes hammerSmash {
+  0%, 42%   { transform: translateY(-15px) rotate(35deg) scale(0); opacity: 0; }
+  50%       { transform: translateY(-8px) rotate(25deg) scale(1.1); opacity: 1; }
+  55%       { transform: translateY(10px) rotate(-25deg) scale(1.25); opacity: 1; }
+  72%, 100% { transform: translateY(0) scale(0); opacity: 0; }
+}
+
+/* --- 10. ĐẢO TIẾNG ANH --- */
+.chat-a   { left: 12%; bottom: 48%; animation: chatLeft 4.8s ease-in-out infinite; }
+.chat-b   { right: 12%; bottom: 48%; animation: chatRight 4.8s ease-in-out infinite; }
+.music-fx { left: 50%; bottom: 60%; width: 62px; height: 62px; animation: musicPop 4.8s ease-out infinite; }
+
+@keyframes chatLeft {
+  0%, 15%   { transform: translate(-10px, 8px) scale(0); opacity: 0; }
+  30%       { transform: translate(0, -6px) scale(1); opacity: 1; }
+  50%       { transform: translate(22px, -4px) scale(1.1); opacity: 1; }
+  58%, 100% { transform: translate(26px, 0) scale(0); opacity: 0; }
+}
+@keyframes chatRight {
+  0%, 20%   { transform: translate(10px, 8px) scale(0); opacity: 0; }
+  35%       { transform: translate(0, -6px) scale(1); opacity: 1; }
+  50%       { transform: translate(-22px, -4px) scale(1.1); opacity: 1; }
+  58%, 100% { transform: translate(-26px, 0) scale(0); opacity: 0; }
+}
+@keyframes musicPop {
+  0%, 50%   { transform: translate(-50%, 6px) scale(0); opacity: 0; }
+  62%       { transform: translate(-50%, -12px) scale(1.25); opacity: 1; }
+  88%, 100% { transform: translate(-50%, -28px) scale(0); opacity: 0; }
+}
+
+/* --- 11. ĐẢO LỊCH SỬ --- */
+.sword-l { left: 16%; bottom: 48%; animation: swordLeft 5s ease-in-out infinite; }
+.sword-r { right: 16%; bottom: 48%; animation: swordRight 5s ease-in-out infinite; }
+.crown   { left: 50%; bottom: 56%; width: 62px; height: 62px; animation: crownGlow 5s ease-out infinite; }
+
+@keyframes swordLeft {
+  0%, 15%   { transform: translateX(-15px) rotate(-35deg); opacity: 0; }
+  25%       { opacity: 1; }
+  45%       { transform: translateX(22px) translateY(-10px) rotate(25deg); opacity: 1; }
+  60%, 100% { transform: translateX(22px) scale(0); opacity: 0; }
+}
+@keyframes swordRight {
+  0%, 15%   { transform: translateX(15px) rotate(35deg) scaleX(-1); opacity: 0; }
+  25%       { opacity: 1; }
+  45%       { transform: translateX(-22px) translateY(-10px) rotate(-25deg) scaleX(-1); opacity: 1; }
+  60%, 100% { transform: translateX(-22px) scale(0); opacity: 0; }
+}
+@keyframes crownGlow {
+  0%, 44%   { transform: translate(-50%, 8px) scale(0); opacity: 0; }
+  58%       { transform: translate(-50%, -12px) scale(1.3); opacity: 1; }
+  85%, 100% { transform: translate(-50%, -20px) scale(0); opacity: 0; }
+}
+
+/* --- ĐẢO TRUNG TÂM --- */
+.crystal {
+  left: 50%; top: -12%;
+  width: clamp(56px, 5.6vw, 82px);
+  height: clamp(56px, 5.6vw, 82px);
+  transform: translate(-50%, 0);
+  filter: drop-shadow(0 0 20px #38bdf8);
+  animation: crystalHover 3.2s ease-in-out infinite;
+}
+@keyframes crystalHover {
+  0%, 100% { transform: translate(-50%, 0) rotate(-5deg); }
+  50%      { transform: translate(-50%, -12px) rotate(5deg) scale(1.12); }
+}
+
+/* ================= 5. TỌA ĐỘ CÁC ĐẢO (ĐẢO TRUNG TÂM LỚN VƯỢT TRỘI) ================= */
+.math       { left: 14%; top: 19%; width: 16%; height: 15%; }
+.physics    { left: 33%; top: 10%; width: 14.5%; height: 14%; }
+.chemistry  { left: 52.5%; top: 10%; width: 15%; height: 14%; }
+.literature { left: 71%; top: 18%; width: 15.5%; height: 15%; }
+.sport      { left: 1.5%; top: 40%; width: 15.5%; height: 15%; }
+.art        { left: 17.5%; top: 53%; width: 15.5%; height: 15%; }
+.biology    { right: 1.5%; top: 41%; width: 15.5%; height: 15%; }
+.geography  { left: 68.5%; top: 60%; width: 16%; height: 15%; }
+.computer   { left: 6.5%; top: 73%; width: 15.5%; height: 14%; }
+.english    { left: 27.5%; top: 73%; width: 15.5%; height: 14%; }
+.history    { left: 52.5%; top: 75%; width: 15.5%; height: 14%; }
+
+/* Đảo Trung Tâm mở rộng từ 24% lên 29% chiều ngang để tôn vinh Đại Thành Cổ */
+.center     { left: 35.5%; top: 26%; width: 29%; height: 35%; }
+
+.rune-btn {
+  bottom: 2%; width: 5.5%; height: 10%; min-width: 58px; min-height: 64px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 2px; border-radius: 16px;
+  background: linear-gradient(145deg, rgba(20, 62, 110, 0.92), rgba(8, 28, 56, 0.95));
+  border: 2px solid rgba(125, 211, 252, 0.82);
+  box-shadow: 0 8px 22px rgba(0, 12, 30, 0.75);
+  color: #fff;
+  animation: runeFloat 3.5s ease-in-out infinite;
+}
+.rune-icon { font-size: 24px; }
+.rune-btn small { font-size: 10px; font-weight: 700; color: #bfe6ff; }
+.settings { left: 1.5%;  animation-delay: 0s; }
+.rewards  { left: 7.8%;  animation-delay: -0.8s; }
+.missions { left: 14.1%; animation-delay: -1.6s; }
+.exit     { left: 20.4%; animation-delay: -2.4s; }
+
+@keyframes runeFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+/* ================= 6. HỘP THOẠI DIALOG ================= */
+.dialog {
+  position: fixed; inset: 0; z-index: 20; display: none;
+  place-items: center; padding: 20px;
+  background: #041126ad; backdrop-filter: blur(6px);
+}
+.dialog.open { display: grid; }
+.dialog-card {
+  position: relative; width: min(440px, 92vw); padding: 30px;
+  border: 1px solid #c1e4ffb3; border-radius: 22px; color: #fff;
+  text-align: center; background: linear-gradient(145deg, #194a7c, #0b2548);
+  box-shadow: 0 25px 70px #0006;
+}
+.close {
+  position: absolute; right: 12px; top: 5px; border: 0;
+  color: #fff; background: transparent; font-size: 30px; cursor: pointer;
+}
+.dialog-icon { font-size: 38px; }
+.dialog-card h2 { margin: 8px 0; }
+.dialog-card p { line-height: 1.55; color: #d9edff; }
+.confirm {
+  padding: 10px 24px; border: 0; border-radius: 10px;
+  color: #fff; background: #247ed1; font-weight: 700; cursor: pointer;
+}
+
+@media(max-width: 850px) {
+  .player-card { transform: scale(.82); transform-origin: top left; }
+  .top-actions { transform: scale(.82); transform-origin: top right; }
+  .ranking-panel { display: none; }
+  .ai-hint { transform: scale(.85); transform-origin: bottom right; }
+}
+@media(max-width: 560px) {
+  .player-card { min-width: 200px; }
+  .top-actions { top: 90px; }
+  .ai-hint { display: none; }
+}

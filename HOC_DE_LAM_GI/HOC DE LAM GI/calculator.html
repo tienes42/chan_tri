@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Máy tính khoa học HDLJ</title><link rel="stylesheet" href="calculator.css">
+</head>
+<body>
+<header class="topbar"><a class="back" href="math-grade.html" aria-label="Quay lại">←</a><div class="brandmark">∑</div><div class="brand"><strong>HDLJ</strong><span>MÁY TÍNH KHOA HỌC</span></div><div class="top-spacer"></div><span class="online"><i></i> Tính toán trên trình duyệt</span></header>
+<main class="layout">
+<section class="intro"><div class="eyebrow">CÔNG CỤ TOÁN HỌC HDLJ</div><h1>Máy tính khoa học</h1><p>Một bộ công cụ tính toán cho học tập: biểu thức khoa học, phương trình bậc hai, bảng hàm số, thống kê và ma trận.</p><div class="notice"><b>ⓘ</b><span>Nhập biểu thức hoặc dùng phím. <strong>SHIFT</strong> bật chức năng phụ, <strong>ALPHA</strong> chèn biến A–F, <strong>DEG/RAD</strong> đổi đơn vị góc.</span></div>
+<div class="feature-grid"><div><span>01</span><b>Tính khoa học</b><small>Phân số, lũy thừa, căn, lượng giác, logarit, giai thừa và tổ hợp.</small></div><div><span>02</span><b>Giải phương trình</b><small>Phương trình bậc hai và hệ phương trình tuyến tính 2 ẩn.</small></div><div><span>03</span><b>Bảng hàm số</b><small>Tạo bảng giá trị từ hàm f(x) với bước tùy chọn.</small></div><div><span>04</span><b>Thống kê & ma trận</b><small>Thống kê một biến, định thức và nghịch đảo ma trận 2×2, 3×3.</small></div></div><div class="disclaimer">Lưu ý: đây là máy tính khoa học HDLJ độc lập, không phải phần mềm Casio chính hãng. Các kết quả số được tính bằng thư viện toán học; cần kiểm thử riêng trước khi dùng trong các bài toán yêu cầu độ chính xác cao.</div></section>
+<section class="calculator" aria-label="Máy tính khoa học"><div class="device-head"><div><b>HDLJ</b><small>SCIENTIFIC · ADVANCED</small></div><span>CALC · v2.0</span></div>
+<div class="screen"><div class="screen-meta"><span id="angleMode">DEG</span><span id="shiftStatus">SHIFT: OFF</span><span id="memoryStatus">M: —</span></div><input id="expression" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Biểu thức" placeholder="Nhập biểu thức…"><div class="result-line"><span id="resultHint">KẾT QUẢ</span><output id="result">0</output></div><div id="error" role="status" aria-live="polite"></div></div>
+<div class="modebar"><label for="modeSelect">CHẾ ĐỘ</label><select id="modeSelect"><option value="calculate">Calculate · Tính toán</option><option value="equation">Equation · Phương trình</option><option value="table">Table · Bảng hàm số</option><option value="statistics">Statistics · Thống kê</option><option value="matrix">Matrix · Ma trận</option></select></div>
+<div id="modePanel" class="mode-panel" hidden></div>
+<div class="toolbar"><button id="angleToggle" class="mode-key">DEG/RAD</button><button data-insert="Ans">Ans</button><button data-action="backspace">⌫</button><button data-action="clear" class="clear-key">AC</button></div>
+<div class="key-grid">
+<button data-insert="sin(" class="fn" data-shift="asin(">sin</button><button data-insert="cos(" class="fn" data-shift="acos(">cos</button><button data-insert="tan(" class="fn" data-shift="atan(">tan</button><button data-insert="sqrt(" class="fn" data-shift="cbrt(">√</button><button data-insert="log(" class="fn" data-shift="10^(">log</button>
+<button data-insert="ln(" class="fn" data-shift="exp(">ln</button><button data-insert="^" class="fn">xʸ</button><button data-insert="!" class="fn">x!</button><button data-insert="(">(</button><button data-insert=")">)</button>
+<!-- Cụm số 3x3 ở ba cột giữa; hai cột ngoài được lấp bằng phím chức năng -->
+<button data-insert="÷" class="operator">÷</button><button data-insert="7" class="number">7</button><button data-insert="8" class="number">8</button><button data-insert="9" class="number">9</button><button data-insert="×" class="operator">×</button>
+<button data-insert="sqrt(" class="fn">√</button><button data-insert="4" class="number">4</button><button data-insert="5" class="number">5</button><button data-insert="6" class="number">6</button><button data-insert="−" class="operator">−</button>
+<button data-insert="%" class="wide">%</button><button data-insert="1" class="number">1</button><button data-insert="2" class="number">2</button><button data-insert="3" class="number">3</button><button data-insert="+" class="operator">+</button>
+<button data-insert="π">π</button><button data-insert="e">e</button><button data-insert="0" class="number">0</button><button data-insert=".">.</button><button data-insert="Ans" class="number">Ans</button>
+<button data-insert="(-" class="wide">(−) dấu âm</button><button data-insert="/" class="wide">a / b</button><button data-insert="," class="wide">,</button><button data-insert="abs(" class="fn">abs</button><button data-insert="floor(" class="fn">floor</button>
+<button data-insert="round(" class="fn">round</button><button data-insert="nCr(" class="fn">nCr</button><button data-insert="A" class="alpha-key">A</button><button data-insert="B" class="alpha-key">B</button><button data-insert="C" class="alpha-key">C</button>
+<button data-insert="D" class="alpha-key">D</button><button data-insert="E" class="alpha-key">E</button><button data-insert="F" class="alpha-key">F</button><button data-action="memory-store" class="memory-key">STO</button><button data-action="memory-recall" class="memory-key">RCL</button>
+<button data-action="shift" id="shiftKey" class="shift-key">SHIFT</button><button data-action="alpha" id="alphaKey" class="shift-key">ALPHA</button><button data-action="memory-add" class="memory-key">M+</button><button data-insert="10^(" class="fn">10ˣ</button><button data-action="equals" class="equals">=</button>
+</div><div class="device-foot"><span>SHIFT · ALPHA · STO · RCL</span><span>HDLJ CALC 2.0</span></div></section>
+<aside class="history-panel"><div class="history-heading"><div><span class="eyebrow">PHÉP TÍNH GẦN ĐÂY</span><h2>Lịch sử</h2></div><button id="clearHistory" class="text-button">Xóa</button></div><div id="historyList" class="history-list"><p class="empty-history">Các phép tính của bạn sẽ xuất hiện ở đây.</p></div><div class="history-tip">Chọn một dòng để đưa biểu thức trở lại màn hình. Lịch sử và biến nhớ được lưu trong phiên hiện tại.</div></aside>
+</main><script src="https://cdn.jsdelivr.net/npm/mathjs@13.2.0/lib/browser/math.js"></script><script src="calculator.js"></script>
+</body></html>

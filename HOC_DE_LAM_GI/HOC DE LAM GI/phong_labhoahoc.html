@@ -1,0 +1,2708 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CÔNG CỤ HÓA — Phòng Thí Nghiệm Hóa Học 3D Tương Tác | HỌC ĐỂ LÀM GÌ?</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js & OrbitControls (r128) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f1f5f9;
+            overflow: hidden;
+            user-select: none;
+        }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
+        #webglContainer { position: absolute; inset: 0; z-index: 1; }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(56, 189, 248, 0.22);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+        }
+        .equip-card { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .equip-card:hover {
+            transform: translateY(-3px);
+            border-color: #38bdf8;
+            box-shadow: 0 6px 18px rgba(56, 189, 248, 0.2);
+        }
+        body.hide-left-panels #leftHudPanel,
+        body.hide-left-panels #topCenterBanner {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col relative">
+
+    <!-- ================= THANH ĐIỀU HƯỚNG TRÊN CÙNG (TOP HEADER) ================= -->
+    <header class="h-14 bg-slate-950/95 border-b border-slate-800 px-4 flex items-center justify-between z-40 shrink-0">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 via-cyan-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-sky-500/25">
+                <i class="fa-solid fa-atom text-white text-lg"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="font-extrabold text-base tracking-tight bg-gradient-to-r from-sky-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent">
+                        CÔNG CỤ HÓA 3D
+                    </span>
+                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                        HỌC ĐỂ LÀM GÌ?
+                    </span>
+                </div>
+                <p class="text-[11px] text-slate-400 hidden xl:block">
+                    Học không chỉ để biết — Học để ứng dụng giải quyết vấn đề thực tiễn
+                </p>
+            </div>
+        </div>
+
+        <!-- Chuyển đổi 2 Khu Vực: KHU SANDBOX 3D vs KHU CÁC THÍ NGHIỆM -->
+        <div class="flex items-center bg-slate-900 p-1 rounded-xl border border-slate-800 gap-1">
+            <button id="btnZoneSandbox" onclick="switchZone('sandbox')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 bg-sky-500 text-slate-950 shadow-md">
+                <i class="fa-solid fa-cubes"></i>
+                <span>1. Khu Sandbox 3D (Tự Do)</span>
+            </button>
+            <button id="btnZoneExperiments" onclick="openExperimentHubModal()" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 text-slate-300 hover:text-white hover:bg-slate-800">
+                <i class="fa-solid fa-flask-vial text-emerald-400"></i>
+                <span>2. Khu Các Thí Nghiệm (Theo Bài)</span>
+                <span id="expCountBadge" class="px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 rounded text-[10px]">12+</span>
+            </button>
+        </div>
+
+        <!-- Các nút Mở rộng Hóa chất/Thí nghiệm, Dọn bàn & Xuất dữ liệu -->
+        <div class="flex items-center gap-2">
+            <button onclick="openCustomCreatorModal()" class="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-plus-circle"></i>
+                <span>Thêm Hóa Chất / Thí Nghiệm</span>
+            </button>
+            <button onclick="resetCurrentScene()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-rotate-right text-sky-400"></i>
+                <span class="hidden md:inline">Làm lại</span>
+            </button>
+            <button onclick="clearAll3DObjects()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-rose-950/60 text-slate-300 hover:text-rose-300 text-xs font-medium border border-slate-700 transition flex items-center gap-1.5">
+                <i class="fa-solid fa-broom text-rose-400"></i>
+                <span class="hidden md:inline">Dọn bàn</span>
+            </button>
+            <button onclick="openFastAPIModal()" class="px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition flex items-center gap-1.5">
+                <i class="fa-solid fa-database"></i>
+                <span class="hidden lg:inline">Dữ liệu KHKT</span>
+                <span id="telemetryCounter" class="px-1.5 py-0.2 bg-emerald-400 text-slate-950 rounded-full text-[10px] font-extrabold">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ================= KHÔNG GIAN CHÍNH (3D WORKBENCH + RIGHT SIDEBAR) ================= -->
+    <div class="flex-1 flex relative overflow-hidden">
+
+        <!-- KHU VỰC KHÔNG GIAN 3D WEBGL CHÍNH -->
+        <div class="flex-1 relative overflow-hidden" id="mainViewportArea">
+            <div id="webglContainer"></div>
+
+            <!-- Thanh tiêu đề bài thí nghiệm & Hướng dẫn thao tác nhanh ở giữa trên -->
+            <div id="topCenterBanner" class="absolute top-3 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center pointer-events-none max-w-xl w-full px-4">
+                <div class="glass-panel px-4 py-1.5 rounded-full flex items-center gap-2.5 pointer-events-auto">
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="activeModeTitle" class="text-xs font-bold text-white">
+                        Khu Sandbox 3D: Tự do lấy mọi Dụng cụ & Hóa chất 3D
+                    </span>
+                </div>
+                <div id="toastBanner3D" class="mt-2 px-3.5 py-1.5 rounded-xl bg-slate-950/90 border border-sky-500/40 text-sky-200 text-xs font-medium shadow-lg text-center">
+                    💡 <b>Thao tác 3D:</b> Kéo <b>Ống nhỏ giọt (Pipet)</b> chạm vào Cốc/Lọ để <b>HÚT</b> dung dịch, rồi kéo sang Ống nghiệm/Cốc khác để <b>NHỎ GIỌT</b>!
+                </div>
+            </div>
+
+            <!-- BẢNG HUD TRÁI: QUAN SÁT HIỆN TƯỢNG, PHƯƠNG TRÌNH & "HỌC ĐỂ LÀM GÌ?" -->
+            <div id="leftHudPanel" class="absolute top-3 left-3 w-80 sm:w-96 z-20 flex flex-col gap-2.5 max-h-[calc(100vh-135px)] overflow-y-auto pr-1">
+                <div class="glass-panel rounded-2xl p-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-sky-400 flex items-center gap-1.5">
+                            <i class="fa-solid fa-crosshairs"></i>
+                            <span>Bình 3D Đang Chọn & Thao Tác</span>
+                        </span>
+                        <span id="selectedObjectBadge" class="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30">
+                            Chưa chọn bình
+                        </span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-1.5 mb-2">
+                        <button id="btnDoseNormal" onclick="setDosageMode('normal')" class="py-1.5 px-2 rounded-lg text-[11px] font-bold bg-sky-600 text-white transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-droplet"></i>
+                            <span>Vừa đủ (3 mL / 5g)</span>
+                        </button>
+                        <button id="btnDoseExcess" onclick="setDosageMode('excess')" class="py-1.5 px-2 rounded-lg text-[11px] font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-water"></i>
+                            <span>Cho dư (10 mL / 15g)</span>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-1.5 pt-1.5 border-t border-slate-800">
+                        <button onclick="quickHeatSelected()" class="py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-orange-600/30 text-slate-200 hover:text-orange-300 border border-slate-700 text-[11px] font-semibold transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-fire text-orange-400"></i>
+                            <span>Đun nóng</span>
+                        </button>
+                        <button onclick="quickStirSelected()" class="py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-sky-600/30 text-slate-200 hover:text-sky-300 border border-slate-700 text-[11px] font-semibold transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-rotate text-sky-400"></i>
+                            <span>Lắc / Khuấy</span>
+                        </button>
+                        <button onclick="removeSelected3DObject()" class="py-1.5 px-2 rounded-lg bg-slate-800 hover:bg-rose-600/30 text-slate-200 hover:text-rose-300 border border-slate-700 text-[11px] font-semibold transition flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-trash-can text-rose-400"></i>
+                            <span>Xóa vật</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Hộp Hướng dẫn từng bước -->
+                <div id="experimentStepsBox" class="hidden glass-panel rounded-2xl p-3 border-amber-500/40">
+                    <div class="text-[11px] font-extrabold uppercase tracking-wider text-amber-400 mb-1 flex items-center justify-between">
+                        <span>📋 Hướng dẫn thực hành từng bước</span>
+                        <span id="expCategoryBadge" class="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300">Bài học</span>
+                    </div>
+                    <div id="experimentStepsText" class="text-xs text-slate-200 leading-relaxed space-y-1"></div>
+                </div>
+
+                <!-- Hộp Quan sát Hiện tượng & Phương trình Hóa học -->
+                <div class="glass-panel rounded-2xl p-3.5">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                            <i class="fa-solid fa-microscope text-cyan-400"></i>
+                            <span>Hiện Tượng & Phương Trình 3D</span>
+                        </span>
+                        <span id="hudTempPhBadge" class="mono text-[11px] font-bold px-2 py-0.5 rounded bg-slate-900 text-amber-300 border border-slate-700">
+                            25°C | pH 7.0
+                        </span>
+                    </div>
+
+                    <div id="hudContentsPills" class="flex flex-wrap gap-1 mb-2.5">
+                        <span class="text-[11px] text-slate-400 italic">Chưa có hóa chất trong bình đang chọn</span>
+                    </div>
+
+                    <div id="hudPhenomenon" class="bg-slate-950/90 border border-slate-800 rounded-xl p-2.5 text-xs text-slate-200 leading-relaxed mb-2.5">
+                        Hãy chọn một bình chứa 3D trên bàn rồi bấm vào hóa chất ở kệ phải (hoặc kéo Ống nhỏ giọt hút dịch từ Cốc/Lọ nhỏ sang Ống nghiệm) để quan sát phản ứng!
+                    </div>
+
+                    <div class="bg-sky-950/40 border-l-4 border-sky-400 rounded-r-xl p-2.5">
+                        <div class="text-[10px] font-bold uppercase text-sky-300 mb-0.5">Phương trình hóa học</div>
+                        <div id="hudEquation" class="mono text-xs font-bold text-white break-words">—</div>
+                    </div>
+                </div>
+
+                <!-- Hộp HỌC ĐỂ LÀM GÌ? -->
+                <div class="glass-panel rounded-2xl p-3.5 bg-gradient-to-br from-emerald-950/60 via-slate-900/90 to-sky-950/60 border-emerald-500/35">
+                    <div class="flex items-center gap-2 mb-1.5">
+                        <span class="w-5 h-5 rounded-md bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-seedling"></i>
+                        </span>
+                        <h3 class="text-[11px] font-extrabold uppercase tracking-wider text-emerald-300">
+                            HỌC ĐỂ LÀM GÌ? — Ứng Dụng Thực Tiễn
+                        </h3>
+                    </div>
+                    <p id="hudRealLifeApp" class="text-xs text-slate-200 leading-relaxed">
+                        Mỗi thí nghiệm 3D đều gắn liền với ứng dụng đời sống: từ luyện thép, hàn cắt kim loại, pha nước muối sinh lý, kiểm định thực phẩm đến xử lý ô nhiễm môi trường.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Nút Ẩn / Hiện bảng thông tin bên trái -->
+            <button id="toggleLeftHudBtn" onclick="toggleLeftHudPanel()" class="absolute bottom-3 left-3 z-30 px-3.5 py-2 rounded-full bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold shadow-lg border border-sky-400 flex items-center gap-1.5 transition">
+                <i class="fa-solid fa-eye-slash"></i>
+                <span id="toggleLeftHudTxt">Ẩn bảng thông tin trái</span>
+            </button>
+
+            <!-- THANH ĐIỀU KHIỂN CAMERA 3D Ở ĐÁY MÀN HÌNH -->
+            <div class="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 glass-panel px-3 py-1.5 rounded-full flex items-center gap-2 flex-wrap justify-center">
+                <button onclick="setCameraView('front')" class="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-200 text-[11px] font-semibold transition flex items-center gap-1">
+                    <i class="fa-solid fa-video"></i>
+                    <span>Chính diện</span>
+                </button>
+                <button onclick="setCameraView('top')" class="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-200 text-[11px] font-semibold transition flex items-center gap-1">
+                    <i class="fa-solid fa-Down-left-and-up-right-to-center"></i>
+                    <span>Góc trên cao</span>
+                </button>
+                <button onclick="setCameraView('closeup')" class="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-sky-500 hover:text-slate-950 text-slate-200 text-[11px] font-semibold transition flex items-center gap-1">
+                    <i class="fa-solid fa-magnifying-glass-plus"></i>
+                    <span>Cận cảnh bình</span>
+                </button>
+                <div class="h-3.5 w-[1px] bg-slate-700 mx-1"></div>
+                <button onclick="toggleIonMicroView()" class="px-2.5 py-1 rounded-full bg-slate-800 hover:bg-purple-500/30 text-slate-200 text-[11px] font-semibold border border-slate-700 transition flex items-center gap-1">
+                    <i class="fa-solid fa-atom text-purple-400"></i>
+                    <span>Soi Ion 3D: <b id="ionViewStatus">TẮT</b></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- ================= KỆ DỤNG CỤ & HÓA CHẤT 3D BÊN PHẢI ================= -->
+        <aside class="w-80 sm:w-96 bg-slate-950 border-l border-slate-800 flex z-30 shrink-0">
+            <div class="w-20 bg-slate-900/90 border-r border-slate-800 flex flex-col items-center py-2 px-1 gap-1.5 overflow-y-auto">
+                <button onclick="selectDrawerTab('containers', this)" class="drawer-tab-btn active-drawer-tab w-full py-2 px-1 rounded-xl flex flex-col items-center gap-1 text-[10px] font-bold bg-sky-500/20 text-sky-300 border border-sky-500/40 transition">
+                    <i class="fa-solid fa-vial text-base"></i>
+                    <span class="text-center leading-tight">Dụng cụ phản ứng</span>
+                </button>
+                <button onclick="selectDrawerTab('assistive', this)" class="drawer-tab-btn w-full py-2 px-1 rounded-xl flex flex-col items-center gap-1 text-[10px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-fire-burner text-base"></i>
+                    <span class="text-center leading-tight">Thiết bị hỗ trợ</span>
+                </button>
+                <button onclick="selectDrawerTab('solids', this)" class="drawer-tab-btn w-full py-2 px-1 rounded-xl flex flex-col items-center gap-1 text-[10px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-cubes-stacked text-base"></i>
+                    <span class="text-center leading-tight">Hóa chất rắn</span>
+                </button>
+                <button onclick="selectDrawerTab('liquids', this)" class="drawer-tab-btn w-full py-2 px-1 rounded-xl flex flex-col items-center gap-1 text-[10px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-Prescription-bottle text-base"></i>
+                    <span class="text-center leading-tight">Hóa chất lỏng</span>
+                </button>
+                <button onclick="selectDrawerTab('gases', this)" class="drawer-tab-btn w-full py-2 px-1 rounded-xl flex flex-col items-center gap-1 text-[10px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition">
+                    <i class="fa-solid fa-cloud text-base"></i>
+                    <span class="text-center leading-tight">Hóa chất khí</span>
+                </button>
+
+                <div class="w-full border-t border-slate-800 pt-1.5 mt-1 flex flex-col items-center gap-0.5" id="azFilterRail"></div>
+            </div>
+
+            <div class="flex-1 flex flex-col overflow-hidden">
+                <div class="p-2.5 border-b border-slate-800 bg-slate-900/50">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+                        <input id="drawerSearchInput" type="text" oninput="renderDrawerCatalog()" placeholder="Tìm công thức, tên chất (VD: AgNO3, O2, Fe)..."
+                            class="w-full bg-slate-950 border border-slate-800 focus:border-sky-500 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div id="experimentFilterBanner" class="hidden px-3 py-2 bg-emerald-950/70 border-b border-emerald-500/30 flex items-center justify-between text-[11px]">
+                    <span class="text-emerald-300 font-medium">
+                        <i class="fa-solid fa-filter mr-1"></i>Chỉ hiện đủ chất của bài thí nghiệm
+                    </span>
+                    <button onclick="switchZone('sandbox')" class="text-sky-400 hover:underline font-bold">Mở tất cả</button>
+                </div>
+
+                <div class="px-3 py-1.5 bg-slate-900/80 border-b border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
+                    <span id="drawerCategoryTitle" class="font-bold text-slate-200">Dụng cụ phản ứng</span>
+                    <span id="drawerCountLabel">0 mục</span>
+                </div>
+
+                <div id="drawerItemsGrid" class="flex-1 overflow-y-auto p-2.5 grid grid-cols-2 gap-2 content-start"></div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- ================= MODAL 1: KHU CÁC THÍ NGHIỆM (EXPERIMENT HUB) ================= -->
+    <div id="experimentHubModal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-6xl w-full h-[86vh] flex flex-col overflow-hidden shadow-2xl">
+            <div class="p-4 sm:px-6 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">Khu vực 2</span>
+                        <h2 class="text-lg sm:text-xl font-extrabold text-white">THƯ VIỆN CÁC THÍ NGHIỆM HÓA HỌC 3D</h2>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-0.5">Chọn một thí nghiệm — Bàn 3D và kệ hóa chất sẽ tự động lọc đúng các dụng cụ & hóa chất cần cho bài đó.</p>
+                </div>
+                <button onclick="closeModal('experimentHubModal')" class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="flex-1 flex overflow-hidden">
+                <div class="w-56 bg-slate-950/70 border-r border-slate-800 p-3 flex flex-col gap-1.5 overflow-y-auto shrink-0">
+                    <button onclick="filterExperimentHub('all', this)" class="hub-cat-btn bg-sky-500/20 text-sky-300 border border-sky-500/40 text-left px-3.5 py-2.5 rounded-xl text-xs font-bold transition">🔥 Tất cả thí nghiệm</button>
+                    <button onclick="filterExperimentHub('combustion', this)" class="hub-cat-btn text-slate-400 hover:bg-slate-800 hover:text-white text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold transition">💨 Chất khí & Sự cháy</button>
+                    <button onclick="filterExperimentHub('solution', this)" class="hub-cat-btn text-slate-400 hover:bg-slate-800 hover:text-white text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold transition">⚖️ Pha chế & Cân đo</button>
+                    <button onclick="filterExperimentHub('inorganic', this)" class="hub-cat-btn text-slate-400 hover:bg-slate-800 hover:text-white text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold transition">🧪 Nhận biết Vô cơ</button>
+                    <button onclick="filterExperimentHub('organic', this)" class="hub-cat-btn text-slate-400 hover:bg-slate-800 hover:text-white text-left px-3.5 py-2.5 rounded-xl text-xs font-semibold transition">🧬 Hữu cơ & Đời sống</button>
+                </div>
+                <div id="hubExperimentsGrid" class="flex-1 p-5 overflow-y-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 content-start"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 2: THÊM HÓA CHẤT, PHẢN ỨNG & THÍ NGHIỆM MỚI ================= -->
+    <div id="customCreatorModal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-3xl w-full max-h-[88vh] flex flex-col overflow-hidden shadow-2xl">
+            <div class="p-4 sm:px-6 border-b border-slate-800 flex items-center justify-between bg-slate-950/60">
+                <h3 class="text-base sm:text-lg font-extrabold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+                    <span>Mở Rộng Phòng Lab: Tự Thêm Hóa Chất & Phản Ứng Mới</span>
+                </h3>
+                <button onclick="closeModal('customCreatorModal')" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-4 text-xs flex-1">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-slate-300 font-semibold mb-1">Công thức hóa học:</label>
+                        <input id="newChemFormula" type="text" placeholder="VD: K₂SO₄, CH₃COOH..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-slate-300 font-semibold mb-1">Tên gọi tiếng Việt:</label>
+                        <input id="newChemName" type="text" placeholder="VD: Kali Sunfat" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-slate-300 font-semibold mb-1">Phân loại kệ:</label>
+                        <select id="newChemCategory" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white">
+                            <option value="liquids">Hóa chất lỏng (Dung dịch)</option>
+                            <option value="solids">Hóa chất rắn / Kim loại</option>
+                            <option value="gases">Hóa chất khí (Bình khí)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-300 font-semibold mb-1">Màu sắc 3D & Độ pH:</label>
+                        <div class="flex gap-2">
+                            <input id="newChemColor" type="color" value="#38bdf8" class="h-9 w-16 bg-slate-950 border border-slate-700 rounded-lg cursor-pointer">
+                            <input id="newChemPh" type="number" step="0.5" value="7.0" class="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white">
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-slate-300 font-semibold mb-1">Ứng dụng thực tế ("HỌC ĐỂ LÀM GÌ?"):</label>
+                    <input id="newChemApp" type="text" placeholder="VD: Dùng làm phân bón kali giúp cây cứng cáp..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-white">
+                </div>
+                <button onclick="saveCustomChemical()" class="w-full py-2.5 rounded-xl bg-sky-500 hover:bg-sky-400 text-slate-950 font-extrabold transition">
+                    <i class="fa-solid fa-check mr-1"></i>Lưu Hóa Chất Vào Kệ 3D Ngay
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 3: XUẤT DỮ LIỆU FASTAPI ================= -->
+    <div id="fastAPIModal" class="hidden fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+            <div class="p-4 sm:px-6 border-b border-slate-800 flex items-center justify-between">
+                <h3 class="text-base font-extrabold text-white">Đồng Bộ FastAPI (`HOC_DE_LAM_GI_v3`)</h3>
+                <button onclick="closeModal('fastAPIModal')" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="p-5 overflow-y-auto space-y-3 flex-1 text-xs">
+                <pre id="fastAPIJsonPreview" class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-emerald-300 mono overflow-x-auto max-h-96"></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= JAVASCRIPT: CƠ SỞ DỮ LIỆU & ENGINE 3D THREE.JS ================= -->
+    <script>
+        /********************************************************************
+         * 1. KHO DỮ LIỆU ĐẦY ĐỦ: 15 DỤNG CỤ 3D & 45+ HÓA CHẤT
+         ********************************************************************/
+        const EQUIPMENT_CATALOG = {
+            containers: [
+                { id: 'test_tube', name: 'Ống nghiệm (20mL)', sub: 'Thủy tinh chịu nhiệt', letter: 'O', isVessel: true },
+                { id: 'beaker_100', name: 'Cốc thủy tinh 100mL', sub: 'Beaker 100mL', letter: 'C', isVessel: true },
+                { id: 'beaker_250', name: 'Cốc thủy tinh 250mL', sub: 'Beaker 250mL', letter: 'C', isVessel: true },
+                { id: 'erlenmeyer', name: 'Bình tam giác 250mL', sub: 'Erlenmeyer Flask', letter: 'B', isVessel: true },
+                { id: 'round_flask', name: 'Bình cầu đáy tròn', sub: 'Round-bottom Flask', letter: 'B', isVessel: true },
+                { id: 'gas_jar', name: 'Bình thu khí có nắp', sub: 'Gas Jar 250mL', letter: 'B', isVessel: true }
+            ],
+            assistive: [
+                { id: 'dropper', name: 'Ống nhỏ giọt (Pipet)', sub: 'Hút & nhỏ dung dịch', letter: 'O' },
+                { id: 'test_rack', name: 'Giá đỡ ống nghiệm gỗ', sub: 'Cắm 4 ống nghiệm 3D', letter: 'G' },
+                { id: 'alcohol_burner', name: 'Đèn cồn 3D (Có nắp)', sub: 'Nguồn nhiệt 650°C', letter: 'D' },
+                { id: 'matchbox', name: 'Hộp diêm & Que diêm', sub: 'Quẹt để châm lửa', letter: 'H' },
+                { id: 'iron_coil', name: 'Dây sắt xoắn lò xo (Fe)', sub: 'Đốt trong bình O₂', letter: 'D' },
+                { id: 'combustion_spoon', name: 'Muôi sắt đốt hóa chất', sub: 'Đốt Photpho, Lưu huỳnh', letter: 'M' },
+                { id: 'balance_scale', name: 'Cân đĩa 3D & Quả cân', sub: 'Cân khối lượng chính xác', letter: 'C' },
+                { id: 'spatula', name: 'Muỗng lấy hóa chất rắn', sub: 'Xúc bột/hạt rắn', letter: 'M' }
+            ],
+            solids: [
+                { id: 'solid_NaCl', formula: 'NaCl', name: 'Natri Clorua (Muối ăn)', color: 0xf8fafc, ph: 7.0, letter: 'N', app: 'Pha nước muối sinh lý 0.9% trong y tế và bảo quản thực phẩm.' },
+                { id: 'solid_RedP', formula: 'P (đỏ)', name: 'Photpho đỏ (Bột)', color: 0x991b1b, ph: 7.0, letter: 'P', app: 'Sản xuất vỏ bao diêm an toàn và phân lân.' },
+                { id: 'solid_Zn', formula: 'Zn', name: 'Kẽm kim loại (Hạt)', color: 0x94a3b8, ph: 7.0, letter: 'Z', app: 'Mạ kẽm bảo vệ vỏ tàu biển và điều chế khí H₂.' },
+                { id: 'solid_Cu', formula: 'Cu', name: 'Đồng kim loại (Lá)', color: 0xd97706, ph: 7.0, letter: 'C', app: 'Chế tạo lõi dây dẫn điện và hợp kim đồng thau.' },
+                { id: 'solid_Fe', formula: 'Fe', name: 'Sắt kim loại (Đinh)', color: 0x64748b, ph: 7.0, letter: 'F', app: 'Luyện thép xây dựng, chế tạo máy móc.' },
+                { id: 'solid_CaCO3', formula: 'CaCO₃', name: 'Đá vôi (Canxi Cacbonat)', color: 0xf1f5f9, ph: 7.5, letter: 'C', app: 'Sản xuất xi măng, vôi sống.' },
+                { id: 'solid_CuSO4_anh', formula: 'CuSO₄ (khan)', name: 'Đồng(II) Sunfat khan', color: 0xf8fafc, ph: 6.0, letter: 'C', app: 'Phát hiện dấu vết nước lẫn trong xăng dầu.' }
+            ],
+            liquids: [
+                { id: 'liq_H2O', formula: 'H₂O', name: 'Nước cất tinh khiết', color: 0xbae6fd, opacity: 0.35, ph: 7.0, letter: 'H', app: 'Dung môi chuẩn để pha chế mọi dung dịch hóa học.' },
+                { id: 'liq_HCl', formula: 'HCl', name: 'Axit Clohiđric', color: 0xe2e8f0, opacity: 0.38, ph: 1.0, letter: 'H', app: 'Có trong dịch vị dạ dày; công nghiệp dùng tẩy gỉ thép.' },
+                { id: 'liq_H2SO4', formula: 'H₂SO₄', name: 'Axit Sunfuric loãng', color: 0xe2e8f0, opacity: 0.40, ph: 0.8, letter: 'H', app: 'Dung dịch điện phân trong bình ắc quy và sản xuất phân bón.' },
+                { id: 'liq_HNO3', formula: 'HNO₃', name: 'Axit Nitric đặc', color: 0xfef08a, opacity: 0.48, ph: 1.0, letter: 'H', app: 'Sản xuất phân đạm và khắc bản mạch đồng điện tử.' },
+                { id: 'liq_CH3COOH', formula: 'CH₃COOH', name: 'Axit Axetic (Giấm ăn)', color: 0xf1f5f9, opacity: 0.35, ph: 2.8, letter: 'C', app: 'Làm giấm ăn gia đình và tẩy cặn vôi ấm đun nước.' },
+                { id: 'liq_NaOH', formula: 'NaOH', name: 'Natri Hiđroxit (Xút)', color: 0xe2e8f0, opacity: 0.38, ph: 13.5, letter: 'N', app: 'Sản xuất xà phòng, giấy và xử lý nước thải axit.' },
+                { id: 'liq_BaOH2', formula: 'Ba(OH)₂', name: 'Bari Hiđroxit', color: 0xe2e8f0, opacity: 0.38, ph: 13.0, letter: 'B', app: 'Thuốc thử nhận biết ion sunfat và cacbonat.' },
+                { id: 'liq_Limewater', formula: 'Ca(OH)₂', name: 'Nước vôi trong', color: 0xf1f5f9, opacity: 0.38, ph: 12.4, letter: 'C', app: 'Khử chua đất nông nghiệp và hấp thụ khí CO₂.' },
+                { id: 'liq_NH3', formula: 'NH₃ (dd)', name: 'Dung dịch Amoniac', color: 0xe2e8f0, opacity: 0.38, ph: 11.2, letter: 'N', app: 'Sản xuất phân đạm và tạo phức tráng gương.' },
+                { id: 'liq_CuSO4', formula: 'CuSO₄', name: 'Đồng(II) Sunfat', color: 0x0284c7, opacity: 0.72, ph: 5.2, letter: 'C', app: 'Diệt nấm mốc cây trồng và diệt tảo hồ bơi.' },
+                { id: 'liq_FeCl3', formula: 'FeCl₃', name: 'Sắt(III) Clorua', color: 0xd97706, opacity: 0.75, ph: 3.5, letter: 'F', app: 'Chất keo tụ xử lý nước thải công nghiệp.' },
+                { id: 'liq_FeSO4', formula: 'FeSO₄', name: 'Sắt(II) Sunfat', color: 0x86efac, opacity: 0.58, ph: 5.5, letter: 'F', app: 'Bổ sung vi lượng sắt cho cây trồng.' },
+                { id: 'liq_AgNO3', formula: 'AgNO₃', name: 'Bạc Nitrat', color: 0xe2e8f0, opacity: 0.38, ph: 6.5, letter: 'A', app: 'Tráng gương soi, tráng ruột phích giữ nhiệt.' },
+                { id: 'liq_BaCl2', formula: 'BaCl₂', name: 'Bari Clorua', color: 0xe2e8f0, opacity: 0.38, ph: 7.0, letter: 'B', app: 'Thuốc thử đặc hiệu nhận biết axit H₂SO₄ và muối sunfat.' },
+                { id: 'liq_Na2CO3', formula: 'Na₂CO₃', name: 'Natri Cacbonat (Soda)', color: 0xe2e8f0, opacity: 0.38, ph: 11.0, letter: 'N', app: 'Làm mềm nước cứng và sản xuất thủy tinh.' },
+                { id: 'liq_AlCl3', formula: 'AlCl₃', name: 'Nhôm Clorua', color: 0xe2e8f0, opacity: 0.38, ph: 4.8, letter: 'A', app: 'Tạo kết tủa keo làm trong nước đục.' },
+                { id: 'liq_NH4Cl', formula: 'NH₄Cl', name: 'Amoni Clorua (Phân đạm)', color: 0xe2e8f0, opacity: 0.38, ph: 5.5, letter: 'N', app: 'Phân đạm cung cấp Nitơ cho cây trồng.' },
+                { id: 'liq_KI', formula: 'KI', name: 'Kali Iotua', color: 0xe2e8f0, opacity: 0.38, ph: 7.0, letter: 'K', app: 'Trộn vào muối ăn ngăn ngừa bệnh bướu cổ.' },
+                { id: 'liq_Glucose', formula: 'C₆H₁₂O₆', name: 'Dung dịch Glucozơ', color: 0xf8fafc, opacity: 0.38, ph: 7.0, letter: 'G', app: 'Huyết thanh truyền dịch cấp cứu y tế và tráng bạc.' },
+                { id: 'liq_Starch', formula: '(C₆H₁₀O₅)ₙ', name: 'Hồ Tinh Bột', color: 0xf1f5f9, opacity: 0.52, ph: 7.0, letter: 'H', app: 'Chỉ thị nhận biết I-ốt.' },
+                { id: 'liq_Protein', formula: 'Protein', name: 'Lòng trắng trứng', color: 0xfef3c7, opacity: 0.58, ph: 7.2, letter: 'P', app: 'Xét nghiệm sinh hóa định lượng đạm bằng phản ứng Biure.' },
+                { id: 'liq_I2', formula: 'I₂', name: 'Dung dịch Iot', color: 0xb45309, opacity: 0.78, ph: 6.8, letter: 'I', app: 'Thuốc sát trùng vết thương và nhận biết tinh bột.' },
+                { id: 'liq_Phenol', formula: 'PP', name: 'Phenolphtalein', color: 0xffffff, opacity: 0.32, ph: 7.0, letter: 'P', app: 'Chỉ thị màu nhận biết môi trường kiềm (hóa hồng khi pH > 8.3).' },
+                { id: 'liq_Litmus', formula: 'Quỳ tím', name: 'Chỉ thị Quỳ tím', color: 0x8b5cf6, opacity: 0.68, ph: 7.0, letter: 'Q', app: 'Nhận biết nhanh môi trường Axit (Đỏ) và Bazơ (Xanh).' }
+            ],
+            gases: [
+                { id: 'gas_O2', formula: 'O₂', name: 'Bình khí Oxi nguyên chất', color: 0xbae6fd, opacity: 0.25, letter: 'O', app: 'Duy trì sự hô hấp, bình thở y tế và luyện thép.' },
+                { id: 'gas_CO2', formula: 'CO₂', name: 'Bình khí Cacbonic', color: 0xcbd5e1, opacity: 0.28, letter: 'C', app: 'Bình cứu hỏa chữa cháy và sản xuất nước ngọt có ga.' },
+                { id: 'gas_Cl2', formula: 'Cl₂', name: 'Bình khí Clo (Vàng lục)', color: 0xbef264, opacity: 0.48, letter: 'C', app: 'Khử trùng nước máy sinh hoạt và sản xuất nước Javel.' }
+            ]
+        };
+
+        const EXPERIMENTS_DB = [
+            {
+                id: 'exp_iron_o2', group: 'combustion', badge: 'HOT',
+                title: '1. Đốt dây sắt (Fe) trong bình khí Oxi (O₂)',
+                desc: 'Quẹt diêm châm đèn cồn 3D, nung nóng đỏ dây sắt xoắn rồi đưa vào bình khí O₂ làm bắn tia lửa Fe₃O₄ rực rỡ.',
+                guide: '<b>B1:</b> Kéo <b>Hộp diêm</b> chạm vào <b>Đèn cồn 3D</b> để bật lửa.<br><b>B2:</b> Kéo <b>Dây sắt xoắn (Fe)</b> hơ vào ngọn lửa đèn cồn đến khi nóng đỏ.<br><b>B3:</b> Kéo dây sắt đang nóng đỏ thả vào <b>Bình khí O₂</b> để xem pháo hoa tia lửa 3D!',
+                allowedItems: ['alcohol_burner', 'matchbox', 'iron_coil', 'gas_jar', 'gas_O2', 'liq_H2O']
+            },
+            {
+                id: 'exp_red_p_air', group: 'combustion', badge: 'HOT',
+                title: '2. Đo hàm lượng Oxi trong không khí bằng Photpho đỏ (P)',
+                desc: 'Đốt cháy Photpho đỏ trên muôi sắt rồi đưa vào bình kín tạo khói trắng P₂O₅ đặc.',
+                guide: '<b>B1:</b> Kéo <b>Muôi đốt</b> chạm vào lọ <b>Photpho đỏ (P)</b>.<br><b>B2:</b> Hơ muôi đốt trên ngọn lửa <b>Đèn cồn 3D</b> cho P bốc cháy rồi đưa vào <b>Bình thu khí</b>!',
+                allowedItems: ['alcohol_burner', 'matchbox', 'combustion_spoon', 'solid_RedP', 'gas_jar', 'beaker_250', 'liq_H2O']
+            },
+            {
+                id: 'exp_nacl_balance', group: 'solution', badge: 'HOT',
+                title: '3. Cân muối NaCl trên Cân Đĩa 3D & Pha chế dung dịch',
+                desc: 'Sử dụng cân 2 đĩa 3D, dùng muỗng xúc muối NaCl rắn lên đĩa cân đến khi thăng bằng (20g).',
+                guide: '<b>B1:</b> Kéo <b>Muỗng lấy hóa chất</b> chạm vào lọ <b>NaCl</b> để lấy 5g muối.<br><b>B2:</b> Đưa muỗng thả vào <b>Cân đĩa 3D</b> (4 lần = 20g) để kim cân thăng bằng.',
+                allowedItems: ['balance_scale', 'beaker_250', 'solid_NaCl', 'liq_H2O', 'spatula']
+            },
+            {
+                id: 'exp_silver_mirror', group: 'organic', badge: 'TRỌNG TÂM',
+                title: '4. Phản ứng Tráng Bạc của Glucozơ (C₆H₁₂O₆)',
+                desc: 'Tạo lớp bạc kim loại (Ag↓) sáng bóng như gương phủ trực tiếp lên thành ống nghiệm 3D khi đun nóng.',
+                guide: '<b>B1:</b> Cho <b>AgNO₃</b>, <b>NH₃</b> và <b>Glucozơ</b> vào Ống nghiệm.<br><b>B2:</b> Đun nóng ống nghiệm trên <b>Đèn cồn 3D</b> để xem lớp gương bạc sáng bóng!',
+                allowedItems: ['test_tube', 'test_rack', 'alcohol_burner', 'matchbox', 'dropper', 'liq_AgNO3', 'liq_NH3', 'liq_Glucose']
+            },
+            {
+                id: 'exp_biuret_protein', group: 'organic', badge: 'THỰC TIỄN',
+                title: '5. Phản ứng màu Biure nhận biết Protein',
+                desc: 'Nhận biết liên kết peptit trong Protein bằng phức chất màu tím đặc trưng với Cu(OH)₂.',
+                guide: 'Cho <b>CuSO₄</b>, <b>NaOH</b> và <b>Protein</b> vào Ống nghiệm → Tạo dung dịch màu tím Biure!',
+                allowedItems: ['test_tube', 'test_rack', 'beaker_100', 'dropper', 'liq_CuSO4', 'liq_NaOH', 'liq_Protein']
+            },
+            {
+                id: 'exp_barium_sulfate', group: 'inorganic', badge: 'NHẬN BIẾT',
+                title: '6. Nhận biết gốc Sunfat (=SO₄) và Halide (Cl⁻, I⁻)',
+                desc: 'Dùng Ống nhỏ giọt hút dung dịch từ Cốc/Lọ nhỏ sang Ống nghiệm trên giá đỡ để tạo kết tủa BaSO₄, AgCl, AgI.',
+                guide: 'Kéo <b>Ống nhỏ giọt</b> chạm vào Cốc chứa <b>H₂SO₄</b> để hút, rồi kéo sang Ống nghiệm chứa <b>BaCl₂</b> để tạo kết tủa trắng BaSO₄!',
+                allowedItems: ['test_tube', 'test_rack', 'beaker_100', 'dropper', 'liq_BaCl2', 'liq_H2SO4', 'liq_AgNO3', 'liq_HCl', 'liq_KI']
+            }
+        ];
+
+        /********************************************************************
+         * 2. KHỞI TẠO KHÔNG GIAN 3D WEBGL (MẶT BÀN TRẮNG ĐỤC DỊU MẮT)
+         ********************************************************************/
+        const webglContainer = document.getElementById('webglContainer');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0f172a);
+        scene.fog = new THREE.FogExp2(0x0f172a, 0.015);
+
+        const camera = new THREE.PerspectiveCamera(44, 1, 0.1, 150);
+        camera.position.set(0, 7.5, 15.5);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        webglContainer.appendChild(renderer.domElement);
+
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.target.set(0, 2.0, 0);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.07;
+        controls.maxPolarAngle = Math.PI / 2 - 0.02;
+        controls.minDistance = 5;
+        controls.maxDistance = 26;
+
+        // Hệ thống ánh sáng trắng dịu (Không ám xanh neon)
+        const ambientLight = new THREE.AmbientLight(0xf8fafc, 0.78);
+        scene.add(ambientLight);
+
+        const mainSpotLight = new THREE.DirectionalLight(0xffffff, 0.82);
+        mainSpotLight.position.set(8, 18, 12);
+        mainSpotLight.castShadow = true;
+        mainSpotLight.shadow.mapSize.width = 2048;
+        mainSpotLight.shadow.mapSize.height = 2048;
+        scene.add(mainSpotLight);
+
+        const softFillLight = new THREE.PointLight(0xe2e8f0, 0.35, 30);
+        softFillLight.position.set(-10, 8, -6);
+        scene.add(softFillLight);
+
+        // Mặt bàn Thí nghiệm 3D: Màu trắng đục nhám dịu mắt (#d6d9df), không bóng chói
+        const benchGroup = new THREE.Group();
+        const benchTopGeo = new THREE.BoxGeometry(24, 0.7, 12);
+        const benchTopMat = new THREE.MeshStandardMaterial({
+            color: 0xd6d9df,
+            roughness: 0.90,
+            metalness: 0.04
+        });
+        const benchTop = new THREE.Mesh(benchTopGeo, benchTopMat);
+        benchTop.position.y = -0.35;
+        benchTop.receiveShadow = true;
+        benchGroup.add(benchTop);
+
+        // Viền bàn màu xám đá trung tính
+        const trimGeo = new THREE.BoxGeometry(24.2, 0.14, 12.2);
+        const trimMat = new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.7 });
+        const trimMesh = new THREE.Mesh(trimGeo, trimMat);
+        trimMesh.position.y = -0.03;
+        benchGroup.add(trimMesh);
+
+        // Lưới tọa độ xám nhạt tinh tế trên mặt bàn trắng đục
+        const tableGrid = new THREE.GridHelper(23.6, 24, 0x94a3b8, 0xcbd5e1);
+        tableGrid.position.y = 0.01;
+        tableGrid.material.opacity = 0.32;
+        tableGrid.material.transparent = true;
+        benchGroup.add(tableGrid);
+        scene.add(benchGroup);
+
+        // Vòng tròn đánh dấu vật thể đang chọn
+        const selectionRing = new THREE.Mesh(
+            new THREE.RingGeometry(0.92, 1.10, 36),
+            new THREE.MeshBasicMaterial({ color: 0x0284c7, side: THREE.DoubleSide })
+        );
+        selectionRing.rotation.x = -Math.PI / 2;
+        selectionRing.position.y = 0.025;
+        selectionRing.visible = false;
+        scene.add(selectionRing);
+
+        // Ống nhỏ giọt tự động bay tới khi bấm hóa chất từ kệ phải
+        const autoPipetteGroup = new THREE.Group();
+        const pipGlass = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.09, 0.025, 1.4, 16),
+            new THREE.MeshPhysicalMaterial({ color: 0xffffff, transparent: true, opacity: 0.65 })
+        );
+        const pipRubber = new THREE.Mesh(
+            new THREE.SphereGeometry(0.2, 16, 16),
+            new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.4 })
+        );
+        pipRubber.position.y = 0.82;
+        const fallingDrop3D = new THREE.Mesh(
+            new THREE.SphereGeometry(0.11, 12, 12),
+            new THREE.MeshBasicMaterial({ color: 0x0284c7 })
+        );
+        fallingDrop3D.position.y = -0.85;
+        autoPipetteGroup.add(pipGlass, pipRubber, fallingDrop3D);
+        autoPipetteGroup.visible = false;
+        scene.add(autoPipetteGroup);
+
+        /********************************************************************
+         * 3. HÀM DỰNG NHÃN CHỮ 3D (TƯƠNG THÍCH MỌI TRÌNH DUYỆT)
+         ********************************************************************/
+        function drawCanvasRoundRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        function create3DLabelSprite(text, subText = '', borderColor = '#38bdf8') {
+            const canvas = document.createElement('canvas');
+            canvas.width = 280;
+            canvas.height = 96;
+            const c = canvas.getContext('2d');
+
+            c.fillStyle = 'rgba(15, 23, 42, 0.90)';
+            c.strokeStyle = borderColor;
+            c.lineWidth = 4;
+            drawCanvasRoundRect(c, 6, 6, 268, 84, 16);
+            c.fill();
+            c.stroke();
+
+            c.fillStyle = '#ffffff';
+            c.font = 'bold 26px Inter, sans-serif';
+            c.textAlign = 'center';
+            c.fillText(String(text).slice(0, 16), 140, subText ? 44 : 56);
+
+            if (subText) {
+                c.fillStyle = '#94a3b8';
+                c.font = '600 17px Inter, sans-serif';
+                c.fillText(String(subText).slice(0, 24), 140, 72);
+            }
+
+            const tex = new THREE.CanvasTexture(canvas);
+            const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+            const sprite = new THREE.Sprite(mat);
+            sprite.scale.set(2.05, 0.72, 1);
+            return sprite;
+        }
+
+        /********************************************************************
+         * 4. NHÀ MÁY DỰNG MÔ HÌNH 3D (ĐÃ CÓ GIÁ ĐỠ ỐNG NGHIỆM GỖ & PIPET PASTEUR MỚI)
+         ********************************************************************/
+        let labObjects3D = [];
+        let particles3D = [];
+        let selectedLabObj = null;
+        let currentZone = 'sandbox';
+        let activeExperiment = null;
+        let currentDrawerTab = 'containers';
+        let currentAZFilter = '';
+        let currentDosageMode = 'normal';
+        let ionMicroView = false;
+        let telemetryEvents = [];
+
+        function getCatalogItemInfo(typeId) {
+            for (const catKey of Object.keys(EQUIPMENT_CATALOG)) {
+                const found = EQUIPMENT_CATALOG[catKey].find(x => x.id === typeId);
+                if (found) return { ...found, categoryKey: catKey };
+            }
+            return null;
+        }
+
+        function spawn3DObject(typeId, x = 0, z = 0) {
+            const info = getCatalogItemInfo(typeId);
+            if (!info) return null;
+
+            const group = new THREE.Group();
+            group.position.set(x, 0, z);
+
+            const objState = {
+                uid: 'obj3d_' + Date.now() + '_' + Math.floor(Math.random() * 9999),
+                typeId,
+                info,
+                group,
+                isVessel: !!info.isVessel,
+                contents: [],
+                heated: false,
+                temperature: 25,
+                ph: info.ph || 7.0,
+                lit: false,
+                capOpen: true,
+                redHot: false,
+                sparking: false,
+                isBubbling: false,
+                smokeColor: null,
+                heldPayload: null, // Dữ liệu hóa chất đang hút trong Ống nhỏ giọt hoặc Muỗng
+                leftWeight: 20,
+                rightWeight: 0,
+                maxHeight: 2.6,
+                meshes: {}
+            };
+
+            const glassMat = new THREE.MeshPhysicalMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.36,
+                roughness: 0.08,
+                metalness: 0.05,
+                depthWrite: false,
+                side: THREE.DoubleSide
+            });
+
+            // A. NHÓM BÌNH CHỨA PHẢN ỨNG 3D (ỐNG NGHIỆM, CỐC, BÌNH TAM GIÁC, BÌNH CẦU, BÌNH KHÍ)
+            if (info.isVessel || info.categoryKey === 'gases') {
+                objState.isVessel = true;
+                let rTop = 0.65, rBot = 0.65, h = 2.8;
+                if (typeId === 'test_tube') { rTop = 0.36; rBot = 0.36; h = 3.1; }
+                else if (typeId === 'beaker_100') { rTop = 0.75; rBot = 0.75; h = 2.2; }
+                else if (typeId === 'beaker_250') { rTop = 0.98; rBot = 0.98; h = 2.8; }
+                else if (typeId === 'erlenmeyer') { rTop = 0.42; rBot = 1.05; h = 2.8; }
+                else if (typeId === 'round_flask') { rTop = 0.38; rBot = 0.95; h = 2.8; }
+                else if (typeId === 'gas_jar' || info.categoryKey === 'gases') { rTop = 0.85; rBot = 0.85; h = 3.0; }
+
+                const bodyGeo = new THREE.CylinderGeometry(rTop, rBot, h, 32, 1, true);
+                const bodyMesh = new THREE.Mesh(bodyGeo, glassMat.clone());
+                bodyMesh.position.y = h / 2 + 0.05;
+                bodyMesh.castShadow = true;
+                group.add(bodyMesh);
+
+                const botMesh = new THREE.Mesh(new THREE.CircleGeometry(rBot, 32), glassMat.clone());
+                botMesh.rotation.x = -Math.PI / 2;
+                botMesh.position.y = 0.05;
+                group.add(botMesh);
+
+                const rimMesh = new THREE.Mesh(
+                    new THREE.TorusGeometry(rTop, 0.04, 12, 32),
+                    new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.2 })
+                );
+                rimMesh.rotation.x = Math.PI / 2;
+                rimMesh.position.y = h + 0.05;
+                group.add(rimMesh);
+
+                // Cột chất lỏng 3D bên trong
+                const liqMat = new THREE.MeshStandardMaterial({
+                    color: info.color || 0x38bdf8,
+                    transparent: true,
+                    opacity: info.opacity || 0.65,
+                    roughness: 0.15
+                });
+                const liqGeo = new THREE.CylinderGeometry(rTop * 0.92, rBot * 0.92, 1, 32);
+                const liqMesh = new THREE.Mesh(liqGeo, liqMat);
+                liqMesh.position.y = 0.5;
+                liqMesh.visible = false;
+                group.add(liqMesh);
+
+                // Lớp kết tủa lắng dưới đáy 3D
+                const precipMesh = new THREE.Mesh(
+                    new THREE.CylinderGeometry(rBot * 0.90, rBot * 0.90, 0.26, 32),
+                    new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.85 })
+                );
+                precipMesh.position.y = 0.18;
+                precipMesh.visible = false;
+                group.add(precipMesh);
+
+                // Mẫu chất rắn dưới đáy
+                const solidMesh = new THREE.Mesh(
+                    new THREE.DodecahedronGeometry(0.22, 0),
+                    new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.7, roughness: 0.3 })
+                );
+                solidMesh.position.set(0.1, 0.22, 0);
+                solidMesh.visible = false;
+                group.add(solidMesh);
+
+                // Nếu là Bình thu khí hoặc Hóa chất khí -> Tạo vai bình, cổ bình thắt lại & tấm kính đậy chuẩn
+                if (typeId === 'gas_jar' || info.categoryKey === 'gases') {
+                    // Làm thân bình dưới thấp xuống để nhường chỗ cho vai bình & cổ bình
+                    bodyMesh.scale.y = 0.72;
+                    bodyMesh.position.y = (h * 0.72) / 2 + 0.05;
+                    rimMesh.visible = false; // Ẩn vành miệng rộng cũ đi
+
+                    // 1. Vai bình thuôn vào (Shoulder)
+                    const shoulderMesh = new THREE.Mesh(
+                        new THREE.CylinderGeometry(rTop * 0.58, rTop, h * 0.14, 32, 1, true),
+                        glassMat.clone()
+                    );
+                    shoulderMesh.position.y = h * 0.72 + (h * 0.14) / 2 + 0.05;
+                    group.add(shoulderMesh);
+
+                    // 2. Cổ bình thu khí (Neck)
+                    const neckMesh = new THREE.Mesh(
+                        new THREE.CylinderGeometry(rTop * 0.58, rTop * 0.58, h * 0.16, 32, 1, true),
+                        glassMat.clone()
+                    );
+                    neckMesh.position.y = h * 0.86 + (h * 0.16) / 2 + 0.05;
+                    group.add(neckMesh);
+
+                    // 3. Vành miệng cổ bình dày màu trắng mờ (Frosted ground glass rim)
+                    const neckRim = new THREE.Mesh(
+                        new THREE.TorusGeometry(rTop * 0.58, 0.045, 12, 32),
+                        new THREE.MeshStandardMaterial({ color: 0xf1f5f9, roughness: 0.3 })
+                    );
+                    neckRim.rotation.x = Math.PI / 2;
+                    neckRim.position.y = h * 1.02 + 0.05;
+                    group.add(neckRim);
+
+                    // 4. Nút đậy bình thu khí đồng tâm (x = 0, z = 0) - Không bao giờ bị lệch!
+                    const stopperGroup = new THREE.Group();
+
+                    // Phần thân nút cắm vừa khít vào trong cổ bình
+                    const plugBottom = new THREE.Mesh(
+                        new THREE.CylinderGeometry(rTop * 0.54, rTop * 0.46, 0.28, 28),
+                        new THREE.MeshStandardMaterial({
+                            color: 0x475569, // Màu xám nút cao su / thủy tinh nhám
+                            roughness: 0.6,
+                            metalness: 0.1
+                        })
+                    );
+                    plugBottom.position.y = -0.05;
+                    stopperGroup.add(plugBottom);
+
+                    // Phần vành nắp đè lên miệng cổ bình
+                    const plugCap = new THREE.Mesh(
+                        new THREE.CylinderGeometry(rTop * 0.66, rTop * 0.62, 0.12, 28),
+                        new THREE.MeshStandardMaterial({
+                            color: 0x334155,
+                            roughness: 0.5,
+                            metalness: 0.15
+                        })
+                    );
+                    plugCap.position.y = 0.12;
+                    stopperGroup.add(plugCap);
+
+                    // Núm tròn nhỏ phía trên cùng để cầm nhấc nút ra
+                    const plugKnob = new THREE.Mesh(
+                        new THREE.CylinderGeometry(rTop * 0.28, rTop * 0.22, 0.16, 24),
+                        new THREE.MeshStandardMaterial({
+                            color: 0x64748b,
+                            roughness: 0.4
+                        })
+                    );
+                    plugKnob.position.y = 0.24;
+                    stopperGroup.add(plugKnob);
+
+                    // Đặt nút đậy thẳng đứng ngay chính giữa tâm (x = 0, z = 0) của cổ bình
+                    stopperGroup.position.set(0, h * 1.02 + 0.05, 0);
+                    group.add(stopperGroup);
+                    objState.meshes.coverMesh = stopperGroup;
+
+                    // 5. Khí màu bên trong bình (O2 xanh nhạt, Cl2 vàng lục...) không bị tràn hay lệch
+                    if (info.categoryKey === 'gases') {
+                        objState.contents.push({
+                            id: info.id, formula: info.formula, name: info.name,
+                            color: info.color, ph: 7.0, isGas: true, app: info.app
+                        });
+                        liqMesh.visible = true;
+                        liqMesh.scale.set(0.95, h * 0.68, 0.95);
+                        liqMesh.position.y = (h * 0.68) / 2 + 0.06;
+                        liqMesh.material.color.setHex(info.color);
+                        liqMesh.material.opacity = info.opacity || 0.32;
+                        liqMesh.material.depthWrite = false; // Chống lỗi xuyên thấu khi nhìn từ trên xuống!
+                    }
+                }
+
+                const labelSprite = create3DLabelSprite(info.formula || info.name.split(' ')[0], info.sub || 'Bình 3D');
+                labelSprite.position.y = h + 0.75;
+                group.add(labelSprite);
+
+                objState.meshes.bodyMesh = bodyMesh;
+                objState.meshes.liqMesh = liqMesh;
+                objState.meshes.precipMesh = precipMesh;
+                objState.meshes.solidMesh = solidMesh;
+                objState.meshes.labelSprite = labelSprite;
+                objState.maxHeight = h;
+            }
+
+            // B. MODEL 3D MỚI CHO GIÁ ĐỠ ỐNG NGHIỆM BẰNG GỖ (4 LỖ CẮM ỐNG NGHIỆM CHUẨN)
+            else if (typeId === 'test_rack') {
+                const woodLight = new THREE.MeshStandardMaterial({ color: 0xc27838, roughness: 0.72, metalness: 0.05 });
+                const woodDark = new THREE.MeshStandardMaterial({ color: 0x78350f, roughness: 0.85, metalness: 0.05 });
+                const holeMat = new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.9 });
+
+                // Đế gỗ bên dưới
+                const base = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.24, 1.3), woodDark);
+                base.position.y = 0.12;
+                base.castShadow = true;
+                base.receiveShadow = true;
+                group.add(base);
+
+                // 2 cột trụ gỗ hai đầu
+                const pillarGeo = new THREE.BoxGeometry(0.24, 1.75, 1.1);
+                const leftPillar = new THREE.Mesh(pillarGeo, woodLight);
+                leftPillar.position.set(-1.72, 0.98, 0);
+                leftPillar.castShadow = true;
+                const rightPillar = new THREE.Mesh(pillarGeo, woodLight);
+                rightPillar.position.set(1.72, 0.98, 0);
+                rightPillar.castShadow = true;
+                group.add(leftPillar, rightPillar);
+
+                // Thanh gỗ ngang đỡ giữa và thanh ngang trên cùng
+                const midBar = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.14, 1.1), woodLight);
+                midBar.position.y = 0.90;
+                group.add(midBar);
+
+                const topBar = new THREE.Mesh(new THREE.BoxGeometry(3.8, 0.18, 1.15), woodLight);
+                topBar.position.y = 1.72;
+                topBar.castShadow = true;
+                group.add(topBar);
+
+                // 4 lỗ tròn cắm ống nghiệm trên thanh gỗ + 4 hõm đỡ dưới đế
+                const slotPositions = [-1.2, -0.4, 0.4, 1.2];
+                slotPositions.forEach(sx => {
+                    const topHole = new THREE.Mesh(new THREE.CylinderGeometry(0.39, 0.39, 0.20, 24), holeMat);
+                    topHole.position.set(sx, 1.72, 0);
+                    group.add(topHole);
+
+                    const midHole = new THREE.Mesh(new THREE.CylinderGeometry(0.39, 0.39, 0.16, 24), holeMat);
+                    midHole.position.set(sx, 0.90, 0);
+                    group.add(midHole);
+
+                    const bottomWell = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.26, 24), woodLight);
+                    bottomWell.position.set(sx, 0.13, 0);
+                    group.add(bottomWell);
+                });
+
+                const labelSprite = create3DLabelSprite('Giá đỡ ống nghiệm', 'Kéo ống nghiệm vào lỗ', '#f59e0b');
+                labelSprite.position.y = 2.65;
+                group.add(labelSprite);
+
+                objState.maxHeight = 1.9;
+                objState.meshes.labelSprite = labelSprite;
+            }
+
+            // C. MODEL 3D MỚI CHO ỐNG NHỎ GIỌT PIPET PASTEUR (BẦU CAO SU ĐỎ + THÂN KÍNH NHỌN + MỰC DUNG DỊCH)
+            else if (typeId === 'dropper') {
+                // 1. Đầu vòi thủy tinh thuôn nhọn ở dưới
+                const nozzleGlass = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.11, 0.025, 0.75, 20),
+                    glassMat.clone()
+                );
+                nozzleGlass.position.y = 0.42;
+                group.add(nozzleGlass);
+
+                // 2. Thân ống thủy tinh trong suốt ở giữa
+                const bodyGlass = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.12, 0.11, 1.35, 20),
+                    glassMat.clone()
+                );
+                bodyGlass.position.y = 1.47;
+                group.add(bodyGlass);
+
+                // Vạch chia ml trên thân ống nhỏ giọt
+                for (let m = 0; m < 4; m++) {
+                    const ringMark = new THREE.Mesh(
+                        new THREE.TorusGeometry(0.122, 0.008, 8, 20),
+                        new THREE.MeshBasicMaterial({ color: 0x38bdf8 })
+                    );
+                    ringMark.rotation.x = Math.PI / 2;
+                    ringMark.position.y = 1.0 + m * 0.28;
+                    group.add(ringMark);
+                }
+
+                // 3. Cột chất lỏng bên trong Ống nhỏ giọt (Hiện lên khi hút dung dịch!)
+                const innerLiquid = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.095, 0.03, 1.55, 18),
+                    new THREE.MeshStandardMaterial({
+                        color: 0x38bdf8,
+                        transparent: true,
+                        opacity: 0.88,
+                        roughness: 0.15
+                    })
+                );
+                innerLiquid.position.y = 1.05;
+                innerLiquid.visible = false;
+                group.add(innerLiquid);
+
+                // 4. Vành cổ ngấn nối thủy tinh với bầu cao su
+                const collar = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.19, 0.16, 0.14, 20),
+                    new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.4 })
+                );
+                collar.position.y = 2.18;
+                group.add(collar);
+
+                // 5. Bầu bóp cao su đỏ (Dùng Sphere kéo dài tương thích 100% với Three.js r128)
+                const bulbRubber = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.24, 24, 20),
+                    new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.35, metalness: 0.05 })
+                );
+                bulbRubber.scale.set(1, 1.65, 1);
+                bulbRubber.position.y = 2.55;
+                bulbRubber.castShadow = true;
+                group.add(bulbRubber);
+
+                const labelSprite = create3DLabelSprite('Ống nhỏ giọt', 'Trống (Kéo vào Cốc/Lọ để hút)', '#38bdf8');
+                labelSprite.position.y = 3.45;
+                group.add(labelSprite);
+
+                objState.maxHeight = 2.8;
+                objState.meshes.innerLiquid = innerLiquid;
+                objState.meshes.bulbRubber = bulbRubber;
+                objState.meshes.labelSprite = labelSprite;
+            }
+
+            // D. ĐÈN CỒN 3D
+            else if (typeId === 'alcohol_burner') {
+                const baseGlass = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.65, 0.9, 1.1, 28),
+                    new THREE.MeshPhysicalMaterial({ color: 0xbae6fd, transparent: true, opacity: 0.55 })
+                );
+                baseGlass.position.y = 0.55;
+                group.add(baseGlass);
+
+                const wickHolder = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.2, 0.25, 0.35, 16),
+                    new THREE.MeshStandardMaterial({ color: 0xf59e0b, metalness: 0.8 })
+                );
+                wickHolder.position.y = 1.25;
+                group.add(wickHolder);
+
+                const flameOuter = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.32, 0.95, 16),
+                    new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.9 })
+                );
+                flameOuter.position.y = 1.85;
+                flameOuter.visible = false;
+                group.add(flameOuter);
+
+                const flameLight = new THREE.PointLight(0xf97316, 0, 8);
+                flameLight.position.y = 2.0;
+                group.add(flameLight);
+
+                const labelSprite = create3DLabelSprite('Đèn cồn 3D', 'Tắt (Châm lửa để bật)', '#f97316');
+                labelSprite.position.y = 2.75;
+                group.add(labelSprite);
+
+                objState.meshes.flameOuter = flameOuter;
+                objState.meshes.flameLight = flameLight;
+                objState.meshes.labelSprite = labelSprite;
+            }
+
+            // E. HỘP DIÊM & QUE DIÊM 3D
+            else if (typeId === 'matchbox') {
+                const boxMesh = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.3, 0.35, 0.85),
+                    new THREE.MeshStandardMaterial({ color: 0xfacc15, roughness: 0.6 })
+                );
+                boxMesh.position.y = 0.18;
+                group.add(boxMesh);
+
+                const stickMesh = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.04, 0.04, 1.1, 12),
+                    new THREE.MeshStandardMaterial({ color: 0xfde68a })
+                );
+                stickMesh.rotation.z = Math.PI / 2;
+                stickMesh.position.set(0.2, 0.45, 0);
+                group.add(stickMesh);
+
+                const headMesh = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.09, 12, 12),
+                    new THREE.MeshStandardMaterial({ color: 0xdc2626 })
+                );
+                headMesh.position.set(0.75, 0.45, 0);
+                group.add(headMesh);
+
+                const matchFlame = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.16, 0.45, 12),
+                    new THREE.MeshBasicMaterial({ color: 0xf97316 })
+                );
+                matchFlame.position.set(0.75, 0.72, 0);
+                matchFlame.visible = false;
+                group.add(matchFlame);
+
+                const labelSprite = create3DLabelSprite('Diêm 3D', 'Kéo vào Đèn cồn', '#eab308');
+                labelSprite.position.y = 1.4;
+                group.add(labelSprite);
+
+                objState.meshes.matchFlame = matchFlame;
+                objState.meshes.labelSprite = labelSprite;
+            }
+
+            // F. DÂY SẮT XOẮN LÒ XO (FE), MUÔI ĐỐT, MUỖNG XÚC HÓA CHẤT RẮN
+            else if (typeId === 'iron_coil' || typeId === 'combustion_spoon' || typeId === 'spatula') {
+                const rodColor = typeId === 'spatula' ? 0xf97316 : 0x94a3b8;
+                const rodMesh = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.045, 0.045, 2.4, 16),
+                    new THREE.MeshStandardMaterial({ color: rodColor, metalness: 0.7, roughness: 0.25 })
+                );
+                rodMesh.position.y = 1.35;
+                group.add(rodMesh);
+
+                const tipMesh = new THREE.Mesh(
+                    typeId === 'iron_coil'
+                        ? new THREE.TorusKnotGeometry(0.18, 0.045, 48, 8)
+                        : new THREE.SphereGeometry(0.2, 16, 16),
+                    new THREE.MeshStandardMaterial({ color: 0x64748b, metalness: 0.6 })
+                );
+                tipMesh.position.y = 0.35;
+                group.add(tipMesh);
+
+                const tipFlame = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.22, 0.55, 12),
+                    new THREE.MeshBasicMaterial({ color: 0xf97316 })
+                );
+                tipFlame.position.y = 0.65;
+                tipFlame.visible = false;
+                group.add(tipFlame);
+
+                const labelSprite = create3DLabelSprite(info.name.split(' ')[0], info.sub, '#38bdf8');
+                labelSprite.position.y = 2.95;
+                group.add(labelSprite);
+
+                objState.meshes.tipMesh = tipMesh;
+                objState.meshes.tipFlame = tipFlame;
+                objState.meshes.labelSprite = labelSprite;
+            }
+
+            // G. CÂN ĐĨA 3D 2 BÊN
+            else if (typeId === 'balance_scale') {
+                const base = new THREE.Mesh(
+                    new THREE.BoxGeometry(2.6, 0.35, 1.3),
+                    new THREE.MeshStandardMaterial({ color: 0x475569, metalness: 0.5 })
+                );
+                base.position.y = 0.18;
+                group.add(base);
+
+                const pillar = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.12, 0.16, 1.8, 16),
+                    new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.7 })
+                );
+                pillar.position.y = 1.1;
+                group.add(pillar);
+
+                const beamGroup = new THREE.Group();
+                beamGroup.position.y = 1.95;
+                const beam = new THREE.Mesh(
+                    new THREE.BoxGeometry(3.2, 0.12, 0.16),
+                    new THREE.MeshStandardMaterial({ color: 0xe2e8f0, metalness: 0.8 })
+                );
+                beamGroup.add(beam);
+
+                const panLeft = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.55, 0.55, 0.08, 24),
+                    new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.6 })
+                );
+                panLeft.position.set(-1.4, -0.45, 0);
+                beamGroup.add(panLeft);
+
+                const weightGold = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.22, 0.22, 0.38, 20),
+                    new THREE.MeshStandardMaterial({ color: 0xfacc15, metalness: 0.85, roughness: 0.2 })
+                );
+                weightGold.position.set(-1.4, -0.22, 0);
+                beamGroup.add(weightGold);
+
+                const panRight = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.55, 0.55, 0.08, 24),
+                    new THREE.MeshStandardMaterial({ color: 0xcbd5e1, metalness: 0.6 })
+                );
+                panRight.position.set(1.4, -0.45, 0);
+                beamGroup.add(panRight);
+
+                const saltPile = new THREE.Mesh(
+                    new THREE.ConeGeometry(0.38, 0.35, 20),
+                    new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.8 })
+                );
+                saltPile.position.set(1.4, -0.25, 0);
+                saltPile.visible = false;
+                beamGroup.add(saltPile);
+
+                group.add(beamGroup);
+
+                const labelSprite = create3DLabelSprite('Cân đĩa 3D', 'Trái: 20g | Phải: 0g', '#10b981');
+                labelSprite.position.y = 2.85;
+                group.add(labelSprite);
+
+                objState.meshes.beamGroup = beamGroup;
+                objState.meshes.saltPile = saltPile;
+                objState.meshes.labelSprite = labelSprite;
+            }
+
+            // H. LỌ HÓA CHẤT RẮN & LỎNG 3D
+            else {
+                const bottleBody = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.58, 0.58, 1.65, 28),
+                    glassMat.clone()
+                );
+                bottleBody.position.y = 0.85;
+                group.add(bottleBody);
+
+                const innerChem = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.52, 0.52, 1.15, 24),
+                    new THREE.MeshStandardMaterial({
+                        color: info.color || 0xffffff,
+                        transparent: info.categoryKey === 'liquids',
+                        opacity: info.opacity || 0.85,
+                        roughness: 0.3
+                    })
+                );
+                innerChem.position.y = 0.62;
+                group.add(innerChem);
+
+                const capMesh = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.34, 0.34, 0.35, 20),
+                    new THREE.MeshStandardMaterial({
+                        color: info.categoryKey === 'solids' ? 0xef4444 : 0x0284c7,
+                        roughness: 0.4
+                    })
+                );
+                capMesh.position.y = 1.85;
+                group.add(capMesh);
+
+                const labelSprite = create3DLabelSprite(info.formula || info.name, info.name, '#38bdf8');
+                labelSprite.position.y = 2.55;
+                group.add(labelSprite);
+
+                objState.meshes.labelSprite = labelSprite;
+            }
+
+            scene.add(group);
+            labObjects3D.push(objState);
+            select3DObject(objState);
+            return objState;
+        }
+
+        /********************************************************************
+         * 5. RAYCASTING KÉO THẢ 3D + HÚT/NHỎ GIỌT PIPET + CẮM ỐNG NGHIỆM VÀO GIÁ ĐỠ
+         ********************************************************************/
+        const raycaster = new THREE.Raycaster();
+        const mouseNDC = new THREE.Vector2();
+        const tableDragPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+        const planeIntersectPt = new THREE.Vector3();
+        let dragging3DObj = null;
+        let dragOffset3D = new THREE.Vector3();
+
+        function getPointerNDC(event) {
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouseNDC.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouseNDC.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+        }
+
+        renderer.domElement.addEventListener('pointerdown', (e) => {
+            if (e.button !== 0) return;
+            getPointerNDC(e);
+            raycaster.setFromCamera(mouseNDC, camera);
+
+            const allRootGroups = labObjects3D.map(o => o.group);
+            const hits = raycaster.intersectObjects(allRootGroups, true);
+
+            if (hits.length > 0) {
+                let hitObj = hits[0].object;
+                while (hitObj.parent && hitObj.parent !== scene) {
+                    hitObj = hitObj.parent;
+                }
+                const foundState = labObjects3D.find(o => o.group === hitObj);
+                if (foundState) {
+                    select3DObject(foundState);
+                    dragging3DObj = foundState;
+                    controls.enabled = false;
+                    if (raycaster.ray.intersectPlane(tableDragPlane, planeIntersectPt)) {
+                        dragOffset3D.subVectors(foundState.group.position, planeIntersectPt);
+                    }
+                    foundState.group.position.y = 0.35;
+                }
+            }
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            if (!dragging3DObj) return;
+            getPointerNDC(e);
+            raycaster.setFromCamera(mouseNDC, camera);
+            if (raycaster.ray.intersectPlane(tableDragPlane, planeIntersectPt)) {
+                const newX = Math.max(-10.5, Math.min(10.5, planeIntersectPt.x + dragOffset3D.x));
+                const newZ = Math.max(-4.8, Math.min(4.8, planeIntersectPt.z + dragOffset3D.z));
+                dragging3DObj.group.position.x = newX;
+                dragging3DObj.group.position.z = newZ;
+                if (selectedLabObj === dragging3DObj) {
+                    selectionRing.position.set(newX, 0.025, newZ);
+                }
+                check3DProximityInteractions(dragging3DObj);
+            }
+        });
+
+        window.addEventListener('pointerup', () => {
+            if (dragging3DObj) {
+                dragging3DObj.group.position.y = 0;
+                // Nếu thả Ống nghiệm gần Giá đỡ gỗ -> Tự động cắm khớp vào lỗ gần nhất trên Giá đỡ!
+                if (dragging3DObj.typeId === 'test_tube') {
+                    const rack = labObjects3D.find(o => o.typeId === 'test_rack');
+                    if (rack) {
+                        const dx = dragging3DObj.group.position.x - rack.group.position.x;
+                        const dz = dragging3DObj.group.position.z - rack.group.position.z;
+                        if (Math.hypot(dx, dz) < 2.2) {
+                            const slots = [-1.2, -0.4, 0.4, 1.2];
+                            let nearestSlot = slots[0];
+                            slots.forEach(s => {
+                                if (Math.abs(dx - s) < Math.abs(dx - nearestSlot)) nearestSlot = s;
+                            });
+                            dragging3DObj.group.position.set(rack.group.position.x + nearestSlot, 0.14, rack.group.position.z);
+                            selectionRing.position.set(dragging3DObj.group.position.x, 0.025, dragging3DObj.group.position.z);
+                            show3DToast('🧪 Đã cắm Ống nghiệm vào lỗ trên Giá đỡ gỗ 3D!');
+                        }
+                    }
+                }
+                dragging3DObj = null;
+                controls.enabled = true;
+            }
+        });
+
+        function select3DObject(objState) {
+            selectedLabObj = objState;
+            if (!objState) {
+                selectionRing.visible = false;
+                document.getElementById('selectedObjectBadge').textContent = 'Chưa chọn bình';
+                return;
+            }
+            selectionRing.visible = true;
+            selectionRing.position.set(objState.group.position.x, 0.025, objState.group.position.z);
+            document.getElementById('selectedObjectBadge').textContent = objState.info.formula || objState.info.name;
+            updateHUDFromObject(objState);
+        }
+
+        function update3DLabel(objState, title, sub, color = '#38bdf8') {
+            if (objState.meshes.labelSprite) {
+                objState.group.remove(objState.meshes.labelSprite);
+            }
+            const sp = create3DLabelSprite(title, sub, color);
+            sp.position.y = (objState.maxHeight || 2.2) + 0.75;
+            objState.group.add(sp);
+            objState.meshes.labelSprite = sp;
+        }
+
+        function toggleBurnerFlame(burnerObj, forceState = null) {
+            burnerObj.lit = forceState !== null ? forceState : !burnerObj.lit;
+            if (burnerObj.meshes.flameOuter) burnerObj.meshes.flameOuter.visible = burnerObj.lit;
+            if (burnerObj.meshes.flameLight) burnerObj.meshes.flameLight.intensity = burnerObj.lit ? 1.4 : 0;
+            update3DLabel(burnerObj, 'Đèn cồn 3D', burnerObj.lit ? '🔥 Đang cháy (650°C)' : 'Đang tắt', '#f97316');
+        }
+
+        /********************************************************************
+         * 6. XỬ LÝ VA CHẠM VẬT LÝ 3D (BAO GỒM HÚT & NHỎ GIỌT PIPET TỪ CỐC & LỌ)
+         ********************************************************************/
+        let lastInteractionTime = 0;
+        function check3DProximityInteractions(mover) {
+            const now = Date.now();
+            if (now - lastInteractionTime < 750) return;
+
+            for (const target of labObjects3D) {
+                if (target.uid === mover.uid) continue;
+                const dist = Math.hypot(
+                    mover.group.position.x - target.group.position.x,
+                    mover.group.position.z - target.group.position.z
+                );
+                if (dist > 1.65) continue;
+
+                // --- 1. CƠ CHẾ ỐNG NHỎ GIỌT PIPET (HÚT TỪ LỌ HOẶC TỪ CỐC/ỐNG NGHIỆM -> NHỎ SANG BÌNH KHÁC) ---
+                if (mover.typeId === 'dropper') {
+                    // TH1A: Ống nhỏ giọt đang TRỐNG chạm vào Lọ hóa chất lỏng -> HÚT!
+                    if (!mover.heldPayload && target.info.categoryKey === 'liquids') {
+                        mover.heldPayload = {
+                            id: target.info.id,
+                            formula: target.info.formula,
+                            name: target.info.name,
+                            color: target.info.color || 0x38bdf8,
+                            sourceUid: target.uid
+                        };
+                        if (mover.meshes.innerLiquid) {
+                            mover.meshes.innerLiquid.visible = true;
+                            mover.meshes.innerLiquid.material.color.setHex(mover.heldPayload.color);
+                        }
+                        if (mover.meshes.bulbRubber) mover.meshes.bulbRubber.scale.set(0.85, 1.35, 0.85);
+                        setTimeout(() => { if (mover.meshes.bulbRubber) mover.meshes.bulbRubber.scale.set(1, 1.65, 1); }, 250);
+
+                        update3DLabel(mover, 'Ống nhỏ giọt', `Đã hút: ${target.info.formula}`, '#22c55e');
+                        show3DToast(`💧 Đã hút dung dịch <b>${target.info.formula} (${target.info.name})</b> vào Ống nhỏ giọt! Hãy kéo sang Cốc/Ống nghiệm để nhỏ.`);
+                        lastInteractionTime = now;
+                        return;
+                    }
+
+                    // TH1B: Ống nhỏ giọt đang TRỐNG chạm vào Cốc/Ống nghiệm ĐANG CÓ DUNG DỊCH -> HÚT TỪ CỐC!
+                    if (!mover.heldPayload && target.isVessel && target.contents.length > 0) {
+                        const topChem = target.contents[target.contents.length - 1];
+                        mover.heldPayload = {
+                            id: topChem.id,
+                            formula: topChem.formula,
+                            name: topChem.name,
+                            color: target.meshes.liqMesh ? target.meshes.liqMesh.material.color.getHex() : (topChem.color || 0x38bdf8),
+                            allContents: [...target.contents],
+                            sourceUid: target.uid
+                        };
+                        if (mover.meshes.innerLiquid) {
+                            mover.meshes.innerLiquid.visible = true;
+                            mover.meshes.innerLiquid.material.color.setHex(mover.heldPayload.color);
+                        }
+                        update3DLabel(mover, 'Ống nhỏ giọt', `Đã hút: ${mover.heldPayload.formula}`, '#22c55e');
+                        show3DToast(`💧 Đã hút dung dịch <b>${mover.heldPayload.formula} (pH ${target.ph})</b> từ ${target.info.name}! Hãy kéo sang Ống nghiệm/Cốc khác để nhỏ vào.`);
+                        lastInteractionTime = now;
+                        return;
+                    }
+
+                    // TH1C: Ống nhỏ giọt ĐANG CHỨA DỊCH chạm vào Cốc/Ống nghiệm khác -> NHỎ DUNG DỊCH VÀO BÌNH ĐÓ!
+                    if (mover.heldPayload && target.isVessel && target.uid !== mover.heldPayload.sourceUid) {
+                        if (mover.heldPayload.allContents) {
+                            mover.heldPayload.allContents.forEach(c => addChemicalInto3DVessel(target, c.id));
+                        } else {
+                            addChemicalInto3DVessel(target, mover.heldPayload.id);
+                        }
+                        const droppedFormula = mover.heldPayload.formula;
+                        mover.heldPayload = null;
+                        if (mover.meshes.innerLiquid) mover.meshes.innerLiquid.visible = false;
+                        update3DLabel(mover, 'Ống nhỏ giọt', 'Trống (Kéo vào Cốc/Lọ để hút)', '#38bdf8');
+                        show3DToast(`✨ Đã nhỏ dung dịch <b>${droppedFormula}</b> từ Ống nhỏ giọt vào <b>${target.info.name}</b>!`);
+                        lastInteractionTime = now;
+                        return;
+                    }
+                }
+
+                // --- 2. Kéo Hộp diêm vào Đèn cồn -> Bật lửa đèn cồn 3D ---
+                if (mover.typeId === 'matchbox' && target.typeId === 'alcohol_burner') {
+                    mover.lit = true;
+                    if (mover.meshes.matchFlame) mover.meshes.matchFlame.visible = true;
+                    toggleBurnerFlame(target, true);
+                    lastInteractionTime = now;
+                    updateHUDPanel(
+                        '🔥 Que diêm 3D đã châm sáng <b>Đèn cồn 3D (650°C)</b>!',
+                        'C₂H₅OH + 3O₂ --(t°)--> 2CO₂ + 3H₂O',
+                        'Đèn cồn cung cấp nguồn nhiệt sạch trong phòng thí nghiệm.'
+                    );
+                    return;
+                }
+
+                // --- 3. Hơ Dây sắt xoắn (Fe) trên Đèn cồn đang cháy ---
+                if (mover.typeId === 'iron_coil' && target.typeId === 'alcohol_burner' && target.lit) {
+                    mover.redHot = true;
+                    mover.meshes.tipMesh.material.color.setHex(0xef4444);
+                    mover.meshes.tipMesh.material.emissive = new THREE.Color(0xdc2626);
+                    update3DLabel(mover, 'Dây sắt (Fe*)', '♨️ Đang nóng đỏ!', '#ef4444');
+                    lastInteractionTime = now;
+                    show3DToast('♨️ Dây sắt đã nóng đỏ! Hãy kéo vào Bình khí O₂.');
+                    return;
+                }
+
+                // --- 4. Đưa Dây sắt đang nóng đỏ vào Bình chứa khí O2 ---
+                const hasO2 = target.contents.some(c => c.id === 'gas_O2');
+                if (mover.typeId === 'iron_coil' && mover.redHot && target.isVessel && hasO2) {
+                    mover.sparking = true;
+                    target.meshes.precipMesh.visible = true;
+                    target.meshes.precipMesh.material.color.setHex(0x1e293b);
+                    setTimeout(() => {
+                        mover.sparking = false;
+                        mover.redHot = false;
+                        mover.meshes.tipMesh.material.color.setHex(0x64748b);
+                        mover.meshes.tipMesh.material.emissive = new THREE.Color(0x000000);
+                    }, 5500);
+                    lastInteractionTime = now;
+                    updateHUDPanel(
+                        '✨ <b>ĐỐT SẮT TRONG KHÍ O₂:</b> Dây sắt cháy mãnh liệt, bắn tia lửa 3D tạo hạt Fe₃O₄ màu nâu đen rơi xuống đáy bình!',
+                        '3Fe + 2O₂ --(t°)--> Fe₃O₄ (Oxit sắt từ)',
+                        'Ứng dụng trong luyện thép và hàn cắt kim loại.'
+                    );
+                    return;
+                }
+
+                // --- 5. Dùng Muỗng (Spatula) hoặc Muôi đốt xúc Hóa chất rắn ---
+                if ((mover.typeId === 'spatula' || mover.typeId === 'combustion_spoon') && target.info.categoryKey === 'solids') {
+                    mover.heldPayload = { ...target.info, isSolid: true, dose: currentDosageMode };
+                    mover.meshes.tipMesh.material.color.setHex(target.info.color);
+                    update3DLabel(mover, mover.info.name.split(' ')[0], `Đang giữ: ${target.info.formula}`, '#facc15');
+                    lastInteractionTime = now;
+                    show3DToast(`🥄 Đã xúc ${target.info.formula} (${target.info.name})!`);
+                    return;
+                }
+
+                // --- 6. Hơ Muôi đốt chứa Photpho đỏ trên Đèn cồn & Đưa vào Bình thu khí ---
+                if (mover.typeId === 'combustion_spoon' && mover.heldPayload && target.typeId === 'alcohol_burner' && target.lit) {
+                    mover.lit = true;
+                    if (mover.meshes.tipFlame) mover.meshes.tipFlame.visible = true;
+                    lastInteractionTime = now;
+                    show3DToast(`🔥 ${mover.heldPayload.formula} đã bốc cháy! Hãy đưa vào Bình thu khí.`);
+                    return;
+                }
+                if (mover.typeId === 'combustion_spoon' && mover.lit && target.isVessel) {
+                    target.smokeColor = 0xffffff;
+                    target.meshes.liqMesh.visible = true;
+                    target.meshes.liqMesh.scale.y = target.maxHeight * 0.85;
+                    target.meshes.liqMesh.position.y = (target.maxHeight * 0.85) / 2 + 0.06;
+                    target.meshes.liqMesh.material.color.setHex(0xf8fafc);
+                    target.meshes.liqMesh.material.opacity = 0.78;
+                    lastInteractionTime = now;
+                    updateHUDPanel(
+                        '☁️ Photpho đỏ cháy tạo khói trắng P₂O₅ dày đặc, chứng minh O₂ chiếm ~1/5 thể tích không khí!',
+                        '4P (đỏ) + 5O₂ --(t°)--> 2P₂O₅ (khói trắng)',
+                        'Ứng dụng điều chế axit H₃PO₄ và sản xuất diêm an toàn.'
+                    );
+                    return;
+                }
+
+                // --- 7. Thả hóa chất vào Cân đĩa 3D ---
+                if (target.typeId === 'balance_scale' && ((mover.typeId === 'spatula' && mover.heldPayload) || mover.info.categoryKey === 'solids')) {
+                    const addedGrams = currentDosageMode === 'excess' ? 10 : 5;
+                    target.rightWeight += addedGrams;
+                    target.meshes.saltPile.visible = true;
+                    const sScale = Math.min(1.8, 0.5 + target.rightWeight * 0.04);
+                    target.meshes.saltPile.scale.set(sScale, sScale, sScale);
+
+                    const diff = target.rightWeight - target.leftWeight;
+                    target.meshes.beamGroup.rotation.z = Math.max(-0.22, Math.min(0.22, -diff * 0.012));
+                    update3DLabel(target, 'Cân đĩa 3D', `Trái: 20g | Phải: ${target.rightWeight}g`, diff === 0 ? '#10b981' : '#f59e0b');
+
+                    if (mover.typeId === 'spatula') {
+                        mover.heldPayload = null;
+                        mover.meshes.tipMesh.material.color.setHex(0x64748b);
+                    }
+                    lastInteractionTime = now;
+                    return;
+                }
+
+                // --- 8. Kéo Bình chứa hơ lên Đèn cồn đang cháy ---
+                if (mover.isVessel && target.typeId === 'alcohol_burner' && target.lit) {
+                    mover.heated = true;
+                    mover.temperature = 85;
+                    lastInteractionTime = now;
+                    evaluate3DVesselReaction(mover);
+                    return;
+                }
+
+                // --- 9. Kéo Lọ hóa chất hoặc Muỗng đổ trực tiếp vào Bình chứa 3D ---
+                if (target.isVessel && (mover.info.categoryKey === 'liquids' || mover.info.categoryKey === 'solids' || (mover.typeId === 'spatula' && mover.heldPayload))) {
+                    const chemToTransfer = mover.heldPayload || mover.info;
+                    addChemicalInto3DVessel(target, chemToTransfer.id);
+                    if (mover.heldPayload) {
+                        mover.heldPayload = null;
+                        if (mover.meshes.tipMesh) mover.meshes.tipMesh.material.color.setHex(0x64748b);
+                    }
+                    lastInteractionTime = now;
+                    return;
+                }
+            }
+        }
+
+        /********************************************************************
+         * 7. THÊM HÓA CHẤT VÀO BÌNH 3D & BỘ MÁY SUY LUẬN PHẢN ỨNG
+         ********************************************************************/
+        function addChemicalInto3DVessel(vesselObj, chemId) {
+            const chemInfo = getCatalogItemInfo(chemId);
+            if (!chemInfo || !vesselObj || !vesselObj.isVessel) return;
+
+            const vPos = vesselObj.group.position;
+            autoPipetteGroup.position.set(vPos.x, (vesselObj.maxHeight || 2.8) + 1.5, vPos.z);
+            autoPipetteGroup.visible = true;
+            fallingDrop3D.material.color.setHex(chemInfo.color || 0x38bdf8);
+            fallingDrop3D.position.y = -0.5;
+
+            let step = 0;
+            const dropInterval = setInterval(() => {
+                step++;
+                fallingDrop3D.position.y -= 0.25;
+                if (step >= 6) {
+                    clearInterval(dropInterval);
+                    autoPipetteGroup.visible = false;
+                }
+            }, 35);
+
+            vesselObj.contents.push({
+                id: chemInfo.id,
+                formula: chemInfo.formula || chemInfo.name,
+                name: chemInfo.name,
+                color: chemInfo.color || 0xe2e8f0,
+                opacity: chemInfo.opacity || 0.60,
+                ph: chemInfo.ph !== undefined ? chemInfo.ph : 7.0,
+                isSolid: chemInfo.categoryKey === 'solids',
+                dose: currentDosageMode,
+                app: chemInfo.app
+            });
+
+            telemetryEvents.push({
+                event_type: 'add_chemical_3d',
+                timestamp: new Date().toISOString(),
+                vessel: vesselObj.info.name,
+                chemical: chemInfo.formula || chemInfo.name
+            });
+            document.getElementById('telemetryCounter').textContent = telemetryEvents.length;
+
+            evaluate3DVesselReaction(vesselObj);
+        }
+
+        function evaluate3DVesselReaction(vessel) {
+            if (!vessel || !vessel.isVessel) return;
+            const contents = vessel.contents;
+            const ids = contents.map(c => c.id);
+            const formulas = contents.map(c => c.formula);
+            const has = (id) => ids.includes(id);
+            const hasExcess = (id) => contents.some(c => c.id === id && c.dose === 'excess');
+
+            if (contents.length === 0) {
+                vessel.meshes.liqMesh.visible = false;
+                vessel.meshes.precipMesh.visible = false;
+                vessel.meshes.solidMesh.visible = false;
+                vessel.isBubbling = false;
+                vessel.smokeColor = null;
+                updateHUDFromObject(vessel);
+                return;
+            }
+
+            const solidItem = contents.find(c => c.isSolid);
+            if (solidItem) {
+                vessel.meshes.solidMesh.visible = true;
+                vessel.meshes.solidMesh.material.color.setHex(solidItem.color);
+            } else {
+                vessel.meshes.solidMesh.visible = false;
+            }
+
+            const liqItems = contents.filter(c => !c.isSolid);
+            const fillRatio = Math.min(0.84, Math.max(0.24, liqItems.length * 0.22));
+            const liqH = (vessel.maxHeight || 2.6) * fillRatio;
+            if (liqItems.length > 0) {
+                vessel.meshes.liqMesh.visible = true;
+                vessel.meshes.liqMesh.scale.y = liqH;
+                vessel.meshes.liqMesh.position.y = liqH / 2 + 0.06;
+            }
+
+            let avgPh = 7.0;
+            contents.forEach(c => { avgPh = (avgPh + c.ph) / 2; });
+            vessel.ph = +avgPh.toFixed(1);
+
+            let liqColor = liqItems.length ? liqItems[liqItems.length - 1].color : 0xbae6fd;
+            let liqOpacity = 0.65;
+            let precipColor = null;
+            let bubbling = false;
+            let smokeColor = null;
+            let silverMirror = false;
+
+            let phenom = `Bình đang chứa: <b>${formulas.join(' + ')}</b>.`;
+            let eq = formulas.join(' + ');
+            let life = contents[contents.length - 1].app || 'Hãy kết hợp thêm thuốc thử hoặc đun nóng để khảo sát hiện tượng.';
+
+            if (has('liq_AgNO3') && has('liq_NH3') && has('liq_Glucose')) {
+                if (vessel.heated) {
+                    silverMirror = true;
+                    liqColor = 0xf8fafc;
+                    phenom = '🪞 <b>PHẢN ỨNG TRÁNG BẠC 3D:</b> Bạc kim loại (Ag↓) kết tủa bám đều lên thành ống nghiệm 3D tạo lớp gương bạc sáng bóng!';
+                    eq = 'HOCH₂[CHOH]₄CHO + 2[Ag(NH₃)₂]OH --(t°)--> HOCH₂[CHOH]₄COONH₄ + 2Ag↓ + 3NH₃ + H₂O';
+                } else {
+                    phenom = 'Hỗn hợp phức bạc và Glucozơ đã sẵn sàng. Hãy <b>Đun nóng</b> để tráng bạc!';
+                }
+            }
+            else if (has('liq_Starch') && has('liq_I2')) {
+                if (vessel.heated) {
+                    liqColor = 0xfef3c7; liqOpacity = 0.35;
+                    phenom = '🔥 Khi đun nóng (85°C), vòng xoắn amylozơ giãn ra làm mất màu xanh tím!';
+                } else {
+                    liqColor = 0x1e1b4b; liqOpacity = 0.92;
+                    phenom = '🟣 Dung dịch chuyển sang màu <b>XANH TÍM ĐẶC TRƯNG</b> do I₂ hấp phụ vào hồ tinh bột!';
+                }
+                eq = '(C₆H₁₀O₅)ₙ + I₂ ⇄ Hợp chất bọc màu xanh tím';
+            }
+            else if (has('liq_Protein') && has('liq_CuSO4') && has('liq_NaOH')) {
+                liqColor = 0x7e22ce; liqOpacity = 0.88;
+                phenom = '🟣 <b>PHẢN ỨNG MÀU BIURE:</b> Dung dịch chuyển sang <b>MÀU TÍM ĐẶC TRƯNG</b>!';
+                eq = 'Protein + Cu(OH)₂ + OH⁻ → Phức chất Biure màu tím';
+            }
+            else if (has('liq_AlCl3') && (has('liq_NaOH') || has('liq_BaOH2') || has('liq_NH3'))) {
+                if (hasExcess('liq_NaOH') || hasExcess('liq_BaOH2') || has('liq_HCl')) {
+                    liqColor = 0xe2e8f0; liqOpacity = 0.35; precipColor = null;
+                    phenom = '💧 Kết tủa keo trắng Al(OH)₃ đã <b>TAN HOÀN TOÀN</b> trong kiềm dư!';
+                    eq = 'Al(OH)₃↓ + NaOH (dư) → NaAlO₂ + 2H₂O';
+                } else {
+                    precipColor = 0xffffff;
+                    phenom = '⚪ Xuất hiện <b>KẾT TỦA KEO TRẮNG Al(OH)₃↓</b> lắng dưới đáy bình!';
+                    eq = 'AlCl₃ + 3NaOH → Al(OH)₃↓ (keo trắng) + 3NaCl';
+                }
+            }
+            else if (has('liq_CuSO4') && (has('liq_NaOH') || has('liq_BaOH2') || has('liq_Limewater'))) {
+                if (vessel.heated) {
+                    precipColor = 0x1e293b; liqColor = 0xe2e8f0;
+                    phenom = '⚫ Khi đun nóng, kết tủa xanh lam Cu(OH)₂ phân hủy thành <b>CuO↓ MÀU ĐEN</b>!';
+                    eq = 'Cu(OH)₂ --(t°)--> CuO↓ (đen) + H₂O';
+                } else {
+                    precipColor = 0x0284c7; liqColor = 0xbae6fd;
+                    phenom = '🔵 Xuất hiện <b>KẾT TỦA XANH LAM Cu(OH)₂↓</b> lắng xuống đáy bình!';
+                    eq = 'Cu²⁺ + 2OH⁻ → Cu(OH)₂↓ (xanh lam)';
+                }
+            }
+            else if (has('liq_FeCl3') && (has('liq_NaOH') || has('liq_BaOH2') || has('liq_NH3') || has('liq_Limewater'))) {
+                precipColor = 0x9a3412; liqColor = 0xfef3c7;
+                phenom = '🟤 Xuất hiện <b>KẾT TỦA NÂU ĐỎ Fe(OH)₃↓</b> lắng dưới đáy bình!';
+                eq = 'Fe³⁺ + 3OH⁻ → Fe(OH)₃↓ (nâu đỏ)';
+            }
+            else if ((has('liq_BaCl2') || has('liq_BaOH2')) && (has('liq_H2SO4') || has('liq_CuSO4') || has('liq_FeSO4'))) {
+                precipColor = 0xffffff;
+                phenom = '⚪ Xuất hiện <b>KẾT TỦA TRẮNG BaSO₄↓</b> không tan trong axit!';
+                eq = 'Ba²⁺ + SO₄²⁻ → BaSO₄↓ (trắng)';
+            }
+            else if (has('liq_AgNO3') && has('liq_KI')) {
+                precipColor = 0xfacc15;
+                phenom = '🟡 Xuất hiện <b>KẾT TỦA VÀNG ĐẬM AgI↓</b> lắng dưới đáy bình!';
+                eq = 'Ag⁺ + I⁻ → AgI↓ (vàng đậm)';
+            }
+            else if (has('liq_AgNO3') && (has('liq_HCl') || has('solid_NaCl') || has('liq_BaCl2') || has('liq_FeCl3') || has('liq_NH4Cl'))) {
+                precipColor = 0xffffff;
+                phenom = '⚪ Xuất hiện <b>KẾT TỦA TRẮNG AgCl↓</b> lắng dưới đáy bình!';
+                eq = 'Ag⁺ + Cl⁻ → AgCl↓ (trắng)';
+            }
+            else if ((has('solid_CaCO3') || has('liq_Na2CO3')) && (has('liq_HCl') || has('liq_H2SO4') || has('liq_HNO3') || has('liq_CH3COOH'))) {
+                bubbling = true;
+                phenom = '🫧 Sủi bọt khí <b>CO₂↑</b> không màu mạnh mẽ!';
+                eq = 'CO₃²⁻ + 2H⁺ → CO₂↑ + H₂O';
+            }
+            else if (has('solid_Cu') && has('liq_HNO3')) {
+                bubbling = true; smokeColor = 0xb45309; liqColor = 0x0284c7;
+                phenom = '🟤 Đồng tan nhanh, dung dịch hóa xanh lam và bốc khói khí <b>NO₂↑ MÀU NÂU ĐỎ</b>!';
+                eq = 'Cu + 4HNO₃ (đặc) → Cu(NO₃)₂ + 2NO₂↑ + 2H₂O';
+            }
+            else if ((has('solid_Zn') || has('solid_Fe')) && (has('liq_HCl') || has('liq_H2SO4'))) {
+                bubbling = true;
+                phenom = '🫧 Kim loại tan dần, sủi bọt khí <b>Hiđro (H₂↑)</b> liên tục!';
+                eq = 'Zn + 2H⁺ → Zn²⁺ + H₂↑';
+            }
+            else if (has('liq_Phenol') && vessel.ph >= 8.3) {
+                liqColor = 0xec4899; liqOpacity = 0.82;
+                phenom = `🌸 Môi trường Bazơ (pH = ${vessel.ph}) làm Phenolphtalein chuyển sang <b>MÀU HỒNG CÁNH SEN</b>!`;
+                eq = 'Phenolphtalein + OH⁻ ⇄ Ion màu hồng';
+            }
+            else if (has('liq_Litmus')) {
+                if (vessel.ph <= 5.5) {
+                    liqColor = 0xef4444; liqOpacity = 0.8;
+                    phenom = `🔴 Quỳ tím chuyển sang <b>MÀU ĐỎ</b> trong môi trường Axit (pH = ${vessel.ph}).`;
+                } else if (vessel.ph >= 8.2) {
+                    liqColor = 0x2563eb; liqOpacity = 0.8;
+                    phenom = `🔵 Quỳ tím chuyển sang <b>MÀU XANH</b> trong môi trường Bazơ (pH = ${vessel.ph}).`;
+                }
+            }
+
+            if (vessel.meshes.liqMesh) {
+                vessel.meshes.liqMesh.material.color.setHex(liqColor);
+                vessel.meshes.liqMesh.material.opacity = liqOpacity;
+            }
+            if (vessel.meshes.precipMesh) {
+                vessel.meshes.precipMesh.visible = precipColor !== null;
+                if (precipColor !== null) vessel.meshes.precipMesh.material.color.setHex(precipColor);
+            }
+            vessel.isBubbling = bubbling;
+            vessel.smokeColor = smokeColor;
+
+            if (vessel.meshes.bodyMesh) {
+                if (silverMirror) {
+                    vessel.meshes.bodyMesh.material.color.setHex(0xf8fafc);
+                    vessel.meshes.bodyMesh.material.metalness = 0.92;
+                    vessel.meshes.bodyMesh.material.roughness = 0.04;
+                    vessel.meshes.bodyMesh.material.opacity = 0.88;
+                } else {
+                    vessel.meshes.bodyMesh.material.color.setHex(0xffffff);
+                    vessel.meshes.bodyMesh.material.metalness = 0.05;
+                    vessel.meshes.bodyMesh.material.opacity = 0.36;
+                }
+            }
+
+            const labelSub = ionMicroView && vessel.contents.length
+                ? vessel.contents.map(c => c.formula).join(' + ')
+                : `pH ${vessel.ph} | ${vessel.temperature}°C`;
+            update3DLabel(vessel, vessel.info.name.split(' ')[0], labelSub, '#38bdf8');
+            updateHUDPanel(phenom, eq, life, vessel);
+        }
+
+        /********************************************************************
+         * 8. VÒNG LẶP ĐỒ HỌA 3D (ANIMATION LOOP)
+         ********************************************************************/
+        const particleGeo = new THREE.SphereGeometry(0.055, 8, 8);
+        function spawn3DParticle(pos, vx, vy, vz, colorHex, lifeFrames = 35, scale = 1) {
+            const mat = new THREE.MeshBasicMaterial({ color: colorHex, transparent: true, opacity: 0.9 });
+            const mesh = new THREE.Mesh(particleGeo, mat);
+            mesh.position.copy(pos);
+            mesh.scale.set(scale, scale, scale);
+            scene.add(mesh);
+            particles3D.push({ mesh, vx, vy, vz, life: lifeFrames, maxLife: lifeFrames });
+        }
+
+        const clock = new THREE.Clock();
+        function animate3DScene() {
+            requestAnimationFrame(animate3DScene);
+            const t = clock.getElapsedTime();
+
+            for (const obj of labObjects3D) {
+                if (obj.typeId === 'alcohol_burner' && obj.lit && obj.meshes.flameOuter) {
+                    obj.meshes.flameOuter.scale.set(
+                        1 + Math.sin(t * 20) * 0.12,
+                        1 + Math.cos(t * 25) * 0.16,
+                        1 + Math.sin(t * 18) * 0.12
+                    );
+                }
+                if (obj.sparking && Math.random() > 0.15) {
+                    const p = obj.group.position.clone();
+                    p.y += 1.2;
+                    for (let i = 0; i < 3; i++) {
+                        spawn3DParticle(p, (Math.random() - 0.5) * 0.14, (Math.random() - 0.2) * 0.14, (Math.random() - 0.5) * 0.14, 0xfef08a, 28, 0.9);
+                    }
+                }
+                if (obj.isBubbling && Math.random() > 0.3) {
+                    const p = obj.group.position.clone();
+                    p.x += (Math.random() - 0.5) * 0.45;
+                    p.y += 0.25;
+                    p.z += (Math.random() - 0.5) * 0.45;
+                    spawn3DParticle(p, 0, 0.055, 0, 0xffffff, 32, 0.85);
+                }
+                if (obj.smokeColor !== null && Math.random() > 0.45) {
+                    const p = obj.group.position.clone();
+                    p.y += (obj.maxHeight || 2.5);
+                    spawn3DParticle(p, (Math.random() - 0.5) * 0.02, 0.04, (Math.random() - 0.5) * 0.02, obj.smokeColor, 45, 2.2);
+                }
+            }
+
+            for (let i = particles3D.length - 1; i >= 0; i--) {
+                const pt = particles3D[i];
+                pt.mesh.position.x += pt.vx;
+                pt.mesh.position.y += pt.vy;
+                pt.mesh.position.z += pt.vz;
+                pt.life--;
+                pt.mesh.material.opacity = pt.life / pt.maxLife;
+                if (pt.life <= 0) {
+                    scene.remove(pt.mesh);
+                    pt.mesh.material.dispose();
+                    particles3D.splice(i, 1);
+                }
+            }
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        function handleResize() {
+            const rect = document.getElementById('mainViewportArea').getBoundingClientRect();
+            camera.aspect = rect.width / rect.height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(rect.width, rect.height);
+        }
+        window.addEventListener('resize', handleResize);
+
+        /********************************************************************
+         * 9. GIAO DIỆN KỆ HÓA CHẤT, CHUYỂN KHU VỰC & TIỆN ÍCH
+         ********************************************************************/
+        function toggleLeftHudPanel() {
+            const hidden = document.body.classList.toggle('hide-left-panels');
+            document.getElementById('toggleLeftHudTxt').textContent = hidden ? 'Hiện bảng thông tin trái' : 'Ẩn bảng thông tin trái';
+        }
+
+        function switchZone(zone) {
+            currentZone = zone;
+            if (zone === 'sandbox') {
+                activeExperiment = null;
+                document.getElementById('activeModeTitle').textContent = 'Khu Sandbox 3D: Tự do lấy mọi Dụng cụ & Hóa chất 3D';
+                document.getElementById('experimentFilterBanner').classList.add('hidden');
+                document.getElementById('experimentStepsBox').classList.add('hidden');
+                renderDrawerCatalog();
+                show3DToast('🛠️ Đã mở khóa 100% Hóa chất và Dụng cụ 3D trong Khu Sandbox!');
+            }
+        }
+
+        function loadExperimentTo3DTable(expId) {
+            const exp = EXPERIMENTS_DB.find(e => e.id === expId);
+            if (!exp) return;
+            currentZone = 'experiments';
+            activeExperiment = exp;
+            closeModal('experimentHubModal');
+
+            document.getElementById('activeModeTitle').textContent = `Bài thí nghiệm: ${exp.title}`;
+            document.getElementById('experimentFilterBanner').classList.remove('hidden');
+            const stepsBox = document.getElementById('experimentStepsBox');
+            stepsBox.classList.remove('hidden');
+            document.getElementById('expCategoryBadge').textContent = exp.badge;
+            document.getElementById('experimentStepsText').innerHTML = exp.guide;
+
+            clearAll3DObjects(false);
+            const spacing = 2.3;
+            const startX = -((exp.allowedItems.length - 1) * spacing) / 2;
+
+            exp.allowedItems.forEach((itemId, idx) => {
+                const posX = Math.max(-9.5, Math.min(9.5, startX + idx * spacing));
+                const posZ = (idx % 2 === 0) ? -0.4 : 0.8;
+                spawn3DObject(itemId, posX, posZ);
+            });
+
+            const firstVessel = labObjects3D.find(o => o.isVessel);
+            if (firstVessel) select3DObject(firstVessel);
+            renderDrawerCatalog();
+        }
+
+        function initAZRail() {
+            const chars = ['Tất cả', 'A', 'B', 'C', 'D', 'F', 'G', 'H', 'I', 'K', 'M', 'N', 'O', 'P', 'Q', 'Z'];
+            const rail = document.getElementById('azFilterRail');
+            rail.innerHTML = chars.map(ch => {
+                const val = ch === 'Tất cả' ? '' : ch;
+                const active = currentAZFilter === val;
+                return `<button onclick="setAZFilter('${val}')" class="w-full py-0.5 rounded text-[10px] font-bold transition ${active ? 'bg-sky-500 text-slate-950' : 'text-slate-400 hover:text-white'}">${ch}</button>`;
+            }).join('');
+        }
+
+        function setAZFilter(letter) {
+            currentAZFilter = letter;
+            initAZRail();
+            renderDrawerCatalog();
+        }
+
+        function selectDrawerTab(tabKey, btnEl) {
+            currentDrawerTab = tabKey;
+            document.querySelectorAll('.drawer-tab-btn').forEach(b => {
+                b.className = 'drawer-tab-btn w-full py-2 px-1 rounded-xl flex flex-col items-center gap-1 text-[10px] font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition';
+            });
+            if (btnEl) {
+                btnEl.className = 'drawer-tab-btn active-drawer-tab w-full py-2 px-1 rounded-xl flex flex-col items-center gap-1 text-[10px] font-bold bg-sky-500/20 text-sky-300 border border-sky-500/40 transition';
+            }
+            const titles = {
+                containers: 'Dụng cụ phản ứng 3D',
+                assistive: 'Thiết bị hỗ trợ 3D',
+                solids: 'Hóa chất rắn / Kim loại',
+                liquids: 'Hóa chất lỏng / Dung dịch',
+                gases: 'Hóa chất khí (Bình khí)'
+            };
+            document.getElementById('drawerCategoryTitle').textContent = titles[tabKey] || 'Danh mục';
+            renderDrawerCatalog();
+        }
+
+        function renderDrawerCatalog() {
+            const query = (document.getElementById('drawerSearchInput').value || '').toLowerCase().trim();
+            let list = EQUIPMENT_CATALOG[currentDrawerTab] || [];
+
+            if (currentZone === 'experiments' && activeExperiment) {
+                list = list.filter(item => activeExperiment.allowedItems.includes(item.id));
+            }
+            if (currentAZFilter) list = list.filter(item => item.letter === currentAZFilter);
+            if (query) {
+                list = list.filter(item =>
+                    item.name.toLowerCase().includes(query) ||
+                    (item.formula && item.formula.toLowerCase().includes(query))
+                );
+            }
+
+            document.getElementById('drawerCountLabel').textContent = `${list.length} mục`;
+            const grid = document.getElementById('drawerItemsGrid');
+
+            grid.innerHTML = list.map(item => {
+                const hexColor = item.color ? '#' + item.color.toString(16).padStart(6, '0') : '#38bdf8';
+                const isChem = currentDrawerTab === 'solids' || currentDrawerTab === 'liquids';
+                return `
+                    <div class="equip-card bg-slate-900/90 border border-slate-800 rounded-xl p-2.5 flex flex-col justify-between cursor-pointer"
+                         onclick="handleDrawerItemClick('${item.id}')">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-extrabold border border-white/20"
+                                  style="background-color: ${hexColor}33; color: ${hexColor};">
+                                ${item.formula ? item.formula.slice(0, 4) : '3D'}
+                            </span>
+                            <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-medium">
+                                ${isChem ? 'Đổ / Đặt bàn' : '+ Đặt ra bàn'}
+                            </span>
+                        </div>
+                        <div>
+                            <div class="font-bold text-xs text-white truncate">${item.formula ? item.formula + ' — ' + item.name : item.name}</div>
+                            <div class="text-[10px] text-slate-400 truncate mt-0.5">${item.sub || (item.ph ? `pH ~ ${item.ph}` : 'Mô hình 3D')}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function handleDrawerItemClick(itemId) {
+            const info = getCatalogItemInfo(itemId);
+            if (!info) return;
+
+            if ((info.categoryKey === 'liquids' || info.categoryKey === 'solids') && selectedLabObj && selectedLabObj.isVessel) {
+                addChemicalInto3DVessel(selectedLabObj, itemId);
+                show3DToast(`💧 Đã cho ${info.formula} (${info.name}) vào ${selectedLabObj.info.name}`);
+                return;
+            }
+
+            const randX = (Math.random() - 0.5) * 8;
+            const randZ = (Math.random() - 0.5) * 3;
+            spawn3DObject(itemId, randX, randZ);
+            show3DToast(`✨ Đã đặt mô hình 3D "${info.name}" lên bàn thí nghiệm!`);
+        }
+
+        function updateHUDFromObject(obj) {
+            if (!obj) return;
+            document.getElementById('hudTempPhBadge').textContent = `${obj.temperature}°C | pH ${obj.ph}`;
+            const pillsBox = document.getElementById('hudContentsPills');
+            if (!obj.contents || obj.contents.length === 0) {
+                pillsBox.innerHTML = `<span class="text-[11px] text-slate-400 italic">${obj.info.name} đang trống</span>`;
+            } else {
+                pillsBox.innerHTML = obj.contents.map(c => `
+                    <span class="px-2 py-0.5 rounded-md bg-sky-500/20 border border-sky-500/40 text-sky-300 text-[11px] mono font-bold">
+                        ${c.formula}${c.dose === 'excess' ? ' (dư)' : ''}
+                    </span>
+                `).join('');
+            }
+        }
+
+        function updateHUDPanel(phenomHTML, eqText, lifeText, vessel = null) {
+            document.getElementById('hudPhenomenon').innerHTML = phenomHTML;
+            document.getElementById('hudEquation').textContent = eqText;
+            document.getElementById('hudRealLifeApp').textContent = lifeText;
+            if (vessel) updateHUDFromObject(vessel);
+        }
+
+        function setDosageMode(mode) {
+            currentDosageMode = mode;
+            document.getElementById('btnDoseNormal').className = mode === 'normal'
+                ? 'py-1.5 px-2 rounded-lg text-[11px] font-bold bg-sky-600 text-white transition flex items-center justify-center gap-1'
+                : 'py-1.5 px-2 rounded-lg text-[11px] font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center justify-center gap-1';
+            document.getElementById('btnDoseExcess').className = mode === 'excess'
+                ? 'py-1.5 px-2 rounded-lg text-[11px] font-bold bg-amber-500 text-slate-950 transition flex items-center justify-center gap-1'
+                : 'py-1.5 px-2 rounded-lg text-[11px] font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition flex items-center justify-center gap-1';
+        }
+
+        function quickHeatSelected() {
+            if (!selectedLabObj) return;
+            if (selectedLabObj.typeId === 'alcohol_burner') {
+                toggleBurnerFlame(selectedLabObj);
+                return;
+            }
+            selectedLabObj.heated = !selectedLabObj.heated;
+            selectedLabObj.temperature = selectedLabObj.heated ? 85 : 25;
+            if (selectedLabObj.isVessel) evaluate3DVesselReaction(selectedLabObj);
+        }
+
+        function quickStirSelected() {
+            if (!selectedLabObj) return;
+            const g = selectedLabObj.group;
+            g.rotation.z = 0.14;
+            setTimeout(() => { g.rotation.z = -0.14; }, 120);
+            setTimeout(() => { g.rotation.z = 0; }, 240);
+        }
+
+        function removeSelected3DObject() {
+            if (!selectedLabObj) return;
+            scene.remove(selectedLabObj.group);
+            labObjects3D = labObjects3D.filter(o => o.uid !== selectedLabObj.uid);
+            select3DObject(labObjects3D[labObjects3D.length - 1] || null);
+        }
+
+        function clearAll3DObjects(notify = true) {
+            labObjects3D.forEach(o => scene.remove(o.group));
+            labObjects3D = [];
+            select3DObject(null);
+            if (notify) show3DToast('🧹 Đã dọn sạch mặt bàn thí nghiệm 3D!');
+        }
+
+        function resetCurrentScene() {
+            if (currentZone === 'experiments' && activeExperiment) {
+                loadExperimentTo3DTable(activeExperiment.id);
+            } else {
+                setupDefaultSandboxTable();
+            }
+        }
+
+        function setCameraView(preset) {
+            if (preset === 'front') {
+                camera.position.set(0, 7.5, 15.5);
+                controls.target.set(0, 2.0, 0);
+            } else if (preset === 'top') {
+                camera.position.set(0, 16.5, 2.5);
+                controls.target.set(0, 0, 0);
+            } else if (preset === 'closeup' && selectedLabObj) {
+                const p = selectedLabObj.group.position;
+                camera.position.set(p.x, 4.2, p.z + 6.5);
+                controls.target.set(p.x, 1.5, p.z);
+            }
+            controls.update();
+        }
+
+        function toggleIonMicroView() {
+            ionMicroView = !ionMicroView;
+            document.getElementById('ionViewStatus').textContent = ionMicroView ? 'BẬT' : 'TẮT';
+            labObjects3D.forEach(o => { if (o.isVessel) evaluate3DVesselReaction(o); });
+        }
+
+        function openExperimentHubModal() {
+            renderExperimentHubCards('all');
+            openModal('experimentHubModal');
+        }
+
+        function filterExperimentHub(groupKey, btnEl) {
+            renderExperimentHubCards(groupKey);
+        }
+
+        function renderExperimentHubCards(groupKey) {
+            const filtered = groupKey === 'all' ? EXPERIMENTS_DB : EXPERIMENTS_DB.filter(e => e.group === groupKey);
+            const grid = document.getElementById('hubExperimentsGrid');
+            grid.innerHTML = filtered.map(exp => `
+                <div onclick="loadExperimentTo3DTable('${exp.id}')" class="cursor-pointer group bg-slate-950/90 hover:bg-slate-800/90 border border-slate-800 hover:border-emerald-400 rounded-2xl p-4 flex flex-col justify-between transition-all shadow-lg">
+                    <div>
+                        <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold">${exp.badge}</span>
+                        <h4 class="font-extrabold text-sm text-white group-hover:text-emerald-300 transition mt-2 mb-1.5">${exp.title}</h4>
+                        <p class="text-xs text-slate-400 leading-relaxed">${exp.desc}</p>
+                    </div>
+                    <div class="mt-4 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs font-bold text-sky-400">
+                        <span>Bày dụng cụ 3D & Thực hành</span>
+                        <i class="fa-solid fa-play"></i>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openCustomCreatorModal() { openModal('customCreatorModal'); }
+        function saveCustomChemical() {
+            const formula = document.getElementById('newChemFormula').value.trim();
+            const name = document.getElementById('newChemName').value.trim();
+            const cat = document.getElementById('newChemCategory').value;
+            const colorHex = parseInt(document.getElementById('newChemColor').value.replace('#', '0x'), 16);
+            const ph = parseFloat(document.getElementById('newChemPh').value) || 7.0;
+            const app = document.getElementById('newChemApp').value.trim();
+            if (!formula || !name) return;
+            const newId = 'custom_' + Date.now();
+            EQUIPMENT_CATALOG[cat].unshift({ id: newId, formula, name, color: colorHex, opacity: 0.65, ph, letter: formula[0].toUpperCase(), app });
+            closeModal('customCreatorModal');
+            selectDrawerTab(cat);
+            spawn3DObject(newId, 0, 0);
+        }
+
+        function openFastAPIModal() {
+            document.getElementById('fastAPIJsonPreview').textContent = JSON.stringify({
+                project: "HỌC ĐỂ LÀM GÌ? (HOC_DE_LAM_GI_v3)",
+                module: "CONG_CU_HOA_3D_LAB",
+                events: telemetryEvents
+            }, null, 2);
+            openModal('fastAPIModal');
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        let toastTimer = null;
+        function show3DToast(msg) {
+            const el = document.getElementById('toastBanner3D');
+            el.innerHTML = msg;
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                el.innerHTML = '💡 <b>Thao tác 3D:</b> Kéo <b>Ống nhỏ giọt (Pipet)</b> chạm vào Cốc/Lọ để <b>HÚT</b> dung dịch, rồi kéo sang Ống nghiệm/Cốc khác để <b>NHỎ GIỌT</b>!';
+            }, 4500);
+        }
+
+        // Bàn thí nghiệm mặc định khi mở trang: Có sẵn Đèn cồn, Diêm, Giá đỡ gỗ, Ống nghiệm, Ống nhỏ giọt Pipet mới và Cốc chứa sẵn dung dịch!
+        function setupDefaultSandboxTable() {
+            clearAll3DObjects(false);
+            spawn3DObject('alcohol_burner', -6.2, 0.2);
+            spawn3DObject('matchbox', -8.0, 0.8);
+            const rack = spawn3DObject('test_rack', -2.2, 0);
+            // Cắm sẵn 1 ống nghiệm vào lỗ của Giá đỡ gỗ
+            const tubeInRack = spawn3DObject('test_tube', -2.2 - 0.4, 0);
+            tubeInRack.group.position.y = 0.14;
+
+            // Đặt sẵn Ống nhỏ giọt Pipet Pasteur model mới ở giữa bàn
+            spawn3DObject('dropper', 0.8, 0.6);
+
+            // Đặt sẵn Cốc 250mL có chứa sẵn dung dịch CuSO4 xanh lam để bạn thử kéo Ống nhỏ giọt vào hút ngay!
+            const beaker = spawn3DObject('beaker_250', 3.2, 0);
+            addChemicalInto3DVessel(beaker, 'liq_CuSO4');
+
+            // Đặt thêm 1 Ống nghiệm trống bên phải để nhỏ sang
+            spawn3DObject('test_tube', 5.6, 0);
+            select3DObject(beaker);
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            handleResize();
+            initAZRail();
+            renderDrawerCatalog();
+            setupDefaultSandboxTable();
+            animate3DScene();
+        });
+    </script>
+
+<script>
+(function injectMegaChemistryPack() {
+    // 1. DANH SÁCH HÓA CHẤT MỞ RỘNG (RẮN, LỎNG, KHÍ)
+    const EXTRA_CATALOG = {
+        solids: [
+            { id: 'solid_Mg', formula: 'Mg', name: 'Magie kim loại (Dây)', color: 0xe2e8f0, ph: 7.0, letter: 'M', app: 'Chế tạo pháo sáng, đèn flash và hợp kim siêu nhẹ trong hàng không.' },
+            { id: 'solid_Al', formula: 'Al', name: 'Nhôm kim loại (Hạt)', color: 0xcbd5e1, ph: 7.0, letter: 'A', app: 'Vật liệu chế tạo vỏ máy bay, dây dẫn điện cao thế và dụng cụ nhà bếp.' },
+            { id: 'solid_Ag', formula: 'Ag', name: 'Bạc kim loại', color: 0xf8fafc, ph: 7.0, letter: 'A', app: 'Làm đồ trang sức, tiếp điểm điện tử cao cấp và tráng gương.' },
+            { id: 'solid_S', formula: 'S', name: 'Lưu huỳnh (Bột vàng)', color: 0xfacc15, ph: 7.0, letter: 'S', app: 'Lưu hóa cao su sản xuất lốp xe, sản xuất axit sunfuric và diêm.' },
+            { id: 'solid_C', formula: 'C', name: 'Than gỗ / Than hoạt tính', color: 0x1e293b, ph: 7.0, letter: 'C', app: 'Lọc nước sinh hoạt, khử mùi, mặt nạ phòng độc và luyện kim.' },
+            { id: 'solid_MnO2', formula: 'MnO₂', name: 'Mangan(IV) Oxit (Xúc tác)', color: 0x1e293b, ph: 7.0, letter: 'M', app: 'Chất xúc tác phân hủy H₂O₂ tạo khí Oxi và làm cực dương trong pin khô.' },
+            { id: 'solid_CuO', formula: 'CuO', name: 'Đồng(II) Oxit (Bột đen)', color: 0x0f172a, ph: 7.0, letter: 'C', app: 'Tạo màu xanh cho gốm sứ, thủy tinh và điều chế muối đồng.' },
+            { id: 'solid_Fe2O3', formula: 'Fe₂O₃', name: 'Sắt(III) Oxit (Quặng Hematit)', color: 0x991b1b, ph: 7.0, letter: 'F', app: 'Nguyên liệu chính luyện gang thép và làm bột màu sơn chống gỉ.' },
+            { id: 'solid_KMnO4', formula: 'KMnO₄ (rắn)', name: 'Thuốc tím tinh thể', color: 0x581c87, ph: 7.0, letter: 'K', app: 'Nhiệt phân điều chế khí O₂ trong phòng thí nghiệm và sát khuẩn y tế.' },
+            { id: 'solid_KClO3', formula: 'KClO₃', name: 'Kali Clorat (Thuốc nổ/Diêm)', color: 0xf8fafc, ph: 7.0, letter: 'K', app: 'Điều chế khí O₂, sản xuất đầu que diêm và pháo hoa.' },
+            { id: 'solid_NaHCO3', formula: 'NaHCO₃ (rắn)', name: 'Baking Soda (Bột nở)', color: 0xffffff, ph: 8.3, letter: 'N', app: 'Làm bột nở trong chế biến bánh, thuốc giảm đau dạ dày và bột chữa cháy.' },
+            { id: 'solid_Na2SO3', formula: 'Na₂SO₃', name: 'Natri Sunfit tinh thể', color: 0xf1f5f9, ph: 7.5, letter: 'N', app: 'Điều chế khí SO₂ trong phòng thí nghiệm và chất bảo quản chống oxi hóa.' },
+            { id: 'solid_FeS', formula: 'FeS', name: 'Sắt(II) Sunfua', color: 0x334155, ph: 7.0, letter: 'F', app: 'Tác dụng với axit HCl dùng để điều chế khí H₂S trong phòng thí nghiệm.' },
+            { id: 'solid_CaC2', formula: 'CaC₂', name: 'Canxi Cacbu (Đất đèn)', color: 0x64748b, ph: 7.0, letter: 'C', app: 'Tác dụng với nước sinh khí Axetilen (C₂H₂) dùng trong đèn xì hàn cắt kim loại và giấm chín trái cây.' }
+        ],
+        liquids: [
+            { id: 'liq_H2O2', formula: 'H₂O₂', name: 'Hiđro Peroxit (Nước oxi già)', color: 0xe0f2fe, opacity: 0.35, ph: 6.2, letter: 'H', app: 'Rửa sát trùng vết thương y tế, tẩy trắng giấy và điều chế nhanh khí O₂ khi có xúc tác MnO₂.' },
+            { id: 'liq_H3PO4', formula: 'H₃PO₄', name: 'Axit Photphoric', color: 0xf1f5f9, opacity: 0.40, ph: 1.5, letter: 'H', app: 'Sản xuất phân lân Superphotphat, chất tẩy gỉ sắt và phụ gia tạo vị chua trong nước ngọt.' },
+            { id: 'liq_KOH', formula: 'KOH', name: 'Kali Hiđroxit (Kiềm mạnh)', color: 0xe2e8f0, opacity: 0.35, ph: 13.8, letter: 'K', app: 'Sản xuất xà phòng lỏng cao cấp và chất điện phân trong pin kiềm (Alkaline).' },
+            { id: 'liq_NaHCO3', formula: 'NaHCO₃', name: 'Dung dịch Natri Hiđrocacbonat', color: 0xf8fafc, opacity: 0.35, ph: 8.4, letter: 'N', app: 'Dung dịch trung hòa axit dạ dày (thuốc muối Nabica) và vệ sinh thực phẩm.' },
+            { id: 'liq_Na2SO4', formula: 'Na₂SO₄', name: 'Natri Sunfat', color: 0xe2e8f0, opacity: 0.35, ph: 7.0, letter: 'N', app: 'Sản xuất bột giặt tổng hợp, thủy tinh và giấy Kraft.' },
+            { id: 'liq_ZnSO4', formula: 'ZnSO₄', name: 'Kẽm Sunfat', color: 0xe2e8f0, opacity: 0.35, ph: 5.5, letter: 'Z', app: 'Bổ sung vi lượng kẽm trong nông nghiệp, thuốc nhỏ mắt và mạ kẽm điện phân.' },
+            { id: 'liq_MgCl2', formula: 'MgCl₂', name: 'Magie Clorua', color: 0xe2e8f0, opacity: 0.35, ph: 6.8, letter: 'M', app: 'Chất làm đông kết sữa đậu nành thành đậu phụ truyền thống và điện phân sản xuất Magie.' },
+            { id: 'liq_CaCl2', formula: 'CaCl₂', name: 'Canxi Clorua', color: 0xe2e8f0, opacity: 0.35, ph: 7.0, letter: 'C', app: 'Chất hút ẩm công nghiệp, làm tan băng tuyết trên mặt đường và bổ sung canxi.' },
+            { id: 'liq_PbNO3', formula: 'Pb(NO₃)₂', name: 'Chì(II) Nitrat', color: 0xe2e8f0, opacity: 0.35, ph: 5.2, letter: 'P', app: 'Tạo phản ứng "Mưa vàng" (PbI₂↓) đẹp mắt và dùng trong nhận biết khí H₂S.' },
+            { id: 'liq_Na2S', formula: 'Na₂S', name: 'Natri Sunfua', color: 0xfef9c3, opacity: 0.42, ph: 11.5, letter: 'N', app: 'Kết tủa hoàn toàn các kim loại nặng độc hại (Pb²⁺, Cu²⁺, Hg²⁺) trong nước thải công nghiệp.' },
+            { id: 'liq_KSCN', formula: 'KSCN', name: 'Kali Thioxianat (Máu giả)', color: 0xe2e8f0, opacity: 0.35, ph: 7.0, letter: 'K', app: 'Thuốc thử siêu nhạy nhận biết ion Sắt(III) Fe³⁺ và làm hiệu ứng "máu giả" trong kỹ xảo điện ảnh.' },
+            { id: 'liq_K2Cr2O7', formula: 'K₂Cr₂O₇', name: 'Kali Đicromat (Da cam)', color: 0xf97316, opacity: 0.80, ph: 4.2, letter: 'K', app: 'Hoạt chất chính trong máy đo nồng độ cồn của CSGT (đổi từ màu da cam sang xanh lục khi gặp hơi cồn).' },
+            { id: 'liq_K2CrO4', formula: 'K₂CrO₄', name: 'Kali Cromat (Vàng chanh)', color: 0xfacc15, opacity: 0.78, ph: 8.5, letter: 'K', app: 'Chất chỉ thị trong chuẩn độ bạc và nghiên cứu cân bằng chuyển dịch Cromat ⇄ Đicromat.' },
+            { id: 'liq_Br2', formula: 'Br₂ (dd)', name: 'Nước Brom (Da cam nâu)', color: 0xd97706, opacity: 0.78, ph: 4.5, letter: 'B', app: 'Thuốc thử nhận biết liên kết đôi/ba (Anken, Ankin), Anilin, Phenol và Glucozơ.' },
+            { id: 'liq_KMnO4', formula: 'KMnO₄ (dd)', name: 'Dung dịch Thuốc tím', color: 0x9333ea, opacity: 0.82, ph: 7.0, letter: 'K', app: 'Sát khuẩn rau quả, oxi hóa các hợp chất hữu cơ không no và chuẩn độ Fe²⁺.' },
+            { id: 'liq_Ethanol', formula: 'C₂H₅OH', name: 'Ancol Etylic (Cồn 90°)', color: 0xf8fafc, opacity: 0.32, ph: 7.0, letter: 'C', app: 'Cồn sát khuẩn y tế 70°, nhiên liệu xăng sinh học E5 và dung môi pha chế nước hoa.' },
+            { id: 'liq_Glycerol', formula: 'C₃H₅(OH)₃', name: 'Glixerol (Ancol đa chức)', color: 0xe2e8f0, opacity: 0.45, ph: 7.0, letter: 'G', app: 'Chất giữ ẩm trong kem dưỡng da, mỹ phẩm, thuốc ho và sản xuất thuốc nổ Nitroglixerin.' },
+            { id: 'liq_Phenol_org', formula: 'C₆H₅OH', name: 'Dung dịch Phenol', color: 0xfef3c7, opacity: 0.38, ph: 5.8, letter: 'C', app: 'Nguyên liệu sản xuất nhựa Phenol-fomanđehit, chất diệt khuẩn và tổng hợp thuốc Aspirin.' },
+            { id: 'liq_Aniline', formula: 'C₆H₅NH₂', name: 'Anilin (Amin thơm)', color: 0xfef08a, opacity: 0.45, ph: 8.8, letter: 'A', app: 'Nguyên liệu quan trọng nhất trong công nghiệp phẩm nhuộm vải và dược phẩm (Paracetamol).' },
+            { id: 'liq_EthylAcetate', formula: 'CH₃COOC₂H₅', name: 'Etyl Axetat (Este mùi thơm)', color: 0xfef9c3, opacity: 0.38, ph: 7.0, letter: 'C', app: 'Dung môi tẩy sơn móng tay (Axeton/Este), chiết xuất cafein và tạo hương thơm trái cây.' },
+            { id: 'liq_Sacharose', formula: 'C₁₂H₂₂O₁₁', name: 'Saccarozơ (Đường mía)', color: 0xf8fafc, opacity: 0.38, ph: 7.0, letter: 'S', app: 'Thực phẩm ngọt thiết yếu, pha chế siro thuốc và tráng gương sau khi thủy phân.' },
+            { id: 'liq_MethylOrange', formula: 'Metyl Da Cam', name: 'Chỉ thị Metyl Da Cam', color: 0xf97316, opacity: 0.72, ph: 7.0, letter: 'M', app: 'Chỉ thị chuẩn độ axit - bazơ mạnh (Đỏ khi pH < 3.1, Vàng khi pH > 4.4).' }
+        ],
+        gases: [
+            { id: 'gas_H2', formula: 'H₂', name: 'Bình khí Hiđro', color: 0xe0f2fe, opacity: 0.20, letter: 'H', app: 'Nhiên liệu sạch không phát thải cho tên lửa và ô tô chạy pin nhiên liệu (Fuel Cell).' },
+            { id: 'gas_NH3', formula: 'NH₃ (khí)', name: 'Bình khí Amoniac', color: 0xf1f5f9, opacity: 0.25, letter: 'N', app: 'Sản xuất phân đạm Urê, axit nitric và làm tác nhân lạnh công nghiệp.' },
+            { id: 'gas_SO2', formula: 'SO₂', name: 'Bình khí Lưu huỳnh đioxit', color: 0xfef9c3, opacity: 0.30, letter: 'S', app: 'Tẩy trắng bột giấy, chống mốc mây tre đan và sản xuất H₂SO₄.' },
+            { id: 'gas_H2S', formula: 'H₂S', name: 'Bình khí Hiđro Sunfua', color: 0xfef08a, opacity: 0.28, letter: 'H', app: 'Khí mùi trứng thối đặc trưng sinh ra khi phân hủy chất đạm hữu cơ.' },
+            { id: 'gas_NO2', formula: 'NO₂', name: 'Bình khí Nitơ Đioxit (Nâu đỏ)', color: 0xb45309, opacity: 0.65, letter: 'N', app: 'Sản phẩm trung gian trong dây chuyền tổng hợp axit nitric HNO₃ công nghiệp.' }
+        ]
+    };
+
+    // 2. DANH SÁCH 24 BÀI THÍ NGHIỆM MỚI CHO KHU VỰC 2 (ĐẦY ĐỦ HÓA 10, 11, 12 & ỨNG DỤNG KHKT)
+    const EXTRA_EXPERIMENTS = [
+        {
+            id: 'exp_amphoteric_al', group: 'inorganic', badge: 'LƯỠNG TÍNH',
+            title: '7. Hòa tan kết tủa lưỡng tính Al(OH)₃ và Zn(OH)₂ trong Kiềm dư',
+            desc: 'Quan sát kết tủa keo trắng tạo thành khi nhỏ vừa đủ NaOH và tan hoàn toàn tạo dung dịch trong suốt khi cho dư NaOH.',
+            guide: '<b>B1:</b> Chọn mức <b>Vừa đủ (3mL)</b>, cho <b>AlCl₃</b> (hoặc ZnSO₄) + <b>NaOH</b> vào ống nghiệm → Tạo kết tủa keo trắng.<br><b>B2:</b> Chuyển sang <b>Cho dư (10mL)</b> rồi thêm tiếp <b>NaOH</b> (hoặc HCl) → Kết tủa tan hết!',
+            allowedItems: ['test_tube', 'test_rack', 'beaker_100', 'dropper', 'liq_AlCl3', 'liq_ZnSO4', 'liq_NaOH', 'liq_HCl', 'liq_NH3']
+        },
+        {
+            id: 'exp_cu_fe_hydroxide', group: 'inorganic', badge: 'XỬ LÝ NƯỚC',
+            title: '8. Xử lý kim loại nặng Cu²⁺, Fe²⁺, Fe³⁺ & Nhiệt phân Cu(OH)₂',
+            desc: 'Tạo kết tủa xanh lam Cu(OH)₂, trắng xanh Fe(OH)₂, nâu đỏ Fe(OH)₃ và đun nóng Cu(OH)₂ hóa đen (CuO↓).',
+            guide: '<b>B1:</b> Dùng Ống nhỏ giọt nhỏ <b>NaOH</b> vào 3 ống nghiệm chứa <b>CuSO₄</b>, <b>FeSO₄</b>, <b>FeCl₃</b>.<br><b>B2:</b> Đun nóng ống chứa Cu(OH)₂ trên <b>Đèn cồn 3D</b> để thấy kết tủa xanh hóa đen!',
+            allowedItems: ['test_tube', 'test_rack', 'alcohol_burner', 'matchbox', 'dropper', 'liq_CuSO4', 'liq_FeSO4', 'liq_FeCl3', 'liq_NaOH']
+        },
+        {
+            id: 'exp_fake_blood_kscn', group: 'inorganic', badge: 'ĐIỆN ẢNH & Y TẾ',
+            title: '9. Phản ứng tạo "Máu Giả Điện Ảnh" giữa FeCl₃ và KSCN',
+            desc: 'Khám phá bí mật kỹ xảo điện ảnh và cách xét nghiệm ion Sắt(III) siêu nhạy bằng phức chất màu đỏ máu.',
+            guide: '<b>B1:</b> Nhỏ dung dịch <b>FeCl₃ (vàng nâu)</b> vào Ống nghiệm hoặc Cốc.<br><b>B2:</b> Dùng Ống nhỏ giọt hút <b>KSCN (không màu)</b> nhỏ vào → Dung dịch chuyển ngay sang <b>màu đỏ máu thẫm Fe(SCN)₃</b>!',
+            allowedItems: ['test_tube', 'test_rack', 'beaker_100', 'dropper', 'liq_FeCl3', 'liq_KSCN']
+        },
+        {
+            id: 'exp_golden_rain', group: 'inorganic', badge: 'KẾT TINH ĐẸP',
+            title: '10. Thí nghiệm "Cơn Mưa Vàng" (Golden Rain — PbI₂↓)',
+            desc: 'Tạo kết tủa Chì(II) Iotua màu vàng óng ánh tuyệt đẹp từ hai dung dịch hoàn toàn trong suốt không màu.',
+            guide: '<b>B1:</b> Cho dung dịch <b>Pb(NO₃)₂</b> vào Cốc thủy tinh hoặc Ống nghiệm.<br><b>B2:</b> Nhỏ dung dịch <b>KI (Kali Iotua)</b> vào → Xuất hiện ngay kết tủa <b>PbI₂↓ màu vàng rực rỡ</b> lắng xuống!',
+            allowedItems: ['test_tube', 'test_rack', 'beaker_250', 'dropper', 'liq_PbNO3', 'liq_KI']
+        },
+        {
+            id: 'exp_alcohol_breathalyzer', group: 'organic', badge: 'CẢNH SÁT GIAO THÔNG',
+            title: '11. Nguyên lý Máy đo nồng độ cồn (K₂Cr₂O₇ + H₂SO₄ + C₂H₅OH)',
+            desc: 'Tái hiện phản ứng hóa học bên trong ống thổi nồng độ cồn: Cồn làm dung dịch Đicromat đổi từ màu da cam sang xanh lục!',
+            guide: '<b>B1:</b> Cho <b>K₂Cr₂O₇ (màu da cam)</b> và vài giọt <b>H₂SO₄</b> vào ống nghiệm.<br><b>B2:</b> Nhỏ <b>Cồn C₂H₅OH</b> vào → Dung dịch đổi từ <b>màu da cam sang màu xanh lục Cr³⁺</b>!',
+            allowedItems: ['test_tube', 'test_rack', 'dropper', 'liq_K2Cr2O7', 'liq_H2SO4', 'liq_Ethanol']
+        },
+        {
+            id: 'exp_glycerol_copper', group: 'organic', badge: 'HÓA HỮU CƠ 11-12',
+            title: '12. Nhận biết Ancol Đa Chức (Glixerol / Saccarozơ) bằng Cu(OH)₂',
+            desc: 'Chứng minh tính chất của ancol có các nhóm -OH liền kề: hòa tan kết tủa Cu(OH)₂ tạo phức đồng màu xanh lam thẫm.',
+            guide: '<b>B1:</b> Nhỏ <b>CuSO₄</b> + <b>NaOH</b> vào ống nghiệm để tạo kết tủa xanh Cu(OH)₂.<br><b>B2:</b> Thêm <b>Glixerol C₃H₅(OH)₃</b> (hoặc <b>Saccarozơ</b>) vào → Kết tủa tan tạo dung dịch <b>xanh lam thẫm trong suốt</b>!',
+            allowedItems: ['test_tube', 'test_rack', 'dropper', 'liq_CuSO4', 'liq_NaOH', 'liq_Glycerol', 'liq_Sacharose']
+        },
+        {
+            id: 'exp_phenol_aniline_br2', group: 'organic', badge: 'NHẬN BIẾT HỮU CƠ',
+            title: '13. Nhận biết Phenol và Anilin bằng Nước Brom (Br₂)',
+            desc: 'Quan sát phản ứng thế nguyên tử H của vòng benzen: làm mất màu nước Brom da cam và tạo kết tủa trắng 2,4,6-tribrom.',
+            guide: '<b>B1:</b> Cho <b>Phenol (C₆H₅OH)</b> hoặc <b>Anilin (C₆H₅NH₂)</b> vào ống nghiệm.<br><b>B2:</b> Nhỏ <b>Nước Brom (Br₂ màu da cam)</b> vào → Nước Brom mất màu và xuất hiện ngay <b>kết tủa trắng↓</b>!',
+            allowedItems: ['test_tube', 'test_rack', 'dropper', 'liq_Phenol_org', 'liq_Aniline', 'liq_Br2']
+        },
+        {
+            id: 'exp_starch_iodine', group: 'organic', badge: 'AN TOÀN THỰC PHẨM',
+            title: '14. Kiểm định Hồ Tinh Bột bằng Iot (I₂) — Đun nóng & Để nguội',
+            desc: 'Phát hiện tinh bột trong thực phẩm bằng dung dịch I₂ tạo màu xanh tím, đun nóng mất màu, để nguội hiện lại.',
+            guide: '<b>B1:</b> Cho <b>Hồ tinh bột</b> + <b>Dung dịch I₂</b> vào ống nghiệm → Hóa <b>xanh tím đậm</b>.<br><b>B2:</b> Đun nóng trên <b>Đèn cồn 3D</b> → Màu xanh tím biến mất!',
+            allowedItems: ['test_tube', 'test_rack', 'alcohol_burner', 'matchbox', 'dropper', 'liq_Starch', 'liq_I2']
+        },
+        {
+            id: 'exp_ester_saponification', group: 'organic', badge: 'SẢN XUẤT XÀ PHÒNG',
+            title: '15. Thủy phân Este (Etyl Axetat) trong môi trường Kiềm (Xà phòng hóa)',
+            desc: 'Đun nóng este CH₃COOC₂H₅ với dung dịch NaOH để tìm hiểu quy trình nấu xà phòng trong công nghiệp.',
+            guide: '<b>B1:</b> Cho <b>Etyl Axetat (CH₃COOC₂H₅)</b> và <b>NaOH</b> vào ống nghiệm.<br><b>B2:</b> Đun nóng trên <b>Đèn cồn 3D</b> để phản ứng xà phòng hóa xảy ra hoàn toàn tạo hỗn hợp đồng nhất!',
+            allowedItems: ['test_tube', 'test_rack', 'alcohol_burner', 'matchbox', 'dropper', 'liq_EthylAcetate', 'liq_NaOH', 'liq_H2SO4']
+        },
+        {
+            id: 'exp_h2o2_mno2_o2', group: 'combustion', badge: 'ĐIỀU CHẾ KHÍ O₂',
+            title: '16. Phân hủy Nước Oxi Già (H₂O₂) bằng chất xúc tác MnO₂',
+            desc: 'Phương pháp điều chế nhanh khí Oxi trong phòng thí nghiệm không cần đun nóng nhờ xúc tác Mangan đioxit.',
+            guide: '<b>B1:</b> Rót <b>Nước oxi già (H₂O₂)</b> vào Bình tam giác hoặc Ống nghiệm.<br><b>B2:</b> Dùng Muỗng xúc bột đen <b>MnO₂</b> thả vào → Sủi bọt khí <b>O₂↑ mãnh liệt</b> ngay lập tức!',
+            allowedItems: ['erlenmeyer', 'test_tube', 'spatula', 'dropper', 'liq_H2O2', 'solid_MnO2']
+        },
+        {
+            id: 'exp_chromate_equilibrium', group: 'inorganic', badge: 'CÂN BẰNG HÓA HỌC',
+            title: '17. Chuyển dịch Cân bằng Cromat (Vàng) ⇄ Đicromat (Da cam)',
+            desc: 'Minh họa nguyên lý chuyển dịch cân bằng Le Chatelier bằng sự đổi màu thuận nghịch giữa môi trường Axit và Bazơ.',
+            guide: '<b>B1:</b> Cho <b>K₂CrO₄ (màu vàng)</b> vào ống nghiệm, nhỏ thêm <b>H₂SO₄</b> → Chuyển sang <b>màu da cam (Cr₂O₇²⁻)</b>.<br><b>B2:</b> Nhỏ ngược lại <b>NaOH (Cho dư)</b> vào ống da cam → Chuyển lại <b>màu vàng chanh (CrO₄²⁻)</b>!',
+            allowedItems: ['test_tube', 'test_rack', 'dropper', 'liq_K2CrO4', 'liq_K2Cr2O7', 'liq_H2SO4', 'liq_NaOH']
+        },
+        {
+            id: 'exp_water_softening', group: 'inorganic', badge: 'XỬ LÝ NƯỚC CỨNG',
+            title: '18. Làm mềm Nước Cứng chứa Ca²⁺, Mg²⁺ bằng Soda (Na₂CO₃)',
+            desc: 'Giải thích cách xử lý nước cứng sinh hoạt gây đóng cặn nồi hơi và làm giảm bọt xà phòng bằng Natri Cacbonat.',
+            guide: '<b>B1:</b> Cho mẫu nước cứng chứa <b>CaCl₂</b> hoặc <b>MgCl₂</b> vào Cốc thủy tinh.<br><b>B2:</b> Nhỏ dung dịch <b>Soda (Na₂CO₃)</b> vào → Tạo kết tủa trắng CaCO₃↓, MgCO₃↓ giúp tách bỏ ion gây cứng nước!',
+            allowedItems: ['beaker_250', 'test_tube', 'dropper', 'liq_CaCl2', 'liq_MgCl2', 'liq_Na2CO3']
+        },
+        {
+            id: 'exp_descaling_kettle', group: 'inorganic', badge: 'MẸO GIA ĐÌNH',
+            title: '19. Tẩy cặn đá vôi CaCO₃ trong ấm đun nước bằng Giấm ăn (CH₃COOH)',
+            desc: 'Ứng dụng axit hữu cơ yếu trong giấm ăn để hòa tan lớp cặn CaCO₃ bám đáy ấm nước một cách an toàn.',
+            guide: '<b>B1:</b> Dùng Muỗng lấy <b>Đá vôi (CaCO₃)</b> cho vào Cốc 250mL.<br><b>B2:</b> Rót <b>Giấm ăn (CH₃COOH)</b> vào → Cặn đá vôi tan dần kèm sủi bọt khí CO₂↑!',
+            allowedItems: ['beaker_250', 'erlenmeyer', 'spatula', 'solid_CaCO3', 'liq_CH3COOH', 'liq_HCl']
+        },
+        {
+            id: 'exp_fertilizer_nh4', group: 'inorganic', badge: 'HÓA HỌC NÔNG NGHIỆP',
+            title: '20. Nhận biết Phân đạm Amoni (NH₄Cl) & Sai lầm khi trộn Vôi',
+            desc: 'Chứng minh vì sao trộn phân đạm amoni với vôi tôi Ca(OH)₂ sẽ làm bay hơi hết đạm dưới dạng khí NH₃ mùi khai.',
+            guide: '<b>B1:</b> Cho <b>Phân đạm NH₄Cl</b> vào ống nghiệm.<br><b>B2:</b> Nhỏ <b>Nước vôi trong Ca(OH)₂</b> (hoặc NaOH) vào → Sủi bọt và thoát khí <b>NH₃↑ mùi khai</b>!',
+            allowedItems: ['test_tube', 'test_rack', 'alcohol_burner', 'dropper', 'liq_NH4Cl', 'liq_Limewater', 'liq_NaOH', 'liq_Phenol']
+        },
+        {
+            id: 'exp_metal_acid_compare', group: 'inorganic', badge: 'DÃY ĐIỆN HÓA',
+            title: '21. So sánh Kim loại (Mg, Zn, Fe, Cu) tác dụng với HCl & HNO₃ đặc',
+            desc: 'Khảo sát tính khử của các kim loại đứng trước và sau Hiđro khi gặp axit thường (HCl) và axit oxi hóa mạnh (HNO₃).',
+            guide: '<b>B1:</b> Cho <b>Mg, Zn, Fe</b> vào <b>HCl</b> → Sủi bọt khí H₂↑ (riêng Cu không phản ứng với HCl).<br><b>B2:</b> Cho <b>Cu</b> vào <b>HNO₃ đặc</b> → Cu tan mạnh, dung dịch hóa xanh và bốc khói <b>NO₂↑ màu nâu đỏ</b>!',
+            allowedItems: ['test_tube', 'test_rack', 'erlenmeyer', 'spatula', 'solid_Mg', 'solid_Zn', 'solid_Fe', 'solid_Cu', 'liq_HCl', 'liq_HNO3']
+        },
+        {
+            id: 'exp_cu_ammonia_complex', group: 'inorganic', badge: 'PHỨC CHẤT TƠ ĐỒNG',
+            title: '22. Điều chế Nước Svayde [Cu(NH₃)₄](OH)₂ hòa tan Xenlulozơ',
+            desc: 'Quan sát sự tạo thành kết tủa xanh lam Cu(OH)₂ và sự hòa tan tạo phức màu xanh lam thẫm khi cho dư dung dịch NH₃.',
+            guide: '<b>B1:</b> Ở chế độ <b>Vừa đủ</b>, nhỏ <b>NH₃</b> vào <b>CuSO₄</b> → Tạo kết tủa xanh lam Cu(OH)₂↓.<br><b>B2:</b> Bật chế độ <b>Cho dư (10mL)</b> rồi nhỏ tiếp <b>NH₃</b> → Kết tủa tan tạo dung dịch <b>xanh lam thẫm</b>!',
+            allowedItems: ['test_tube', 'test_rack', 'beaker_100', 'dropper', 'liq_CuSO4', 'liq_NH3', 'liq_NaOH']
+        },
+        {
+            id: 'exp_calcium_carbide_c2h2', group: 'organic', badge: 'KHÍ ĐẤT ĐÈN',
+            title: '23. Điều chế khí Axetilen (C₂H₂) từ Đất đèn (CaC₂) & Làm mất màu Br₂',
+            desc: 'Thả đất đèn CaC₂ vào nước sinh khí C₂H₂ sủi bọt mạnh, ứng dụng trong hàn xì oxi-axetilen và giấm chín hoa quả.',
+            guide: '<b>B1:</b> Dùng Muỗng xúc <b>Đất đèn (CaC₂)</b> thả vào Cốc chứa <b>Nước (H₂O)</b> → Sủi bọt khí Axetilen C₂H₂↑ mạnh!<br><b>B2:</b> Thêm <b>Nước Brom (Br₂)</b> vào để thấy phản ứng cộng làm mất màu da cam của Brom.',
+            allowedItems: ['beaker_250', 'test_tube', 'spatula', 'dropper', 'solid_CaC2', 'liq_H2O', 'liq_Br2', 'liq_KMnO4']
+        },
+        {
+            id: 'exp_sulfide_heavy_metals', group: 'inorganic', badge: 'MÔI TRƯỜNG',
+            title: '24. Kết tủa Sunfua màu đen (CuS↓, PbS↓) để khử độc kim loại nặng',
+            desc: 'Dùng muối sunfua Na₂S để kết tủa triệt để các ion chì (Pb²⁺) và đồng (Cu²⁺) thành chất rắn màu đen không tan trong axit.',
+            guide: 'Nhỏ dung dịch <b>Na₂S</b> vào ống nghiệm chứa <b>Pb(NO₃)₂</b> hoặc <b>CuSO₄</b> → Xuất hiện ngay <b>kết tủa màu đen tuyền (PbS↓ / CuS↓)</b>!',
+            allowedItems: ['test_tube', 'test_rack', 'dropper', 'liq_PbNO3', 'liq_CuSO4', 'liq_Na2S', 'liq_HCl']
+        },
+        {
+            id: 'exp_kmno4_redox', group: 'inorganic', badge: 'OXI HÓA - KHỬ',
+            title: '25. Phản ứng làm mất màu Thuốc tím KMnO₄ bởi FeSO₄ trong H₂SO₄',
+            desc: 'Chuẩn độ oxi hóa - khử kinh điển: Ion Fe²⁺ khử thuốc tím KMnO₄ trong môi trường axit làm mất màu tím hoàn toàn.',
+            guide: '<b>B1:</b> Cho <b>KMnO₄ (màu tím)</b> và <b>H₂SO₄ loãng</b> vào ống nghiệm.<br><b>B2:</b> Nhỏ <b>FeSO₄</b> (hoặc Na₂SO₃) vào → Màu tím biến mất nhanh chóng!',
+            allowedItems: ['test_tube', 'test_rack', 'dropper', 'liq_KMnO4', 'liq_H2SO4', 'liq_FeSO4', 'solid_Na2SO3']
+        },
+        {
+            id: 'exp_anhydrous_cuso4', group: 'inorganic', badge: 'KIỂM TRA ĐỘ ẨM',
+            title: '26. Phát hiện nước lẫn trong Xăng/Cồn bằng CuSO₄ khan màu trắng',
+            desc: 'Tinh thể CuSO₄ khan màu trắng hút ẩm cực nhạy và chuyển ngay sang màu xanh lam của tinh thể ngậm nước CuSO₄·5H₂O.',
+            guide: 'Dùng Muỗng lấy bột <b>CuSO₄ khan (màu trắng)</b> cho vào ống nghiệm, sau đó nhỏ vài giọt <b>Nước H₂O</b> vào → Hóa <b>xanh lam</b> ngay lập tức!',
+            allowedItems: ['test_tube', 'test_rack', 'spatula', 'dropper', 'solid_CuSO4_anh', 'liq_H2O', 'liq_Ethanol']
+        },
+        {
+            id: 'exp_indicators_3_types', group: 'solution', badge: 'CHUẨN ĐỘ PH',
+            title: '27. Khảo sát 3 chất chỉ thị (Quỳ tím, Phenolphtalein, Metyl Da Cam)',
+            desc: 'So sánh sự biến đổi màu sắc của 3 loại chất chỉ thị pH phổ biến nhất trong môi trường Axit, Trung tính và Bazơ.',
+            guide: 'Thử nhỏ lần lượt <b>Quỳ tím</b>, <b>Phenolphtalein</b> và <b>Metyl da cam</b> vào các ống chứa <b>HCl (Axit)</b> và <b>NaOH (Bazơ)</b> để so sánh bảng màu!',
+            allowedItems: ['test_tube', 'test_rack', 'dropper', 'liq_HCl', 'liq_NaOH', 'liq_H2O', 'liq_Litmus', 'liq_Phenol', 'liq_MethylOrange']
+        },
+        {
+            id: 'exp_copper_oxide_acid', group: 'inorganic', badge: 'OXIT BAZƠ',
+            title: '28. Hòa tan bột Đồng(II) Oxit (CuO đen) và Sắt(III) Oxit (Fe₂O₃) bằng Axit',
+            desc: 'Giải thích cơ chế dùng dung dịch axit để tẩy sạch lớp vảy oxit đen/gỉ đỏ bám trên bề mặt kim loại.',
+            guide: 'Cho bột <b>CuO (màu đen)</b> vào ống chứa <b>HCl</b> hoặc <b>H₂SO₄</b> và đun nhẹ → Bột đen tan dần tạo dung dịch <b>màu xanh lam</b>!',
+            allowedItems: ['test_tube', 'test_rack', 'alcohol_burner', 'spatula', 'solid_CuO', 'solid_Fe2O3', 'liq_HCl', 'liq_H2SO4']
+        }
+    ];
+
+    // 3. TỰ ĐỘNG GỘP VÀO KHO HÓA CHẤT & KHO THÍ NGHIỆM GỐC (KHÔNG TRÙNG LẶP)
+    function mergeAllData() {
+        if (typeof EQUIPMENT_CATALOG !== 'undefined') {
+            ['solids', 'liquids', 'gases'].forEach(cat => {
+                EXTRA_CATALOG[cat].forEach(newItem => {
+                    if (!EQUIPMENT_CATALOG[cat].some(existing => existing.id === newItem.id)) {
+                        EQUIPMENT_CATALOG[cat].push(newItem);
+                    }
+                });
+            });
+        }
+
+        if (typeof EXPERIMENTS_DB !== 'undefined') {
+            EXTRA_EXPERIMENTS.forEach(newExp => {
+                if (!EXPERIMENTS_DB.some(existing => existing.id === newExp.id)) {
+                    EXPERIMENTS_DB.push(newExp);
+                }
+            });
+            const badge = document.getElementById('expCountBadge');
+            if (badge) badge.textContent = EXPERIMENTS_DB.length;
+        }
+
+        if (typeof renderDrawerCatalog === 'function') renderDrawerCatalog();
+    }
+
+    // 4. NÂNG CẤP BỘ MÁY SUY LUẬN PHẢN ỨNG 3D ĐỂ NHẬN DIỆN TẤT CẢ CÁC CHẤT MỚI
+    function hookExtendedReactionEngine() {
+        if (typeof evaluate3DVesselReaction !== 'function') return;
+        const originalEvaluate = window.evaluate3DVesselReaction;
+
+        window.evaluate3DVesselReaction = function(vessel) {
+            // Chạy bộ máy gốc trước
+            originalEvaluate(vessel);
+            if (!vessel || !vessel.isVessel || !vessel.contents || vessel.contents.length === 0) return;
+
+            const contents = vessel.contents;
+            const ids = contents.map(c => c.id);
+            const has = (id) => ids.includes(id);
+            const hasExcess = (id) => contents.some(c => c.id === id && c.dose === 'excess');
+
+            let matched = false;
+            let liqColor = vessel.meshes.liqMesh ? vessel.meshes.liqMesh.material.color.getHex() : 0xbae6fd;
+            let liqOpacity = 0.75;
+            let precipColor = null;
+            let bubbling = false;
+            let smokeColor = null;
+            let phenom = '', eq = '', life = '';
+
+            // --- CÁC PHẢN ỨNG MỞ RỘNG MỚI ---
+            // 1. Máu giả điện ảnh: FeCl3 + KSCN -> Đỏ máu thẫm
+            if (has('liq_FeCl3') && has('liq_KSCN')) {
+                matched = true; liqColor = 0x991b1b; liqOpacity = 0.94;
+                phenom = '🩸 <b>PHẢN ỨNG TẠO MÁU GIẢ:</b> Dung dịch chuyển ngay sang <b>MÀU ĐỎ MÁU THẪM</b> của phức chất Sắt(III) Thioxianat!';
+                eq = 'Fe³⁺ + 3SCN⁻ ⇄ Fe(SCN)₃ (đỏ máu)';
+                life = 'Ứng dụng làm máu nhân tạo trong phim ảnh và xét nghiệm định tính ion Fe³⁺ với độ nhạy cực cao.';
+            }
+            // 2. Cơn mưa vàng: Pb(NO3)2 + KI -> Kết tủa vàng óng PbI2
+            else if (has('liq_PbNO3') && has('liq_KI')) {
+                matched = true; precipColor = 0xfacc15; liqColor = 0xfef08a; liqOpacity = 0.45;
+                phenom = '🌟 <b>THÍ NGHIỆM MƯA VÀNG:</b> Xuất hiện kết tủa tinh thể <b>Chì(II) Iotua (PbI₂↓) MÀU VÀNG ÓNG ÁNH</b> lắng xuống đáy bình!';
+                eq = 'Pb(NO₃)₂ + 2KI → PbI₂↓ (vàng óng) + 2KNO₃';
+                life = 'Minh họa sự kết tinh lại trong dung dịch nóng và nhận biết ion chì độc hại.';
+            }
+            // 3. Máy đo nồng độ cồn CSGT: K2Cr2O7 + H2SO4 + C2H5OH -> Đổi từ cam sang xanh lục
+            else if (has('liq_K2Cr2O7') && has('liq_Ethanol')) {
+                matched = true; liqColor = 0x15803d; liqOpacity = 0.85;
+                phenom = '🟢 <b>NGUYÊN LÝ MÁY ĐO ĐỘ CỒN:</b> Cồn C₂H₅OH khử Cr⁺⁶ làm dung dịch chuyển từ <b>MÀU DA CAM sang MÀU XANH LỤC (Cr³⁺)</b>!';
+                eq = 'K₂Cr₂O₇ (cam) + 3C₂H₅OH + 4H₂SO₄ → Cr₂(SO₄)₃ (xanh lục) + 3CH₃CHO + K₂SO₄ + 7H₂O';
+                life = 'Nguyên lý hóa học trong máy đo nồng độ cồn trong hơi thở của Cảnh sát giao thông.';
+            }
+            // 4. Hòa tan Cu(OH)2 bởi Glixerol / Saccarozơ / Glucozơ ở nhiệt độ thường -> Phức xanh lam thẫm
+            else if (has('liq_CuSO4') && (has('liq_NaOH') || has('liq_KOH')) && (has('liq_Glycerol') || has('liq_Sacharose') || (has('liq_Glucose') && !vessel.heated))) {
+                matched = true; liqColor = 0x1d4ed8; liqOpacity = 0.90; precipColor = null;
+                phenom = '🔵 <b>PHẢN ỨNG ANCOL ĐA CHỨC:</b> Kết tủa Cu(OH)₂ tan hoàn toàn tạo dung dịch phức đồng <b>MÀU XANH LAM THẪM</b> trong suốt!';
+                eq = '2C₃H₅(OH)₃ + Cu(OH)₂ → [C₃H₅(OH)₂O]₂Cu (xanh lam thẫm) + 2H₂O';
+                life = 'Dùng để nhận biết các hợp chất poliol có nhiều nhóm -OH liền kề như Glixerol, Glucozơ, Saccarozơ.';
+            }
+            // 5. Phenol hoặc Anilin + Nước Brom (Br2) -> Mất màu cam + Kết tủa trắng
+            else if ((has('liq_Phenol_org') || has('liq_Aniline')) && has('liq_Br2')) {
+                matched = true; liqColor = 0xf8fafc; liqOpacity = 0.45; precipColor = 0xffffff;
+                const isPhenol = has('liq_Phenol_org');
+                phenom = `⚪ Nước Brom mất màu da cam và xuất hiện ngay <b>KẾT TỦA TRẮNG ${isPhenol ? '2,4,6-tribromphenol↓' : '2,4,6-tribromanilin↓'}</b>!`;
+                eq = isPhenol
+                    ? 'C₆H₅OH + 3Br₂ → C₆H₂Br₃OH↓ (trắng) + 3HBr'
+                    : 'C₆H₅NH₂ + 3Br₂ → C₆H₂Br₃NH₂↓ (trắng) + 3HBr';
+                life = 'Phản ứng đặc trưng dùng để định tính và định lượng Phenol, Anilin trong công nghiệp hóa chất.';
+            }
+            // 6. Phân hủy H2O2 khi có xúc tác MnO2 -> Sủi bọt khí O2 mãnh liệt
+            else if (has('liq_H2O2') && has('solid_MnO2')) {
+                matched = true; bubbling = true; liqColor = 0xe0f2fe;
+                phenom = '🫧 <b>PHÂN HỦY H₂O₂ XÚC TÁC:</b> Bột đen MnO₂ làm nước oxi già phân hủy tức khắc, <b>sủi bọt khí Oxi (O₂↑)</b> cực mạnh!';
+                eq = '2H₂O₂ --(MnO₂)--> 2H₂O + O₂↑';
+                life = 'Giải thích hiện tượng sủi bọt trắng khi nhỏ nước oxi già lên vết thương chảy máu (do có men catalase đóng vai trò xúc tác).';
+            }
+            // 7. Đất đèn CaC2 + H2O -> Sủi bọt khí Axetilen C2H2 + Ca(OH)2 đục
+            else if (has('solid_CaC2') && has('liq_H2O')) {
+                matched = true; bubbling = true; precipColor = 0xf1f5f9;
+                if (has('liq_Br2')) {
+                    liqColor = 0xf8fafc;
+                    phenom = '💧 Khí Axetilen (C₂H₂) sinh ra làm <b>MẤT MÀU NƯỚC BROM DA CAM</b> do phản ứng cộng vào liên kết ba!';
+                    eq = 'CH≡CH + 2Br₂ → CHBr₂-CHBr₂';
+                } else {
+                    phenom = '🫧 <b>ĐẤT ĐÈN GẶP NƯỚC:</b> Sủi bọt khí <b>Axetilen (C₂H₂↑)</b> mãnh liệt và tạo vẩn đục Ca(OH)₂!';
+                    eq = 'CaC₂ + 2H₂O → C₂H₂↑ + Ca(OH)₂';
+                }
+                life = 'Điều chế khí đất đèn dùng cho đèn xì hàn cắt kim loại và tổng hợp nhựa PVC.';
+            }
+            // 8. Tính lưỡng tính của Zn(OH)2 (ZnSO4 + NaOH / NH3)
+            else if (has('liq_ZnSO4') && (has('liq_NaOH') || has('liq_KOH') || has('liq_NH3'))) {
+                matched = true;
+                if (hasExcess('liq_NaOH') || hasExcess('liq_KOH') || hasExcess('liq_NH3') || has('liq_HCl')) {
+                    liqColor = 0xe2e8f0; liqOpacity = 0.35; precipColor = null;
+                    phenom = '💧 Kết tủa trắng Zn(OH)₂ đã <b>TAN HOÀN TOÀN</b> trong kiềm dư (hoặc NH₃ dư) tạo dung dịch trong suốt!';
+                    eq = has('liq_NH3') ? 'Zn(OH)₂ + 4NH₃ → [Zn(NH₃)₄](OH)₂' : 'Zn(OH)₂ + 2NaOH → Na₂ZnO₂ + 2H₂O';
+                } else {
+                    precipColor = 0xffffff;
+                    phenom = '⚪ Xuất hiện <b>KẾT TỦA TRẮNG Zn(OH)₂↓</b>. (Chọn chế độ "Cho dư 10mL" rồi thêm NaOH hoặc NH₃ sẽ thấy kết tủa tan!).';
+                    eq = 'Zn²⁺ + 2OH⁻ → Zn(OH)₂↓ (trắng)';
+                }
+                life = 'Chứng minh tính lưỡng tính của Kẽm hiđroxit và khả năng tạo phức chất amoniac.';
+            }
+            // 9. Sắt(II) FeSO4 + Kiềm -> Kết tủa trắng xanh Fe(OH)2
+            else if (has('liq_FeSO4') && (has('liq_NaOH') || has('liq_KOH') || has('liq_BaOH2'))) {
+                matched = true; precipColor = 0xa7f3d0; liqColor = 0xe2e8f0;
+                phenom = '🟢 Xuất hiện <b>KẾT TỦA TRẮNG XANH Fe(OH)₂↓</b> lắng dưới đáy bình (để lâu ngoài không khí sẽ hóa nâu đỏ Fe(OH)₃)!';
+                eq = 'Fe²⁺ + 2OH⁻ → Fe(OH)₂↓ (trắng xanh)';
+                life = 'Nhận biết hợp chất Sắt(II) và quá trình oxi hóa phèn sắt trong tự nhiên.';
+            }
+            // 10. Kết tủa Sunfua màu đen (PbS, CuS, FeS)
+            else if (has('liq_Na2S') && (has('liq_PbNO3') || has('liq_CuSO4') || has('liq_FeSO4'))) {
+                matched = true; precipColor = 0x0f172a; liqColor = 0xe2e8f0;
+                phenom = '⚫ Xuất hiện ngay <b>KẾT TỦA MÀU ĐEN TUYỀN (CuS↓ / PbS↓)</b> bền vững dưới đáy ống nghiệm!';
+                eq = has('liq_PbNO3') ? 'Pb²⁺ + S²⁻ → PbS↓ (đen)' : 'Cu²⁺ + S²⁻ → CuS↓ (đen)';
+                life = 'Phương pháp kết tủa sunfua giúp loại bỏ triệt để các kim loại nặng độc hại trong nước thải mỏ khoáng sản.';
+            }
+            // 11. Chuyển dịch cân bằng Cromat (Vàng) <-> Đicromat (Da cam)
+            else if (has('liq_K2CrO4') && (has('liq_H2SO4') || has('liq_HCl'))) {
+                matched = true; liqColor = 0xf97316; liqOpacity = 0.82;
+                phenom = '🟠 Trong môi trường Axit (H⁺), ion Cromat màu vàng chuyển dịch thành <b>Đicromat (Cr₂O₇²⁻) MÀU DA CAM</b>!';
+                eq = '2CrO₄²⁻ (vàng) + 2H⁺ ⇄ Cr₂O₇²⁻ (da cam) + H₂O';
+                life = 'Minh họa trực quan nguyên lý chuyển dịch cân bằng hóa học Le Chatelier.';
+            }
+            else if (has('liq_K2Cr2O7') && (has('liq_NaOH') || has('liq_KOH'))) {
+                matched = true; liqColor = 0xfacc15; liqOpacity = 0.80;
+                phenom = '🟡 Trong môi trường Kiềm (OH⁻), ion Đicromat màu da cam chuyển dịch thành <b>Cromat (CrO₄²⁻) MÀU VÀNG CHANH</b>!';
+                eq = 'Cr₂O₇²⁻ (da cam) + 2OH⁻ ⇄ 2CrO₄²⁻ (vàng) + H₂O';
+                life = 'Minh họa sự đổi màu thuận nghịch của muối Crom(VI) theo độ pH.';
+            }
+            // 12. Làm mềm nước cứng: CaCl2 / MgCl2 + Na2CO3 -> Kết tủa trắng
+            else if ((has('liq_CaCl2') || has('liq_MgCl2')) && has('liq_Na2CO3')) {
+                matched = true; precipColor = 0xffffff;
+                phenom = '⚪ Xuất hiện <b>KẾT TỦA TRẮNG (CaCO₃↓ / MgCO₃↓)</b> giúp loại bỏ ion Ca²⁺, Mg²⁺ ra khỏi nước cứng!';
+                eq = 'Ca²⁺ + CO₃²⁻ → CaCO₃↓ (trắng)';
+                life = 'Ứng dụng làm mềm nước cứng toàn phần trong công nghiệp lò hơi và giặt tẩy.';
+            }
+            // 13. Thuốc tím KMnO4 + FeSO4 / Na2SO3 + H2SO4 -> Mất màu tím
+            else if (has('liq_KMnO4') && (has('liq_FeSO4') || has('solid_Na2SO3'))) {
+                matched = true; liqColor = 0xf8fafc; liqOpacity = 0.35;
+                phenom = '💧 Dung dịch Thuốc tím (KMnO₄) <b>MẤT MÀU TÍM HOÀN TOÀN</b> do bị khử thành Mn²⁺ không màu!';
+                eq = '10FeSO₄ + 2KMnO₄ + 8H₂SO₄ → 5Fe₂(SO₄)₃ + 2MnSO₄ + K₂SO₄ + 8H₂O';
+                life = 'Ứng dụng trong phép chuẩn độ Pemanganat để xác định hàm lượng sắt trong quặng.';
+            }
+            // 14. Oxit kim loại (CuO đen, Fe2O3 nâu đỏ) tan trong Axit (HCl, H2SO4)
+            else if ((has('solid_CuO') || has('solid_Fe2O3')) && (has('liq_HCl') || has('liq_H2SO4'))) {
+                matched = true;
+                const isCuO = has('solid_CuO');
+                liqColor = isCuO ? 0x0284c7 : 0xd97706;
+                liqOpacity = 0.75;
+                if (vessel.meshes.solidMesh) vessel.meshes.solidMesh.visible = false;
+                phenom = isCuO
+                    ? '🔵 Bột CuO màu đen tan dần trong axit tạo dung dịch muối Đồng(II) <b>MÀU XANH LAM</b>!'
+                    : '🟠 Bột gỉ sắt Fe₂O₃ tan trong axit tạo dung dịch muối Sắt(III) <b>MÀU VÀNG NÂU</b>!';
+                eq = isCuO ? 'CuO + 2H⁺ → Cu²⁺ (xanh lam) + H₂O' : 'Fe₂O₃ + 6H⁺ → 2Fe³⁺ (vàng nâu) + 3H₂O';
+                life = 'Ứng dụng dùng dung dịch axit để tẩy rửa lớp gỉ sét bám trên bề mặt chi tiết máy bằng kim loại.';
+            }
+            // 15. Chỉ thị Metyl Da Cam
+            else if (has('liq_MethylOrange')) {
+                matched = true;
+                if (vessel.ph <= 3.5) {
+                    liqColor = 0xef4444; liqOpacity = 0.80;
+                    phenom = `🔴 Chỉ thị Metyl Da Cam chuyển sang <b>MÀU ĐỎ</b> trong môi trường Axit mạnh (pH = ${vessel.ph}).`;
+                } else if (vessel.ph >= 4.5) {
+                    liqColor = 0xfacc15; liqOpacity = 0.80;
+                    phenom = `🟡 Chỉ thị Metyl Da Cam chuyển sang <b>MÀU VÀNG</b> khi pH = ${vessel.ph} (> 4.4).`;
+                }
+                eq = 'Chỉ thị axit - bazơ Metyl Da Cam';
+                life = 'Dùng để xác định điểm tương đương trong chuẩn độ axit mạnh và bazơ yếu.';
+            }
+
+            if (matched) {
+                if (vessel.meshes.liqMesh) {
+                    vessel.meshes.liqMesh.material.color.setHex(liqColor);
+                    vessel.meshes.liqMesh.material.opacity = liqOpacity;
+                }
+                if (vessel.meshes.precipMesh) {
+                    vessel.meshes.precipMesh.visible = precipColor !== null;
+                    if (precipColor !== null) vessel.meshes.precipMesh.material.color.setHex(precipColor);
+                }
+                vessel.isBubbling = bubbling;
+                vessel.smokeColor = smokeColor;
+                if (typeof updateHUDPanel === 'function') {
+                    updateHUDPanel(phenom, eq, life, vessel);
+                }
+            }
+        };
+    }
+
+    // Chạy tự động ngay khi trang tải xong
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            mergeAllData();
+            hookExtendedReactionEngine();
+        });
+    } else {
+        mergeAllData();
+        hookExtendedReactionEngine();
+    }
+})();
+</script>
+ <div id="lobbyChoiceModalAuto" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-4xl w-full p-6 sm:p-8 shadow-2xl relative">
+        <!-- Nút đóng Sảnh để quay lại bàn đang làm dở -->
+        <button onclick="document.getElementById('lobbyChoiceModalAuto').classList.add('hidden')" 
+                class="absolute top-5 right-5 w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center">
+            <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+
+        <div class="text-center mb-6">
+            <span class="px-3 py-1 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30 text-xs font-extrabold uppercase tracking-wider">
+                Dự án Khoa học Kỹ thuật: HỌC ĐỂ LÀM GÌ?
+            </span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-2">
+                SẢNH CHÍNH — <span class="text-sky-400">CÔNG CỤ HÓA 3D</span>
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-400 mt-1">
+                Chọn khu vực thực hành 3D hoặc quay về trang môn Hóa học:
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <!-- KHU 1: SANDBOX 3D -->
+            <div onclick="switchZone('sandbox'); document.getElementById('lobbyChoiceModalAuto').classList.add('hidden');" 
+                 class="group cursor-pointer rounded-2xl bg-gradient-to-br from-slate-800/90 to-slate-900 border-2 border-slate-700 hover:border-sky-400 p-6 transition-all flex flex-col justify-between shadow-lg">
+                <div>
+                    <div class="w-12 h-12 rounded-2xl bg-sky-500/20 border border-sky-500/40 flex items-center justify-center text-sky-400 text-xl mb-3">
+                        <i class="fa-solid fa-cubes"></i>
+                    </div>
+                    <span class="text-[11px] font-bold uppercase text-sky-400">Khu vực 1 — Tự do sáng tạo</span>
+                    <h3 class="text-lg font-extrabold text-white mt-1 mb-2">Khu Sandbox 3D (Tất cả Hóa chất)</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Mở khóa toàn bộ 65+ hóa chất và dụng cụ thí nghiệm 3D trên bàn để tự do pha trộn, đun nóng và quan sát hiện tượng.
+                    </p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-sky-400">
+                    <span>Vào bàn Sandbox 3D</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
+            </div>
+
+            <!-- KHU 2: CÁC THÍ NGHIỆM -->
+            <div onclick="document.getElementById('lobbyChoiceModalAuto').classList.add('hidden'); openExperimentHubModal();" 
+                 class="group cursor-pointer rounded-2xl bg-gradient-to-br from-slate-800/90 to-slate-900 border-2 border-slate-700 hover:border-emerald-400 p-6 transition-all flex flex-col justify-between shadow-lg">
+                <div>
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-xl mb-3">
+                        <i class="fa-solid fa-flask-vial"></i>
+                    </div>
+                    <span class="text-[11px] font-bold uppercase text-emerald-400">Khu vực 2 — Theo bài học</span>
+                    <h3 class="text-lg font-extrabold text-white mt-1 mb-2">Khu Các Thí Nghiệm (28+ Bài)</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Chọn bài thí nghiệm theo chuyên đề. Bàn 3D và kệ bên phải sẽ chỉ lọc đúng bộ dụng cụ và hóa chất của bài đó.
+                    </p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-emerald-400">
+                    <span>Mở danh sách thí nghiệm</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Nút quay về hẳn trang môn Hóa (chemistry.html) hoặc Trang chủ (index.html) -->
+        <div class="mt-6 pt-4 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
+            <a href="chemistry.html" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 transition flex items-center gap-2">
+                <i class="fa-solid fa-arrow-left text-sky-400"></i>
+                <span>Quay về trang Môn Hóa (chemistry.html)</span>
+            </a>
+            <a href="index.html" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition flex items-center gap-2">
+                <i class="fa-solid fa-house text-emerald-400"></i>
+                <span>Về Trang Chủ HỌC ĐỂ LÀM GÌ?</span>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+(function injectBackToLobbyButtons() {
+    window.openLabLobby = function() {
+        const existingModal = document.getElementById('startChoiceModal') || document.getElementById('lobbyChoiceModalAuto');
+        if (existingModal) existingModal.classList.remove('hidden');
+    };
+
+    function addButtonsToHeader() {
+        const header = document.querySelector('header');
+        if (!header || document.getElementById('btnBackToLobbyTop')) return;
+
+        const firstGroup = header.firstElementChild;
+        if (!firstGroup) return;
+
+        // 1. Nút "Sảnh Phòng Lab" (Mở bảng chọn 2 Khu vực & lối về trang Môn Hóa)
+        const lobbyBtn = document.createElement('button');
+        lobbyBtn.id = 'btnBackToLobbyTop';
+        lobbyBtn.onclick = window.openLabLobby;
+        lobbyBtn.className = 'px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-sky-500/20 text-sky-300 border border-sky-500/40 text-xs font-bold transition flex items-center gap-1.5 shadow-sm mr-1';
+        lobbyBtn.innerHTML = '<i class="fa-solid fa-house-chimney"></i><span>Quay lại Sảnh</span>';
+
+        // 2. Nút mũi tên quay nhanh về trang chemistry.html
+        const backChemLink = document.createElement('a');
+        backChemLink.href = 'chemistry.html';
+        backChemLink.title = 'Quay về trang Môn Hóa Học (chemistry.html)';
+        backChemLink.className = 'w-8 h-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 hover:text-white border border-slate-700 transition flex items-center justify-center';
+        backChemLink.innerHTML = '<i class="fa-solid fa-arrow-left text-xs"></i>';
+
+        firstGroup.insertBefore(lobbyBtn, firstGroup.firstChild);
+        firstGroup.insertBefore(backChemLink, lobbyBtn);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', addButtonsToHeader);
+    } else {
+        addButtonsToHeader();
+    }
+})();
+</script>
+</body>
+</html>

@@ -1,14 +1,223 @@
 <!DOCTYPE html>
-<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>HỌC ĐỂ LÀM GÌ</title><link rel="stylesheet" href="index.css"></head>
-<body><main class="home" aria-label="Trang chủ Học để làm gì">
-<div class="artwork" aria-hidden="true"></div>
-<!-- Artwork sạch không chứa các bảng thông tin này, nên hiển thị mỗi thành phần đúng một lần tại đây. -->
-<header class="player-card"><div class="avatar">👨🏻‍🎓</div><div class="player-info"><strong>Tên người chơi</strong><div class="xp-line"><b>Lv.1</b><span class="xp-bar"><i></i></span><small>0/100</small></div></div></header>
-<nav class="top-actions"><button class="top-button class-button" id="classButton"><span>👥</span><span>Lớp<br><b>12A3</b></span><em>›</em></button><button class="top-button ranking-button" id="rankingButton"><span>🏆</span><span>Bảng xếp hạng</span><em>›</em></button></nav>
-<aside class="ranking-panel"><h3>🏆 Bảng xếp hạng</h3><div class="rank-row current"><span>👑</span><b>Tên người chơi</b><strong>1250</strong></div><div class="rank-row"><span>2</span><b>Bạn A</b><strong>1120</strong></div><div class="rank-row"><span>3</span><b>Bạn B</b><strong>980</strong></div><div class="rank-row"><span>4</span><b>Bạn C</b><strong>870</strong></div><div class="rank-row"><span>5</span><b>Bạn D</b><strong>760</strong></div></aside>
-<div class="ai-hint"><span>✦</span><i>Tri thức là chìa khóa<br>mở ra tương lai</i><b>🤖</b></div>
-<div class="hotspots" aria-label="Điều hướng">
-<button class="hit math" data-page="math.html" aria-label="Toán học"></button><button class="hit physics" data-page="physics.html" aria-label="Vật lý"></button><button class="hit chemistry" data-page="chemistry.html" aria-label="Hóa học"></button><button class="hit literature" data-page="literature.html" aria-label="Ngữ văn"></button><button class="hit sport" data-page="sport.html" aria-label="Thể dục"></button><button class="hit art" data-page="art.html" aria-label="Mỹ thuật"></button><button class="hit biology" data-page="biology.html" aria-label="Sinh học"></button><button class="hit geography" data-page="geography.html" aria-label="Địa lý"></button><button class="hit computer" data-page="computer.html" aria-label="Tin học"></button><button class="hit english" data-page="english.html" aria-label="Tiếng Anh"></button><button class="hit history" data-page="history.html" aria-label="Lịch sử"></button><button class="hit center" id="centerHit" aria-label="Giới thiệu Học để làm gì"></button>
-<!-- Chỉ là vùng bấm trên icon đã có trong ảnh; không tạo icon thứ hai. --><button class="hit settings" data-popup="Cài đặt" aria-label="Cài đặt"></button><button class="hit rewards" data-popup="Phần thưởng" aria-label="Phần thưởng"></button><button class="hit missions" data-popup="Nhiệm vụ" aria-label="Nhiệm vụ"></button><button class="hit exit" data-popup="Thoát" aria-label="Thoát"></button></div>
-<div class="dialog" id="dialog" aria-hidden="true"><section class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="dialogTitle"><button class="close" id="closeDialog" aria-label="Đóng">×</button><div class="dialog-icon">✨</div><h2 id="dialogTitle"></h2><p id="dialogText"></p><button class="confirm" id="confirmDialog">Đã hiểu</button></section></div>
-</main><script src="index.js"></script></body></html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HỌC ĐỂ LÀM GÌ</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+<main class="home" id="homeScene" aria-label="Trang chủ Học để làm gì">
+
+  <!-- 1. LỚP NỀN BẦU TRỜI ĐIỆN ẢNH TỪ ẢNH BANANA (assets/sky-bg.png) -->
+  <div class="sky-backdrop" aria-hidden="true">
+    <div class="artwork-sky" id="parallaxFar"></div>
+    <div class="god-rays"></div>
+    <canvas id="cinematicCanvas"></canvas>
+
+    <!-- Mây 3D & Chim vỗ cánh 2 frame cắt từ assets/props-sheet-2.png -->
+    <div class="sky-layer" id="skyLayer">
+      <div class="cloud sp2 cloud-white c1"></div>
+      <div class="cloud sp2 cloud-gold c2"></div>
+      <div class="cloud sp2 cloud-white c3"></div>
+      <div class="cloud sp2 cloud-gold c4"></div>
+      <div class="cloud sp2 cloud-white c5"></div>
+    </div>
+
+    <div class="bottom-cloud-sea"></div>
+  </div>
+
+  <!-- 2. THÔNG TIN NGƯỜI CHƠI & BẢNG XẾP HẠNG -->
+  <header class="player-card">
+    <div class="avatar">👨🏻‍🎓</div>
+    <div class="player-info">
+      <strong>Tên người chơi</strong>
+      <div class="xp-line"><b>Lv.1</b><span class="xp-bar"><i></i></span><small>0/100</small></div>
+    </div>
+  </header>
+
+  <nav class="top-actions">
+    <button class="top-button class-button" id="classButton"><span>👥</span><span>Lớp<br><b>12A3</b></span><em>›</em></button>
+    <button class="top-button ranking-button" id="rankingButton"><span>🏆</span><span>Bảng xếp hạng</span><em>›</em></button>
+  </nav>
+
+  <aside class="ranking-panel">
+    <h3>🏆 Bảng xếp hạng</h3>
+    <div class="rank-row current"><span>👑</span><b>Tên người chơi</b><strong>1250</strong></div>
+    <div class="rank-row"><span>2</span><b>Bạn A</b><strong>1120</strong></div>
+    <div class="rank-row"><span>3</span><b>Bạn B</b><strong>980</strong></div>
+    <div class="rank-row"><span>4</span><b>Bạn C</b><strong>870</strong></div>
+    <div class="rank-row"><span>5</span><b>Bạn D</b><strong>760</strong></div>
+  </aside>
+
+  <div class="ai-hint"><span>✦</span><i>Tri thức là chìa khóa<br>mở ra tương lai</i><b>🤖</b></div>
+
+  <!-- 3. HỆ THỐNG 12 HÒN ĐẢO BAY & DỤNG CỤ HỌC TẬP TỪ ẢNH BANANA -->
+  <div class="hotspots" id="islandsLayer" aria-label="Điều hướng">
+
+    <!-- 1. ĐẢO TOÁN HỌC -->
+    <button class="hit math island-float f-delay-1" data-page="math.html" aria-label="Toán học">
+      <div class="island-art hue-math"></div>
+      <div class="stage">
+        <span class="actor sp1 ruler"></span>
+        <span class="actor sp1 compass"></span>
+        <span class="actor fx-math">π ∑ √x ∞</span>
+      </div>
+      <span class="island-label">📐 Toán học</span>
+    </button>
+
+    <!-- 2. ĐẢO VẬT LÝ -->
+    <button class="hit physics island-float f-delay-2" data-page="physics.html" aria-label="Vật lý">
+      <div class="island-art hue-physics"></div>
+      <div class="stage">
+        <span class="actor sp1 magnet"></span>
+        <span class="actor sp1 apple"></span>
+        <span class="actor sp1 spark"></span>
+      </div>
+      <span class="island-label">⚡ Vật lý</span>
+    </button>
+
+    <!-- 3. ĐẢO HÓA HỌC (2 lọ hóa chất nhảy ra va nhau -> nổ cái BÙM -> khói tỏa -> chui ra lại) -->
+    <button class="hit chemistry island-float f-delay-3" data-page="chemistry.html" aria-label="Hóa học">
+      <div class="island-art hue-chem"></div>
+      <div class="stage">
+        <span class="actor sp2 bush-l"></span>
+        <span class="actor sp2 bush-r"></span>
+        <span class="actor sp1 flask-left"></span>
+        <span class="actor sp1 flask-right"></span>
+        <span class="actor sp1 chem-boom"></span>
+        <span class="actor sp1 chem-smoke"></span>
+      </div>
+      <span class="island-label">🧪 Hóa học</span>
+    </button>
+
+    <!-- 4. ĐẢO NGỮ VĂN -->
+    <button class="hit literature island-float f-delay-4" data-page="literature.html" aria-label="Ngữ văn">
+      <div class="island-art hue-lit"></div>
+      <div class="stage">
+        <span class="actor sp1 book"></span>
+        <span class="actor sp1 quill"></span>
+        <span class="actor sp2 bird-paper"></span>
+      </div>
+      <span class="island-label">📖 Ngữ văn</span>
+    </button>
+
+    <!-- 5. ĐẢO THỂ DỤC -->
+    <button class="hit sport island-float f-delay-2" data-page="sport.html" aria-label="Thể dục">
+      <div class="island-art hue-sport"></div>
+      <div class="stage">
+        <span class="actor sp1 shoe"></span>
+        <span class="actor sp1 ball"></span>
+        <span class="actor sp2 goal"></span>
+      </div>
+      <span class="island-label">⚽ Thể dục</span>
+    </button>
+
+    <!-- 6. ĐẢO MỸ THUẬT -->
+    <button class="hit art island-float f-delay-5" data-page="art.html" aria-label="Mỹ thuật">
+      <div class="island-art hue-art"></div>
+      <div class="stage">
+        <span class="actor sp1 palette"></span>
+        <span class="actor sp1 brush"></span>
+        <span class="actor sp2 rainbow"></span>
+      </div>
+      <span class="island-label">🎨 Mỹ thuật</span>
+    </button>
+
+    <!-- 7. ĐẢO SINH HỌC -->
+    <button class="hit biology island-float f-delay-1" data-page="biology.html" aria-label="Sinh học">
+      <div class="island-art hue-bio"></div>
+      <div class="stage">
+        <span class="actor sp2 sprout"></span>
+        <span class="actor sp2 flower"></span>
+        <span class="actor sp2 butterfly"></span>
+      </div>
+      <span class="island-label">🧬 Sinh học</span>
+    </button>
+
+    <!-- 8. ĐẢO ĐỊA LÝ -->
+    <button class="hit geography island-float f-delay-3" data-page="geography.html" aria-label="Địa lý">
+      <div class="island-art hue-geo"></div>
+      <div class="stage">
+        <span class="actor sp1 globe"></span>
+        <span class="actor sp1 volcano"></span>
+        <span class="actor sp1 lava"></span>
+      </div>
+      <span class="island-label">🌍 Địa lý</span>
+    </button>
+
+    <!-- 9. ĐẢO TIN HỌC -->
+    <button class="hit computer island-float f-delay-4" data-page="computer.html" aria-label="Tin học">
+      <div class="island-art hue-it"></div>
+      <div class="stage">
+        <span class="actor sp1 laptop"></span>
+        <span class="actor sp2 bug"></span>
+        <span class="actor sp2 hammer"></span>
+      </div>
+      <span class="island-label">💻 Tin học</span>
+    </button>
+
+    <!-- 10. ĐẢO TIẾNG ANH -->
+    <button class="hit english island-float f-delay-2" data-page="english.html" aria-label="Tiếng Anh">
+      <div class="island-art hue-eng"></div>
+      <div class="stage">
+        <span class="actor sp2 chat-a"></span>
+        <span class="actor sp2 chat-b"></span>
+        <span class="actor sp2 music-fx"></span>
+      </div>
+      <span class="island-label">🌐 Tiếng Anh</span>
+    </button>
+
+    <!-- 11. ĐẢO LỊCH SỬ -->
+    <button class="hit history island-float f-delay-5" data-page="history.html" aria-label="Lịch sử">
+      <div class="island-art hue-hist"></div>
+      <div class="stage">
+        <span class="actor sp2 sword-l"></span>
+        <span class="actor sp2 sword-r"></span>
+        <span class="actor sp2 crown"></span>
+      </div>
+      <span class="island-label">⚔️ Lịch sử</span>
+    </button>
+
+    <!-- ĐẢO TRUNG TÂM ĐỒ SỘ (assets/island-center.png) -->
+    <button class="hit center island-float-center" id="centerHit" aria-label="Giới thiệu Học để làm gì">
+      <div class="center-aura-ring"></div>
+      <div class="island-center-art"></div>
+      <div class="stage">
+        <span class="actor sp2 crystal"></span>
+      </div>
+      <span class="island-label center-title">🌟 Chân Tri 🌟</span>
+    </button>
+
+    <!-- 4 NÚT CHỨC NĂNG GÓC DƯỚI TRÁI -->
+    <button class="hit rune-btn settings" data-popup="Cài đặt" aria-label="Cài đặt">
+      <span class="rune-icon">⚙️</span><small>Cài đặt</small>
+    </button>
+    <button class="hit rune-btn rewards" data-popup="Phần thưởng" aria-label="Phần thưởng">
+      <span class="rune-icon">🎁</span><small>Thưởng</small>
+    </button>
+    <button class="hit rune-btn missions" data-popup="Nhiệm vụ" aria-label="Nhiệm vụ">
+      <span class="rune-icon">📜</span><small>Nhiệm vụ</small>
+    </button>
+    <button class="hit rune-btn exit" data-popup="Thoát" aria-label="Thoát">
+      <span class="rune-icon">🚪</span><small>Thoát</small>
+    </button>
+  </div>
+
+  <!-- Viền ống kính điện ảnh -->
+  <div class="cinematic-vignette" aria-hidden="true"></div>
+
+  <!-- HỘP THOẠI POPUP -->
+  <div class="dialog" id="dialog" aria-hidden="true">
+    <section class="dialog-card" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+      <button class="close" id="closeDialog" aria-label="Đóng">×</button>
+      <div class="dialog-icon">✨</div>
+      <h2 id="dialogTitle"></h2>
+      <p id="dialogText"></p>
+      <button class="confirm" id="confirmDialog">Đã hiểu</button>
+    </section>
+  </div>
+</main>
+<script src="index.js"></script>
+</body>
+</html>
